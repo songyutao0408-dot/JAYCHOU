@@ -23,7 +23,8 @@
     "build:walk": "node tools/build-walk.mjs",
     "extract-walk": "python3 tools/extract-walk.py",
     "style-check": "node tools/style-check.mjs",
-    "walk-sheet": "node tools/walk-sheet.mjs"
+    "walk-sheet": "node tools/walk-sheet.mjs",
+    "brightness": "node tools/brightness.mjs"
   },
   "engines": {
     "node": ">=20"

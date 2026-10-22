@@ -39,6 +39,7 @@ npm run build                 # 打包 src/ → preview/build/bundle.js（加 --
 npm test                      # 节拍网格测试 + 场景时间写法检查（只许用小节/拍）
 npm run shot -- s01:5 12.3    # 截图（时间写法：秒数 / b:全局拍 / s03:5 第 3 站第 5 拍 / intro:9 / outro:17）
 npm run contact               # 全片接触表 → render/contact.png
+npm run brightness -- --stations s02,s05   # 亮度与人物反差表（全局规则，每批自查必跑）→ render/brightness/
 npm run style-check           # 人物 × 16 种画风对照表 → render/style-check.png
 npm run walk-sheet            # 走路循环检查表（全部帧、落在拍上的帧）
 npm run render                # 成片（无音轨，60fps）→ render/film_1080p_60fps.mp4；--height 480 --fps 30 出小样

@@ -277,6 +277,8 @@ const glanceIndex = (env) => {
 export const s02 = {
   id: 's02',
   station: ST,
+  // 沙色人物贴在沙色浮雕上：加一圈深褐色描边（像浮雕的阴刻线），保证反差
+  figureRim: { color: '#3d2712', width: 4, alpha: 0.9 },
   figureAdjust(b) {
     // 第 7 拍前 0.3 拍：正面站立被「压扁」成侧身，第 7 拍弹回侧身走路
     const E = GAG + 4;

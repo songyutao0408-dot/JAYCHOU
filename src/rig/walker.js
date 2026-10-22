@@ -2,6 +2,7 @@
 // 一个循环 = 两步 = 两拍；两次脚跟落地（meta.strikes）分别对齐到拍点上，一拍迈一步。
 // 画面上人物约占画面高度的一半（FIGURE_H 单位）。各站按 STATION_STYLE 做画风转换（styles.js）。
 import { styledFrame } from './styles.js';
+import { makeCanvas, memo } from '../kit/canvas.js';
 
 export const FIGURE_H = 500; // 人物身高（场景单位，≈ 画面高度一半）
 
@@ -59,10 +60,36 @@ export function drawWalker(ctx, o = {}) {
   const idx = stand ? -1 : o.frame ?? frameIndex(o.phase || 0);
   const src = stand ? active.stand : active.frames[idx];
   if (!src) return;
-  const img = styledFrame(`${active.name}/${stand ? 'stand' : idx}`, src, o.style);
+  const key = `${active.name}/${stand ? 'stand' : idx}`;
+  const img = styledFrame(key, src, o.style);
   ctx.save();
   if (o.lean) ctx.rotate(o.lean);
   ctx.imageSmoothingQuality = 'high';
+  // 轮廓光 / 浅色描边：背景偏暗时，在人物外面加一圈亮边，保证反差（全局规则）
+  if (o.rim) {
+    const halo = rimFrame(key, img, o.rim.color || '#fff6e0', o.rim.width || 5);
+    ctx.globalAlpha *= o.rim.alpha ?? 0.9;
+    ctx.drawImage(halo, -m.anchorX * s, -m.baseY * s, m.width * s, m.height * s);
+    ctx.globalAlpha /= o.rim.alpha ?? 0.9;
+  }
   ctx.drawImage(img, -m.anchorX * s, -m.baseY * s, m.width * s, m.height * s);
   ctx.restore();
+}
+
+/** 人物外轮廓向外扩 width 像素、填成纯色的一圈（按帧、颜色、宽度缓存）。 */
+function rimFrame(key, img, color, width) {
+  return memo(`rim|${key}|${img.width}|${color}|${width}`, () => {
+    const w = img.width, h = img.height;
+    const c = makeCanvas(w, h);
+    const ctx = c.getContext('2d');
+    const steps = 16;
+    for (let i = 0; i < steps; i++) {
+      const a = (i / steps) * Math.PI * 2;
+      for (const r of [width, width * 0.5]) ctx.drawImage(img, Math.cos(a) * r, Math.sin(a) * r);
+    }
+    ctx.globalCompositeOperation = 'source-in';
+    ctx.fillStyle = color;
+    ctx.fillRect(0, 0, w, h);
+    return c;
+  });
 }

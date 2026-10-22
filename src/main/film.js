@@ -22,6 +22,8 @@ const LEAD = 2;      // 画框提前 2 拍（每站最后 2 拍）出现
 export const TAIL = 0.4; // 强拍后 0.4 拍画框完全扫出画面
 
 const sceneOf = (sec) => SCENES[sec.id];
+/** 自查用的开关：hideFigure = 不画人物（亮度 / 反差检查时用来分离人物和背景）。 */
+export const renderFlags = { hideFigure: false };
 /** 镜头累计平移：人物开始走（Intro 第 3 小节）之前镜头不动。 */
 const camDist = (gb) => dist(Math.max(gb, WALK_START));
 
@@ -57,7 +59,7 @@ export function drawSceneLayers(ctx, env, { back = true, front = true } = {}) {
 export function drawFigureFor(ctx, env, { forceStand = false } = {}) {
   const { scene, b } = env;
   const fig = figurePlacement(env, { forceStand });
-  if (fig.hidden) return;
+  if (fig.hidden || renderFlags.hideFigure) return;
   ctx.save();
   applyUnits(ctx);
   ctx.translate(fig.x, fig.y);
@@ -82,6 +84,7 @@ export function figurePlacement(env, { forceStand = false } = {}) {
     phase: st.phase,
     lean: st.lean + (adj.rotate || 0),
     style: adj.style || scene.figureStyle || (sec.station ? STATION_STYLE[sec.station] : 'comic'),
+    rim: adj.rim !== undefined ? adj.rim : scene.figureRim || null,
   };
 }
 

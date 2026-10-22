@@ -72,19 +72,19 @@
     [2e3, "Jay", "Jay", "\u53EF\u7231\u5973\u4EBA", "\u9752\u6625\u8857\u89D2", "\u6F2B\u753B\u7F51\u70B9\u5206\u955C", "\u4ED6\u4E00\u56DE\u5934\uFF08\u5B9A\u683C\u6362\u6210\u6B63\u9762\u7AD9\u7ACB\u5E27\uFF09\uFF0C\u80CC\u666F\u77AC\u95F4\u94FA\u6EE1\u5C11\u5973\u6F2B\u753B\u95EA\u5149\u82B1\u6735\uFF0C\u4E0B\u4E00\u62CD\u590D\u539F", ["#f4efe4", "#c9c2b4", "#26232a", "#e8467c"]],
     [2001, "\u8303\u7279\u897F", "Fantasy", "\u7231\u5728\u897F\u5143\u524D", "\u53E4\u5DF4\u6BD4\u4F26\u57CE\u5899", "\u4E24\u6CB3\u6D41\u57DF\u6D6E\u96D5", "\u6D6E\u96D5\u91CC\u4EBA\u4EBA\u4FA7\u8EAB\u884C\u8FDB\uFF0C\u53EA\u6709\u5B9A\u683C\u7684\u4ED6\u6B63\u9762\u7AD9\u7740\uFF1B\u4E0B\u4E00\u62CD\u4ED6\u4E5F\u88AB\u8FEB\u4FA7\u7740\u8EAB\u5B50\u7EE7\u7EED\u8D70", ["#e7d3a8", "#c49a5c", "#4a3320", "#2f6fb0"]],
     [2002, "\u516B\u5EA6\u7A7A\u95F4", "The Eight Dimensions", "\u7237\u7237\u6CE1\u7684\u8336", "\u5C71\u95F4\u8336\u68DA", "\u6C34\u58A8", "\u8001\u4EBA\u659F\u8336\uFF0C\u8336\u6C34\u5012\u6210\u4E00\u9053\u58A8\u7EBF\u4E00\u8DEF\u6D41\u5230\u8DEF\u4E0A\uFF0C\u4ED6\u8E29\u7740\u58A8\u7EBF\u8D70", ["#f2eee3", "#a9a69c", "#1d1d1b", "#7a8c5a"]],
-    [2003, "\u53F6\u60E0\u7F8E", "Yeh Hui-Mei", "\u4EE5\u7236\u4E4B\u540D", "\u54E5\u7279\u6559\u5802", "\u5F69\u8272\u73BB\u7483", "\u4ED6\u8D70\u8FDB\u7A97\u683C\uFF0C\u88AB\u94C5\u6761\u5207\u6210\u4E00\u5757\u5757\u5F69\u8272\u73BB\u7483\uFF0C\u5F3A\u62CD\u4E0A\u4E00\u675F\u5149\u6253\u4E0B", ["#1c2140", "#3b5fa8", "#0c0d14", "#d9a73a"]],
+    [2003, "\u53F6\u60E0\u7F8E", "Yeh Hui-Mei", "\u4EE5\u7236\u4E4B\u540D", "\u767D\u5929\u7684\u54E5\u7279\u6559\u5802\uFF1A\u9633\u5149\u900F\u8FC7\u5F69\u8272\u73BB\u7483\uFF0C\u5728\u6D45\u8272\u77F3\u5899\u548C\u5730\u9762\u6295\u4E0B\u5F69\u8272\u5149\u6591", "\u5F69\u8272\u73BB\u7483\uFF08\u767D\u5929\u3001\u94C5\u6761\u7EC6\uFF09", "\u4ED6\u8D70\u8FDB\u7A97\u683C\uFF0C\u88AB\u7EC6\u94C5\u6761\u5207\u6210\u4E00\u5757\u5757\u5F69\u8272\u73BB\u7483\uFF0C\u5F3A\u62CD\u4E0A\u4E00\u675F\u9633\u5149\u6253\u4E0B", ["#efe9dc", "#c9b99a", "#3c3a44", "#d9a73a"]],
     [2004, "\u4E03\u91CC\u9999", "Common Jasmine Orange", "\u6B62\u6218\u4E4B\u6B87", "\u5E9F\u589F\u91CC\u7684\u767D\u9E3D", "\u94C5\u7B14\u901F\u5199 + \u8272\u5F69\u6655\u5F00", "\u94A2\u76D4\u91CC\u98DE\u51FA\u4E00\u53EA\u767D\u9E3D\uFF0C\u9E3D\u5B50\u98DE\u8FC7\u7684\u5730\u65B9\u989C\u8272\u50CF\u6C34\u5F69\u4E00\u6837\u6655\u5F00\uFF0C\u4E24\u62CD\u5185\u6574\u5E45\u753B\u4ECE\u7070\u8272\u901F\u5199\u53D8\u6210\u5F69\u8272", ["#f3ecdc", "#b4ada1", "#5f5a52", "#8fb8d8"]],
-    [2005, "\u5341\u4E00\u6708\u7684\u8427\u90A6", "November's Chopin", "\u591C\u66F2", "\u6708\u591C\u91CC\u7684\u4E00\u67B6\u94A2\u7434", "\u9ED1\u767D\u94A2\u7B14\u753B", "\u7434\u76D6\u4E0A\u7684\u4E4C\u9E26\u6392\u6210\u4E00\u884C\u97F3\u7B26\uFF0C\u5F3A\u62CD\u4E0A\u540C\u65F6\u626D\u5934", ["#f3f1ea", "#9b9890", "#151515", "#6c7a96"]],
-    [2006, "\u4F9D\u7136\u8303\u7279\u897F", "Still Fantasy", "\u591C\u7684\u7B2C\u4E03\u7AE0", "\u7EF4\u591A\u5229\u4E9A\u96FE\u591C\uFF0C\u4FA6\u63A2", "\u94DC\u7248\u753B", "\u4E00\u53EA\u653E\u5927\u955C\u4ECE\u753B\u5916\u4F38\u8FDB\u6765\uFF0C\u5BF9\u51C6\u4ED6\u8033\u6735\u4E0A\u7684\u8033\u673A", ["#d8cdb4", "#8a7b62", "#2a2219", "#7d5a36"]],
-    [2007, "\u6211\u5F88\u5FD9", "On the Run!", "\u6700\u957F\u7684\u7535\u5F71", "\u8001\u7535\u5F71\u9662", "\u80F6\u7247\u5212\u75D5 + 4:3 \u753B\u5E45", "\u753B\u5E45\u7A81\u7136\u7F29\u6210 4:3\uFF0C\u4ED6\u8D70\u5728\u94F6\u5E55\u91CC\uFF0C\u524D\u6392\u89C2\u4F17\u526A\u5F71\u4E00\u8D77\u626D\u5934", ["#2a2622", "#8f8576", "#0d0c0b", "#e8d9b0"]],
+    [2005, "\u5341\u4E00\u6708\u7684\u8427\u90A6", "November's Chopin", "\u591C\u66F2", "\u6708\u591C\u91CC\u7684\u4E00\u67B6\u94A2\u7434\uFF08\u5927\u800C\u4EAE\u7684\u6708\u4EAE\uFF09", "\u767D\u7EB8\u84DD\u9ED1\u58A8\u6C34\u94A2\u7B14\u753B\uFF08\u591C\u8272\u53EA\u7528\u5929\u7A7A\u7A00\u758F\u6392\u7EBF\uFF09", "\u7434\u76D6\u4E0A\u7684\u4E4C\u9E26\u6392\u6210\u4E00\u884C\u97F3\u7B26\uFF0C\u5F3A\u62CD\u4E0A\u540C\u65F6\u626D\u5934", ["#fbfaf6", "#c9d0dc", "#1f2a44", "#6c7a96"]],
+    [2006, "\u4F9D\u7136\u8303\u7279\u897F", "Still Fantasy", "\u591C\u7684\u7B2C\u4E03\u7AE0", "\u7EF4\u591A\u5229\u4E9A\u6D45\u7070\u8584\u96FE\uFF0C\u4FA6\u63A2\uFF0C\u7164\u6C14\u706F\u6696\u9EC4\u5149\u6655", "\u94DC\u7248\u753B\uFF08\u7C73\u9EC4\u7EB8\u3001\u68D5\u8910\u6CB9\u58A8\uFF09", "\u4E00\u53EA\u653E\u5927\u955C\u4ECE\u753B\u5916\u4F38\u8FDB\u6765\uFF0C\u5BF9\u51C6\u4ED6\u8033\u6735\u4E0A\u7684\u8033\u673A", ["#efe3c4", "#c9b48e", "#5a3a22", "#e8b54a"]],
+    [2007, "\u6211\u5F88\u5FD9", "On the Run!", "\u6700\u957F\u7684\u7535\u5F71", "\u8001\u7535\u5F71\u9662\uFF1A\u53D1\u5149\u7684\u94F6\u5E55\u5360\u753B\u9762\u5927\u90E8\u5206\uFF0C\u89C2\u4F17\u526A\u5F71\u53EA\u5728\u5E95\u90E8\u4E00\u7A84\u6761", "\u80F6\u7247\u5212\u75D5 + 4:3 \u753B\u5E45", "\u753B\u5E45\u7A81\u7136\u7F29\u6210 4:3\uFF0C\u4ED6\u8D70\u5728\u94F6\u5E55\u91CC\uFF0C\u524D\u6392\u89C2\u4F17\u526A\u5F71\u4E00\u8D77\u626D\u5934", ["#f2ead2", "#cfc3a4", "#2a2622", "#e8d9b0"]],
     [2008, "\u9B54\u6770\u5EA7", "Capricorn", "\u4E54\u514B\u53D4\u53D4", "\u9A6C\u620F\u56E2\u5C0F\u4E11", "19 \u4E16\u7EAA\u77F3\u7248\u753B\u6D77\u62A5", "\u5C0F\u4E11\u9012\u6765\u4E00\u53EA\u6C14\u7403\uFF0C\u5B9A\u683C\u7684\u4ED6\u88AB\u6574\u4E2A\u5E26\u7740\u98D8\u8D77\u534A\u62CD\uFF0C\u5F3A\u62CD\u843D\u56DE", ["#efe0bf", "#d0533c", "#2b2a3a", "#2f7d6d"]],
-    [2010, "\u8DE8\u65F6\u4EE3", "The Era", "\u96E8\u4E0B\u4E00\u6574\u665A", "\u57CE\u5E02\u591C\u96E8", "\u6C34\u5F69\u6655\u67D3", "\u96E8\u6C34\u628A\u989C\u6599\u6655\u5F00\uFF0C\u8FDE\u4ED6\u7684\u4F1E\u90FD\u5316\u6210\u4E00\u6EE9\u989C\u8272\uFF0C\u4E0B\u4E00\u62CD\u6536\u56DE", ["#e9eef2", "#7f9bb5", "#27364a", "#e0a24f"]],
+    [2010, "\u8DE8\u65F6\u4EE3", "The Era", "\u96E8\u4E0B\u4E00\u6574\u665A", "\u508D\u665A\u84DD\u8C03\u65F6\u523B\u7684\u57CE\u5E02\u8857\u9053\uFF0C\u8DEF\u9762\u6620\u7740\u9713\u8679\u548C\u8F66\u706F\u7684\u5F69\u8272\u5012\u5F71", "\u900F\u660E\u6C34\u5F69\u6655\u67D3", "\u96E8\u6C34\u628A\u989C\u6599\u6655\u5F00\uFF0C\u8FDE\u4ED6\u7684\u4F1E\u90FD\u5316\u6210\u4E00\u6EE9\u989C\u8272\uFF0C\u4E0B\u4E00\u62CD\u6536\u56DE", ["#dfe8f2", "#8fb0d4", "#3c5577", "#f08a6a"]],
     [2011, "\u60CA\u53F9\u53F7", "Wow!", "\u8FF7\u9B42\u66F2", "\u4E2D\u56FD\u53E4\u4EE3\u76AE\u5F71\u620F", "\u76AE\u5F71", "\u6CB9\u706F\u4E00\u6643\uFF0C\u4ED6\u7684\u76AE\u5F71\uFF08\u540C\u4E00\u5E27\u526A\u5F71\uFF09\u4E00\u5206\u4E3A\u4E09\u5DE6\u53F3\u9519\u5F00\uFF0C\u5F3A\u62CD\u4E0A\u5408\u56DE\u4E00\u4E2A", ["#f0c77a", "#c46a2c", "#3a1d10", "#b8322a"]],
     [2012, "\u5341\u4E8C\u65B0\u4F5C", "Opus 12", "\u7EA2\u5C18\u5BA2\u6808", "\u6B66\u4FA0\u5BA2\u6808", "\u6728\u7248\u5E74\u753B", "\u5E97\u5C0F\u4E8C\u628A\u4ED6\u5F53\u6210\u5927\u4FA0\uFF0C\u62B1\u62F3\u4F5C\u63D6", ["#f1e3c4", "#d4a02f", "#2d1f18", "#c23b2b"]],
     [2014, "\u54CE\u5466\uFF0C\u4E0D\u9519\u54E6", "Aiyo, Not Bad", "\u978B\u5B50\u7279\u5927\u53F7", "\u8721\u7B14\u753B\u7684\u5C0F\u9547", "\u513F\u7AE5\u8721\u7B14\u753B", "\u6BD4\u4F8B\u5168\u9519\uFF0C\u4ED6\u811A\u4E0B\u90A3\u4E00\u622A\u88AB\u5355\u72EC\u653E\u5927\u6210\u7279\u5927\u53F7\u978B\u5B50\uFF0C\u4E00\u6B65\u8DE8\u8FC7\u534A\u4E2A\u753B\u9762", ["#fbf7ec", "#8cc06a", "#3a3a8c", "#f2a33a"]],
     [2016, "\u5468\u6770\u4F26\u7684\u5E8A\u8FB9\u6545\u4E8B", "Jay Chou's Bedtime Stories", "\u524D\u4E16\u60C5\u4EBA", "\u6E29\u99A8\u7684\u7236\u5973\u573A\u666F", "\u7AE5\u4E66\u7ED8\u672C\u6C34\u5F69", "\u5C0F\u5973\u5B69\u8E2E\u811A\u7ED9\u5B9A\u683C\u7AD9\u7740\u7684\u4ED6\u6234\u4E0A\u4E00\u9876\u7EB8\u7687\u51A0", ["#fbf1e4", "#e6b8a2", "#5a4a5e", "#e8c25a"]],
     [2022, "\u6700\u4F1F\u5927\u7684\u4F5C\u54C1", "Greatest Works of Art", "\u8FD8\u5728\u6D41\u6D6A", "\u516C\u8DEF\u65C5\u884C", "\u590D\u53E4\u660E\u4FE1\u7247", "\u4E00\u4E2A\u90AE\u6233\u300C\u556A\u300D\u5730\u76D6\u5728\u4ED6\u8EAB\u4E0A\uFF0C\u65E5\u671F 2022", ["#f0e2c4", "#5aa0b4", "#3a2c24", "#d6643a"]],
-    [2026, "\u592A\u9633\u4E4B\u5B50", "Children of the Sun", "\u90A3\u5929\u4E0B\u96E8\u4E86", "\u96E8\u591C\u516C\u4EA4\u7AD9\u53F0\uFF0C\u4E00\u7537\u4E00\u5973\u5404\u6253\u4E00\u628A\u4F1E", "\u7535\u5F71\u611F\u539A\u6D82\u63D2\u753B\uFF0C\u8DEF\u706F\u6696\u5149\u5BF9\u51B7\u96E8", "\u516C\u4EA4\u8F66\u9A76\u8FC7\u6E85\u8D77\u6C34\u82B1\uFF0C\u4E24\u628A\u4F1E\u5728\u5F3A\u62CD\u4E0A\u540C\u65F6\u4E00\u6B6A\uFF08\u4ED6\u7684\u4F1E\u753B\u5728\u7AD9\u7ACB\u5E27\u7684\u624B\u4E0A\uFF09", ["#1b2230", "#3d5670", "#0a0e15", "#f0b25a"]]
+    [2026, "\u592A\u9633\u4E4B\u5B50", "Children of the Sun", "\u90A3\u5929\u4E0B\u96E8\u4E86", "\u767D\u5929\u9635\u96E8\u91CC\u7684\u57CE\u5E02\u8857\u8FB9\u516C\u4EA4\u7AD9\u53F0\uFF0C\u4E00\u7537\u4E00\u5973\u5404\u6491\u4E00\u628A\u989C\u8272\u9C9C\u660E\u7684\u4F1E\u7B49\u8F66", "\u7535\u5F71\u611F\u539A\u6D82\u63D2\u753B\uFF08\u767D\u5929\u3001\u660E\u4EAE\u7684\u6D45\u7070\u5929\u7A7A\u3001\u67D4\u548C\u5747\u5300\u7684\u5149\uFF09", "\u516C\u4EA4\u8F66\u9A76\u8FC7\u6E85\u8D77\u6C34\u82B1\uFF0C\u4E24\u628A\u4F1E\u5728\u5F3A\u62CD\u4E0A\u540C\u65F6\u4E00\u6B6A", ["#e7ebee", "#a9b6c0", "#3d4a56", "#e8553f"]]
   ];
   var EN_CHECKED = new Set(Array.from({ length: 16 }, (_, i) => i + 1));
   var STATIONS = raw.map(([year, albumZh, albumEn, song, scene, style, gag, palette], i) => {
@@ -759,7 +759,7 @@
       O.b[i] = base[2] + (lead[2] - base[2]) * ink;
       O.a[i] = I.a[i] > 0.5 ? color ? 1 : 0.94 : I.a[i];
     }
-    outline(O, I.a, 1.3, lead);
+    outline(O, I.a, color ? 1.6 : 2.6, rgbf("#35312c"));
     return O;
   }
   var STYLES = {
@@ -875,8 +875,10 @@
       return O;
     },
     woodcut: (I) => hatchStyle(comicBase(I, { levels: 3, keep: 0, lw: 0 }), { paper: "#8d887e", ink: "#0e0d0c", angle1: 0.15, angle2: 0.15, gap: 6, solid: 0.2, l1: 0.7, l2: 0.01, edge: 0.6, lw: 2.6, jitter: 1.2, halo: "#b3ada1", haloW: 5 }),
-    pen: (I) => hatchStyle(comicBase(I, { levels: 4, keep: 0.2, lw: 0 }), { paper: "#f3f1ea", ink: "#151515", gap: 4, solid: 0.06, l1: 0.6, l2: 0.32, edge: 0.4, lw: 1.6 }),
-    etching: (I) => hatchStyle(comicBase(I, { levels: 4, keep: 0.2, lw: 0 }), { paper: "#d8cdb4", ink: "#2a2219", angle1: 0.5, angle2: -1.1, gap: 3.4, solid: 0.05, l1: 0.66, l2: 0.36, edge: 0.4, lw: 1.4, jitter: 0.3 }),
+    // 第 6 站：白纸上的蓝黑墨水钢笔画
+    pen: (I) => hatchStyle(comicBase(I, { levels: 4, keep: 0.2, lw: 0 }), { paper: "#fbfaf6", ink: "#1f2a44", gap: 4, solid: 0.06, l1: 0.6, l2: 0.32, edge: 0.4, lw: 1.6 }),
+    // 第 7 站：米黄纸、棕褐油墨的铜版画
+    etching: (I) => hatchStyle(comicBase(I, { levels: 4, keep: 0.2, lw: 0 }), { paper: "#efe3c4", ink: "#5a3a22", angle1: 0.5, angle2: -1.1, gap: 3.4, solid: 0.05, l1: 0.66, l2: 0.36, edge: 0.4, lw: 1.4, jitter: 0.3 }),
     film: (I) => {
       const O = comicBase(I, { levels: 5, keep: 0.3, lw: 1.8 });
       for (let i = 0; i < O.w * O.h; i++) {
@@ -969,13 +971,13 @@
     },
     cinematic: (I) => {
       const O = comicBase(I, { levels: 7, keep: 0.5, lw: 1.2, inner: 0.9, smooth: 1.5 });
-      const warm = rgbf("#f0b25a");
+      const warm = rgbf("#eef3f6");
       for (let y = 0; y < O.h; y++) for (let x = 0; x < O.w - 4; x++) {
         const i = y * O.w + x;
         if (O.a[i] < 0.01) continue;
-        O.r[i] *= 0.86;
-        O.g[i] *= 0.93;
-        O.b[i] = Math.min(1, O.b[i] * 1.08 + 0.02);
+        O.r[i] = O.r[i] * 0.92 + 0.03;
+        O.g[i] = O.g[i] * 0.95 + 0.03;
+        O.b[i] = Math.min(1, O.b[i] * 1.02 + 0.05);
         if (I.a[i] > 0.5) {
           const d = I.a[i + 1] < 0.5 ? 1 : I.a[i + 2] < 0.5 ? 0.75 : I.a[i + 3] < 0.5 ? 0.4 : 0;
           if (d > 0) {
@@ -1064,12 +1066,35 @@
     const idx = stand ? -1 : o.frame ?? frameIndex(o.phase || 0);
     const src = stand ? active.stand : active.frames[idx];
     if (!src) return;
-    const img = styledFrame(`${active.name}/${stand ? "stand" : idx}`, src, o.style);
+    const key = `${active.name}/${stand ? "stand" : idx}`;
+    const img = styledFrame(key, src, o.style);
     ctx.save();
     if (o.lean) ctx.rotate(o.lean);
     ctx.imageSmoothingQuality = "high";
+    if (o.rim) {
+      const halo = rimFrame(key, img, o.rim.color || "#fff6e0", o.rim.width || 5);
+      ctx.globalAlpha *= o.rim.alpha ?? 0.9;
+      ctx.drawImage(halo, -m.anchorX * s, -m.baseY * s, m.width * s, m.height * s);
+      ctx.globalAlpha /= o.rim.alpha ?? 0.9;
+    }
     ctx.drawImage(img, -m.anchorX * s, -m.baseY * s, m.width * s, m.height * s);
     ctx.restore();
+  }
+  function rimFrame(key, img, color, width) {
+    return memo(`rim|${key}|${img.width}|${color}|${width}`, () => {
+      const w = img.width, h = img.height;
+      const c = makeCanvas(w, h);
+      const ctx = c.getContext("2d");
+      const steps = 16;
+      for (let i = 0; i < steps; i++) {
+        const a = i / steps * Math.PI * 2;
+        for (const r of [width, width * 0.5]) ctx.drawImage(img, Math.cos(a) * r, Math.sin(a) * r);
+      }
+      ctx.globalCompositeOperation = "source-in";
+      ctx.fillStyle = color;
+      ctx.fillRect(0, 0, w, h);
+      return c;
+    });
   }
 
   // src/scenes/intro.js
@@ -1724,6 +1749,8 @@
   var s02 = {
     id: "s02",
     station: ST,
+    // 沙色人物贴在沙色浮雕上：加一圈深褐色描边（像浮雕的阴刻线），保证反差
+    figureRim: { color: "#3d2712", width: 4, alpha: 0.9 },
     figureAdjust(b) {
       const E = GAG + 4;
       if (b >= E - 0.3 && b < E) return { pose: "stand", sx: lerp(1, 0.12, ease.inOut((b - (E - 0.3)) / 0.3)) };
@@ -2681,6 +2708,7 @@
 
   // src/scenes/s09.js
   var ST3 = stationByN(9);
+  var CREAM2 = "#efe0bf";
   var PAPER3 = "#f4e8cc";
   var RED = "#d0533c";
   var RED_D = "#a63a2a";
@@ -3068,6 +3096,8 @@
   var s09 = {
     id: "s09",
     station: ST3,
+    // 深蓝人物站在深蓝观众席前：加一圈米白描边（海报套印的白边），保证反差
+    figureRim: { color: CREAM2, width: 6, alpha: 1 },
     figureAdjust(b) {
       if (b >= T_RISE[0] && b < T_LAND) {
         const up = b < T_RISE[1] ? ease.out((b - T_RISE[0]) / (T_RISE[1] - T_RISE[0])) : 1 - ease.in((b - T_RISE[1]) / (T_LAND - T_RISE[1]));
@@ -3679,6 +3709,7 @@
   var LEAD3 = 2;
   var TAIL = 0.4;
   var sceneOf = (sec) => SCENES[sec.id];
+  var renderFlags = { hideFigure: false };
   var camDist = (gb) => dist(Math.max(gb, WALK_START));
   function envFor(sec, gb, extra = {}) {
     const scene = sceneOf(sec);
@@ -3714,7 +3745,7 @@
   function drawFigureFor(ctx, env, { forceStand = false } = {}) {
     const { scene, b } = env;
     const fig = figurePlacement(env, { forceStand });
-    if (fig.hidden) return;
+    if (fig.hidden || renderFlags.hideFigure) return;
     ctx.save();
     applyUnits(ctx);
     ctx.translate(fig.x, fig.y);
@@ -3739,7 +3770,8 @@
       pose: forceStand ? "stand" : adj.pose || st.pose,
       phase: st.phase,
       lean: st.lean + (adj.rotate || 0),
-      style: adj.style || scene.figureStyle || (sec.station ? STATION_STYLE[sec.station] : "comic")
+      style: adj.style || scene.figureStyle || (sec.station ? STATION_STYLE[sec.station] : "comic"),
+      rim: adj.rim !== void 0 ? adj.rim : scene.figureRim || null
     };
   }
   function drawSection(ctx, sec, gb, { figure = true, stand = false } = {}) {
@@ -3761,9 +3793,9 @@
     return null;
   }
   function frameRect(x) {
-    const lin = (t) => t;
-    const E = keyframes([[-LEAD3, W + 90], [-0.5, CHAR_PX + 90, ease.inOut], [0, CHAR_PX, lin], [TAIL, 0, ease.out]], x);
-    const s = keyframes([[-LEAD3, 0.36], [-0.5, 0.74, ease.inOut], [0, 0.9, lin], [TAIL, 1, ease.out]], x);
+    const lin2 = (t) => t;
+    const E = keyframes([[-LEAD3, W + 90], [-0.5, CHAR_PX + 90, ease.inOut], [0, CHAR_PX, lin2], [TAIL, 0, ease.out]], x);
+    const s = keyframes([[-LEAD3, 0.36], [-0.5, 0.74, ease.inOut], [0, 0.9, lin2], [TAIL, 1, ease.out]], x);
     return { E, s, x: E, y: ROAD_PX * (1 - s), w: W * s, h: H * s };
   }
   function zoomAbout(ctx, z, ax, ay) {
@@ -4120,6 +4152,7 @@
         contact: (o) => canvasToB64(contactSheet(ctx, canvas, o)),
         styleCheck: (o) => canvasToB64(styleCheck(o)),
         walkSheet: (o) => canvasToB64(walkSheet(o)),
+        analyze: (beat) => analyzeFrame(ctx, canvas, beat),
         beatAt,
         timeAtBeat,
         setGrid
@@ -4128,4 +4161,85 @@
       else renderAt(ctx, 0);
     };
   });
+  var lin = (v) => v <= 0.04045 ? v / 12.92 : Math.pow((v + 0.055) / 1.055, 2.4);
+  function analyzeFrame(ctx, canvas, beat) {
+    const SW = 960, SH = 540;
+    const small = document.createElement("canvas");
+    small.width = SW;
+    small.height = SH;
+    const sc = small.getContext("2d", { willReadFrequently: true });
+    renderBeat(ctx, beat);
+    const png = canvas.toDataURL("image/png").split(",")[1];
+    sc.drawImage(canvas, 0, 0, SW, SH);
+    const A = sc.getImageData(0, 0, SW, SH).data;
+    renderFlags.hideFigure = true;
+    renderBeat(ctx, beat);
+    renderFlags.hideFigure = false;
+    sc.drawImage(canvas, 0, 0, SW, SH);
+    const Bd = sc.getImageData(0, 0, SW, SH).data;
+    const n = SW * SH;
+    const Y = (d, i) => 0.2126 * d[i] + 0.7152 * d[i + 1] + 0.0722 * d[i + 2];
+    const L = (d, i) => 0.2126 * lin(d[i] / 255) + 0.7152 * lin(d[i + 1] / 255) + 0.0722 * lin(d[i + 2] / 255);
+    let sum = 0;
+    const mask = new Uint8Array(n);
+    for (let p = 0; p < n; p++) {
+      const i = p * 4;
+      sum += Y(A, i);
+      if (Math.abs(A[i] - Bd[i]) + Math.abs(A[i + 1] - Bd[i + 1]) + Math.abs(A[i + 2] - Bd[i + 2]) > 30) mask[p] = 1;
+    }
+    const R = 12, ring = new Uint8Array(n);
+    for (let y = 0; y < SH; y++) for (let x = 0; x < SW; x++) {
+      if (!mask[y * SW + x]) continue;
+      for (let dy = -R; dy <= R; dy += 4) for (let dx = -R; dx <= R; dx += 4) {
+        const xx = x + dx, yy = y + dy;
+        if (xx >= 0 && yy >= 0 && xx < SW && yy < SH) ring[yy * SW + xx] = 1;
+      }
+    }
+    const LA = new Float32Array(n);
+    for (let p = 0; p < n; p++) LA[p] = L(A, p * 4);
+    const ratios = [];
+    for (let y = 1; y < SH - 1; y++) for (let x = 1; x < SW - 1; x++) {
+      const p = y * SW + x;
+      if (!mask[p] || mask[p - 1] && mask[p + 1] && mask[p - SW] && mask[p + SW]) continue;
+      let os = 0, on = 0;
+      for (let dy = -3; dy <= 3; dy++) for (let dx = -3; dx <= 3; dx++) {
+        const xx = x + dx, yy = y + dy;
+        if (xx < 0 || yy < 0 || xx >= SW || yy >= SH) continue;
+        const q = yy * SW + xx;
+        if (!mask[q]) {
+          os += LA[q];
+          on++;
+        }
+      }
+      if (!on) continue;
+      const ol = os / on;
+      let best = 1;
+      for (let dy = -6; dy <= 6; dy += 2) for (let dx = -6; dx <= 6; dx += 2) {
+        const xx = x + dx, yy = y + dy;
+        if (xx < 0 || yy < 0 || xx >= SW || yy >= SH) continue;
+        const q = yy * SW + xx;
+        if (!mask[q]) continue;
+        const il = LA[q];
+        best = Math.max(best, (Math.max(il, ol) + 0.05) / (Math.min(il, ol) + 0.05));
+      }
+      ratios.push(best);
+    }
+    ratios.sort((u, v) => u - v);
+    const edge = ratios.length ? ratios[Math.floor(ratios.length / 2)] : null;
+    const weak = ratios.length ? ratios.filter((r) => r < 1.5).length / ratios.length : null;
+    let fs = 0, fn = 0, bs = 0, bn = 0;
+    for (let p = 0; p < n; p++) {
+      if (mask[p]) {
+        fs += L(A, p * 4);
+        fn++;
+      }
+      if (ring[p]) {
+        bs += L(Bd, p * 4);
+        bn++;
+      }
+    }
+    const fl = fn ? fs / fn : 0, bl = bn ? bs / bn : 0;
+    const contrast = (Math.max(fl, bl) + 0.05) / (Math.min(fl, bl) + 0.05);
+    return { mean: sum / n / 255, figurePx: fn, figureL: fl, backL: bl, contrast, edge, weak, png };
+  }
 })();

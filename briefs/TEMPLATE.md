@@ -31,5 +31,8 @@
 ## 标题卡、播放器、画框
 `cardStyle.bgDraw`、`playerStyle`、`drawFrame` 的样子。
 
+## 亮度与反差（全局规则）
+写出目标平均亮度（≥ 45%，多数站应更高）；人物轮廓反差 ≥ 3。背景偏暗处写明用 `figureRim` 加轮廓光或浅色描边。自查时跑 `node tools/brightness.mjs --stations sNN`。
+
 ## 约束
 不画封面及近似版；不画 MV 镜头；画面只出现专辑名和歌名；播放器 / 品牌全部虚构；场景里不写死秒数（`npm test` 会查）。

@@ -252,6 +252,8 @@ const T_LET = GAG + 5.2;                 // 松手
 export const s09 = {
   id: 's09',
   station: ST,
+  // 深蓝人物站在深蓝观众席前：加一圈米白描边（海报套印的白边），保证反差
+  figureRim: { color: CREAM, width: 6, alpha: 1 },
   figureAdjust(b) {
     if (b >= T_RISE[0] && b < T_LAND) {
       const up = b < T_RISE[1] ? ease.out((b - T_RISE[0]) / (T_RISE[1] - T_RISE[0])) : 1 - ease.in((b - T_RISE[1]) / (T_LAND - T_RISE[1]));

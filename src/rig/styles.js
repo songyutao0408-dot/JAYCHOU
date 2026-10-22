@@ -237,7 +237,8 @@ function sketchStyle(I, color) {
     O.b[i] = base[2] + (lead[2] - base[2]) * ink;
     O.a[i] = I.a[i] > 0.5 ? (color ? 1 : 0.94) : I.a[i];
   }
-  outline(O, I.a, 1.3, lead);
+  // 外轮廓用更深、更粗的铅笔线，保证在浅纸上认得出（全局反差规则）
+  outline(O, I.a, color ? 1.6 : 2.6, rgbf('#35312c'));
   return O;
 }
 
@@ -342,8 +343,10 @@ const STYLES = {
     return O;
   },
   woodcut: (I) => hatchStyle(comicBase(I, { levels: 3, keep: 0, lw: 0 }), { paper: '#8d887e', ink: '#0e0d0c', angle1: 0.15, angle2: 0.15, gap: 6, solid: 0.2, l1: 0.7, l2: 0.01, edge: 0.6, lw: 2.6, jitter: 1.2, halo: '#b3ada1', haloW: 5 }),
-  pen: (I) => hatchStyle(comicBase(I, { levels: 4, keep: 0.2, lw: 0 }), { paper: '#f3f1ea', ink: '#151515', gap: 4, solid: 0.06, l1: 0.6, l2: 0.32, edge: 0.4, lw: 1.6 }),
-  etching: (I) => hatchStyle(comicBase(I, { levels: 4, keep: 0.2, lw: 0 }), { paper: '#d8cdb4', ink: '#2a2219', angle1: 0.5, angle2: -1.1, gap: 3.4, solid: 0.05, l1: 0.66, l2: 0.36, edge: 0.4, lw: 1.4, jitter: 0.3 }),
+  // 第 6 站：白纸上的蓝黑墨水钢笔画
+  pen: (I) => hatchStyle(comicBase(I, { levels: 4, keep: 0.2, lw: 0 }), { paper: '#fbfaf6', ink: '#1f2a44', gap: 4, solid: 0.06, l1: 0.6, l2: 0.32, edge: 0.4, lw: 1.6 }),
+  // 第 7 站：米黄纸、棕褐油墨的铜版画
+  etching: (I) => hatchStyle(comicBase(I, { levels: 4, keep: 0.2, lw: 0 }), { paper: '#efe3c4', ink: '#5a3a22', angle1: 0.5, angle2: -1.1, gap: 3.4, solid: 0.05, l1: 0.66, l2: 0.36, edge: 0.4, lw: 1.4, jitter: 0.3 }),
   film: (I) => {
     // 老胶片：高反差灰阶 + 微微泛黄
     const O = comicBase(I, { levels: 5, keep: 0.3, lw: 1.8 });
@@ -429,15 +432,15 @@ const STYLES = {
     return O;
   },
   cinematic: (I) => {
-    // 电影感厚涂：保留更多原貌，轻微色块化；冷色调 + 右侧（路灯一侧）暖色轮廓光
+    // 电影感厚涂（第 16 站，白天阵雨）：保留更多原貌，轻微色块化；柔和的浅灰天光，轻微偏冷，右侧一道浅色天光轮廓
     const O = comicBase(I, { levels: 7, keep: 0.5, lw: 1.2, inner: 0.9, smooth: 1.5 });
-    const warm = rgbf('#f0b25a');
+    const warm = rgbf('#eef3f6');
     for (let y = 0; y < O.h; y++) for (let x = 0; x < O.w - 4; x++) {
       const i = y * O.w + x;
       if (O.a[i] < 0.01) continue;
       // 冷调
-      O.r[i] *= 0.86; O.g[i] *= 0.93; O.b[i] = Math.min(1, O.b[i] * 1.08 + 0.02);
-      // 轮廓光：只在人物右侧（路灯一侧）紧贴边缘的几个像素
+      O.r[i] = O.r[i] * 0.92 + 0.03; O.g[i] = O.g[i] * 0.95 + 0.03; O.b[i] = Math.min(1, O.b[i] * 1.02 + 0.05);
+      // 天光轮廓：只在人物右侧紧贴边缘的几个像素
       if (I.a[i] > 0.5) {
         const d = I.a[i + 1] < 0.5 ? 1 : I.a[i + 2] < 0.5 ? 0.75 : I.a[i + 3] < 0.5 ? 0.4 : 0;
         if (d > 0) { const k = d * 0.75; O.r[i] += (warm[0] - O.r[i]) * k; O.g[i] += (warm[1] - O.g[i]) * k; O.b[i] += (warm[2] - O.b[i]) * k; }
