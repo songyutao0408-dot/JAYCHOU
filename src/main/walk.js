@@ -1,12 +1,12 @@
 // 全片的行走距离（镜头平移）。人物在屏幕上站位固定，世界向左平移。
 //   - 平移速度由走路视频里支撑脚后退的速度决定（walker.walkSpeedOf），脚不打滑
-//   - 每站第 5～6 拍人物定格成站立姿势，镜头同时停住
+//   - 每站第 9–12 拍（梗）人物定格成站立姿势，镜头同时停住
 //   - 过画框前半拍略微加速（人物同时略微前倾），进入新站后恢复
 // 速度是分段函数，这里预先按 1/64 拍积分成表，dist(gb) 查表插值，仍是拍位的纯函数。
-import { sections, TOTAL_BEATS, SB } from '../beat/time.js';
+import { sections, TOTAL_BEATS, STATION } from '../beat/time.js';
 
 export const DOWNBEATS = sections.filter((s) => s.station).map((s) => s.start);
-export const FREEZE = [SB(5), SB(7)]; // 每站第 5～6 拍
+export const FREEZE = STATION.gag; // 每站第 9–12 拍（梗）
 
 const BOOST_FROM = -0.55, BOOST_LEN = 0.8, BOOST_AMP = 0.45;
 const RAMP = 0.2; // 定格前后镜头减速 / 加速用的拍数

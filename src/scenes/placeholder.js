@@ -1,12 +1,12 @@
 // 第一阶段的占位场景：按调色板画天空、三层视差、路面，标出站名和画风；
-// 第 5–6 拍（梗的位置）亮起一个提示。正式场景做好后逐个替换。
+// 第 9–12 拍（梗的位置）亮起一个提示。正式场景做好后逐个替换。
 import { X_MIN, X_MAX, ROAD_Y, CHAR_X } from '../main/layout.js';
 import { mix, rgba, readableOn } from '../kit/color.js';
 import { rng } from '../kit/rng.js';
 import { font, SERIF, SANS } from '../kit/text.js';
 import { roundRect, circle, poly } from '../kit/shapes.js';
 import { pulse, smoothstep } from '../kit/math.js';
-import { SB } from '../beat/time.js';
+import { GAG } from '../beat/time.js';
 
 export function placeholderScene(st) {
   const [bg, mid, ink, acc] = st.palette;
@@ -74,10 +74,10 @@ export function placeholderScene(st) {
       });
     },
     drawFront(ctx, b, env) {
-      // 梗的位置：第 5–6 拍
-      const k = smoothstep(SB(5) - 0.15, SB(5) + 0.1, b) * (1 - smoothstep(SB(7) - 0.2, SB(7), b));
+      // 梗的位置：第 9–12 拍
+      const k = smoothstep(GAG - 0.15, GAG + 0.1, b) * (1 - smoothstep(GAG + 4 - 0.2, GAG + 4, b));
       if (k <= 0.01) return;
-      const pul = 1 + 0.08 * pulse(SB(5), SB(6), b) + 0.08 * pulse(SB(6), SB(7), b);
+      const pul = 1 + [0, 1, 2, 3].reduce((a, k) => a + 0.08 * pulse(GAG + k, GAG + k + 1, b), 0);
       ctx.save();
       ctx.globalAlpha = k;
       ctx.translate(CHAR_X, ROAD_Y - 190);
@@ -95,7 +95,7 @@ export function placeholderScene(st) {
       ctx.save();
       ctx.globalAlpha = k;
       font(ctx, 38, { family: SANS, weight: 700 });
-      const lines = wrap(ctx, `第 2 小节的梗：${st.gag}`, 760);
+      const lines = wrap(ctx, `第 3 小节的梗：${st.gag}`, 760);
       const x = 520, y = 470;
       roundRect(ctx, x - 24, y - 54, 808, lines.length * 52 + 40, 12);
       ctx.fillStyle = rgba(mix(bg, '#ffffff', 0.5), 0.92);

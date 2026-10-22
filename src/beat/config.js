@@ -10,9 +10,12 @@ export const FIRST_DOWNBEAT = 0;
 
 export const BEATS_PER_BAR = 4;
 
+// 每站 4 小节（16 拍，127 BPM 下约 7.56 秒）。
+export const STATION_BARS = 4;
+
 // 段落表（按顺序首尾相接）。
 export const SECTIONS = [
   { id: 'intro', bars: 3 },
-  ...Array.from({ length: 16 }, (_, i) => ({ id: `s${String(i + 1).padStart(2, '0')}`, bars: 2, station: i + 1 })),
+  ...Array.from({ length: 16 }, (_, i) => ({ id: `s${String(i + 1).padStart(2, '0')}`, bars: STATION_BARS, station: i + 1 })),
   { id: 'outro', bars: 6 },
 ];

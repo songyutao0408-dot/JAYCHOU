@@ -1,8 +1,8 @@
 // 第 2 站 · 范特西（Fantasy, 2001）·「爱在西元前」· 古巴比伦城墙 · 两河流域浮雕
 // 构图：暮色天空 + 远处阶梯形塔庙 → 青金石釉砖城墙（阶梯雉堞、花饰带、金色狮子带）
 //       → 砂岩浮雕带：一列侧身行进的人，每拍迈一步，和他同步 → 游行大道的石板路
-// 梗（第 5～6 拍）：他定格成正面站着，浮雕里人人侧身照走；离他最近的浮雕人回头看他一眼；
-//       第 7 拍前他被「压扁」成侧身，接着继续走。
+// 梗（第 9–12 拍）：他定格成正面站着，浮雕里人人侧身照走；离他最近的浮雕人回头看他一眼；
+//       第 13 拍前他被「压扁」成侧身，接着继续走。
 // 原创构图，只借用两河流域釉砖与浮雕的一般风格，不对应任何具体文物或 MV 画面。
 import { X_MIN, X_MAX, ROAD_Y, CHAR_X } from '../main/layout.js';
 import { strip, drawStrip, stripRange } from '../kit/strip.js';
@@ -11,7 +11,7 @@ import { noise2 } from '../kit/noise.js';
 import { mix, rgba } from '../kit/color.js';
 import { smoothPath, poly, circle, ellipse, roundRect } from '../kit/shapes.js';
 import { clamp, ease, lerp, smoothstep, keyframes } from '../kit/math.js';
-import { SB } from '../beat/time.js';
+import { GAG } from '../beat/time.js';
 import { stationByN } from '../data/stations.js';
 import { drawDefaultFrame } from '../main/frame.js';
 
@@ -267,7 +267,7 @@ function roadLayer() {
 // ---------- 场景 ----------
 const glanceIndex = (env) => {
   // 定格时离他最近、在他右前方的那个浮雕人（画面 x ≈ 560 附近）
-  const cam = env.camAt(SB(5));
+  const cam = env.camAt(GAG);
   const want = 560 + cam * P_WALL;
   const [x0] = stripRange(P_WALL);
   const i = Math.round((want - (x0 + 60)) / FIG_GAP);
@@ -279,8 +279,9 @@ export const s02 = {
   station: ST,
   figureAdjust(b) {
     // 第 7 拍前 0.3 拍：正面站立被「压扁」成侧身，第 7 拍弹回侧身走路
-    if (b >= SB(6.7) && b < SB(7)) return { pose: 'stand', sx: lerp(1, 0.12, ease.inOut((b - SB(6.7)) / 0.3)) };
-    if (b >= SB(7) && b < SB(7.15)) return { sx: lerp(1.12, 1, (b - SB(7)) / 0.15) };
+    const E = GAG + 4;
+    if (b >= E - 0.3 && b < E) return { pose: 'stand', sx: lerp(1, 0.12, ease.inOut((b - (E - 0.3)) / 0.3)) };
+    if (b >= E && b < E + 0.15) return { sx: lerp(1.12, 1, (b - E) / 0.15) };
     return null;
   },
   drawBack(ctx, b, env) {
@@ -314,7 +315,7 @@ export const s02 = {
     const pose = Math.floor(env.gb + 1e-6) % 2;
     drawStrip(ctx, reliefLayer(pose), cam);
     // 梗：离他最近的浮雕人回头看他一眼（第 5 拍后半到第 6 拍后半）
-    const k = smoothstep(SB(5.6), SB(5.8), b) * (1 - smoothstep(SB(6.6), SB(6.8), b));
+    const k = smoothstep(GAG + 0.8, GAG + 1.0, b) * (1 - smoothstep(GAG + 3.4, GAG + 3.6, b));
     if (k > 0.5) {
       const { i, x } = glanceIndex(env);
       const sxp = x - cam * P_WALL;
@@ -335,7 +336,7 @@ export const s02 = {
   },
   drawFront(ctx, b, env) {
     // 前景：陶罐与棕榈叶，放在定格时画面两侧，不挡人物
-    const cam = env.cam, c4 = env.camAt(SB(5));
+    const cam = env.cam, c4 = env.camAt(GAG);
     const items = [[-260, 'jar'], [1240, 'frond'], [2100, 'jar']];
     for (const [sx0, kind] of items) {
       const x = sx0 + c4 * P_FG - cam * P_FG;

@@ -2,7 +2,7 @@
 // 有限套色（米白、红、深蓝、青绿、芥末黄），色块与深蓝轮廓线故意错开一点（套色不准）+ 蜡笔颗粒。海报上不放任何字。
 // 构图：大棚里红白竖条纹篷布、荷叶边帷幔、三角彩旗、扫动的探照灯 → 观众席 → 带星星的马戏场围栏、鼓凳
 //       → 木屑地面；右侧是原创的高个丑角「乔克叔叔」，手里攥着一把气球。
-// 梗：第 4 拍他递出一只气球，第 5 拍强拍他接住；第 6 拍后半被气球带着整个人飘起来，第 7 拍落回；第 8 拍松手，气球飘走。
+// 梗：第 8 拍他递出一只气球，第 9 拍强拍他接住；第 11 拍后半被气球带着整个人飘起来，第 13 拍强拍落回；第 14 拍松手，气球飘走。
 import { X_MIN, X_MAX, ROAD_Y, CHAR_X } from '../main/layout.js';
 import { strip, drawStrip } from '../kit/strip.js';
 import { grainPattern, stipple } from '../kit/etch.js';
@@ -11,7 +11,7 @@ import { noise2 } from '../kit/noise.js';
 import { rgba, mix } from '../kit/color.js';
 import { smoothPath, circle, ellipse, poly, roundRect } from '../kit/shapes.js';
 import { clamp, ease, lerp, smoothstep } from '../kit/math.js';
-import { SB } from '../beat/time.js';
+import { GAG } from '../beat/time.js';
 import { stationByN } from '../data/stations.js';
 import { ANCHORS } from '../rig/walker.js';
 
@@ -243,11 +243,11 @@ function clown(ctx, x, b, { reach = 0, laugh = 0, hold = 3 }) {
 }
 
 // ---------- 时间点 ----------
-const T_REACH = [SB(3.5), SB(5)];   // 递出气球
-const T_GIVE = SB(5);               // 强拍接住
-const T_RISE = [SB(6.5), SB(6.8)];  // 飘起
-const T_LAND = SB(7);               // 落回
-const T_LET = SB(8.2);              // 松手
+const T_REACH = [GAG - 1.5, GAG];        // 第 7.5–9 拍：递出气球
+const T_GIVE = GAG;                      // 第 9 拍（第 3 小节强拍）接住
+const T_RISE = [GAG + 2.5, GAG + 3.8];   // 第 11.5 拍起被带着飘起
+const T_LAND = GAG + 4;                  // 第 13 拍（第 4 小节强拍）落回
+const T_LET = GAG + 5.2;                 // 松手
 
 export const s09 = {
   id: 's09',
@@ -285,8 +285,8 @@ export const s09 = {
     const c5 = env.camAt(T_GIVE);
     const cx = 690 + c5 - cam;
     if (cx > X_MIN - 200 && cx < X_MAX + 200) {
-      const reach = smoothstep(T_REACH[0], T_REACH[1], b) * (1 - smoothstep(SB(6), SB(6.5), b));
-      const laugh = smoothstep(T_RISE[0], T_RISE[1], b) * (1 - smoothstep(SB(7.5), SB(8), b)) + Math.max(0, Math.sin(b * Math.PI * 2)) * 0.15;
+      const reach = smoothstep(T_REACH[0], T_REACH[1], b) * (1 - smoothstep(GAG + 1, GAG + 1.5, b));
+      const laugh = smoothstep(T_RISE[0], T_RISE[1], b) * (1 - smoothstep(T_LAND + 0.5, T_LAND + 1, b)) + Math.max(0, Math.sin(b * Math.PI * 2)) * 0.15;
       ctx.fillStyle = rgba(NAVY, 0.25); ellipse(ctx, cx + 4, ROAD_Y + 4, 120, 16); ctx.fill();
       // 手里那一把气球（递出去的那只单独画）
       const holdX = cx + 54 + 150 * Math.sin(0.35), holdY = ROAD_Y - 380 - 150 * Math.cos(0.35);

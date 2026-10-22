@@ -4,7 +4,7 @@
 import { baked } from './canvas.js';
 import { K, X_MIN, X_MAX } from '../main/layout.js';
 
-const CAM_MIN = -520, CAM_MAX = 1650; // 一站里镜头平移的大致范围（单位）
+const CAM_MIN = -520, CAM_MAX = 2700; // 一站里镜头平移的大致范围（单位；每站 16 拍，走 12 拍左右）
 
 /**
  * strip('s02-wall', 0.85, (ctx, x0, x1) => { ...用层内单位坐标作画... })

@@ -1,7 +1,7 @@
 // 拍 ⇄ 秒 的换算，以及「现在落在哪个段落的第几拍」。
 // 约定：beat 位置一律从 0 开始计数的浮点数（0 = 第 1 小节第 1 拍）。
 // 对外用 1 起的「小节、拍」写法：B(2, 1) 表示第 2 小节第 1 拍。
-import { BPM, FIRST_DOWNBEAT, BEATS_PER_BAR, SECTIONS } from './config.js';
+import { BPM, FIRST_DOWNBEAT, BEATS_PER_BAR, SECTIONS, STATION_BARS } from './config.js';
 
 // 运行时网格：默认取 config.js；预览页对拍时可以临时覆盖（不写回文件）。
 export const grid = { bpm: BPM, firstDownbeat: FIRST_DOWNBEAT };
@@ -16,8 +16,21 @@ export const barSec = () => beatSec() * BEATS_PER_BAR;
 /** 段内位置：第 bar 小节第 beat 拍（都从 1 起，beat 可带小数）→ 段内拍位（0 起）。 */
 export const B = (bar, beat = 1) => (bar - 1) * BEATS_PER_BAR + (beat - 1);
 
-/** 每站 8 拍的写法：第 n 拍（1–8，可带小数）→ 段内拍位。 */
+/** 每站第 n 拍（1 起，可带小数）→ 段内拍位。 */
 export const SB = (n) => n - 1;
+
+/**
+ * 每站的结构（段内拍位，左闭右开）。每站 16 拍：
+ *   第 1–4 拍   过画框进场（第 1 拍强拍），标题卡、播放器出现
+ *   第 5–8 拍   往前走，镜头带过场景细节
+ *   第 9–12 拍  这一站的梗（人物定格成站立帧，镜头停住）
+ *   第 13–16 拍 走向下一道画框（画框在最后 2 拍出现）
+ */
+export const STATION = (() => {
+  const N = STATION_BARS * BEATS_PER_BAR;
+  return { beats: N, enter: [0, 4], walk: [4, N - 8], gag: [N - 8, N - 4], leave: [N - 4, N] };
+})();
+export const GAG = STATION.gag[0]; // 梗开始的拍位（第 9 拍，第 3 小节强拍）
 
 // 段落起止（单位：拍，全局）
 let acc = 0;

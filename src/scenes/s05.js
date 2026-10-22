@@ -3,8 +3,8 @@
 // 构图：远处断续的城市轮廓 → 炸断的墙（砖缝、窗洞、钢筋）、倒下的路牌 → 碎石路（裂缝）、
 //       废墟里的旧玩具熊、地上一顶旧钢盔 → 前景碎砖堆。
 // 贯穿细节：他每迈一步，脚下的裂缝里冒出一朵小彩花（全站唯一一直有颜色的东西）。
-// 梗：第 5 拍强拍，钢盔里飞出一只白鸽；鸽子飞过的地方，颜色像水彩一样从画面中间晕开——
-//     墙上长出绿藤、天空变淡蓝，两拍内整幅画从灰色速写变成彩色。第 7～8 拍他走向下一道画框，身后保持彩色。
+// 梗：第 9 拍强拍（第 3 小节），钢盔里飞出一只白鸽；鸽子飞过的地方，颜色像水彩一样从画面中间晕开——
+//     墙上长出绿藤、天空变淡蓝，两拍内整幅画从灰色速写变成彩色；第 11–12 拍他站在彩色里，第 13–16 拍走向下一道画框，身后保持彩色。
 // 铅笔线与水彩用 p5.brush 画（烘焙成视差长条），每帧的小物件用 kit/sketch.js 的手绘线。
 import { X_MIN, X_MAX, ROAD_Y, CHAR_X } from '../main/layout.js';
 import { drawStrip } from '../kit/strip.js';
@@ -15,7 +15,7 @@ import { noise2 } from '../kit/noise.js';
 import { rgba, mix } from '../kit/color.js';
 import { circle, ellipse, roundRect, poly } from '../kit/shapes.js';
 import { clamp, ease, lerp, smoothstep } from '../kit/math.js';
-import { SB } from '../beat/time.js';
+import { GAG } from '../beat/time.js';
 import { stationByN } from '../data/stations.js';
 import { drawWalker } from '../rig/walker.js';
 import { K } from '../main/layout.js';
@@ -24,7 +24,7 @@ const ST = stationByN(5);
 const PAPER = '#f3ecdc', PAPER_D = '#ebe2cf', LEAD = '#8a847a', LEAD_D = '#5f5a52', LEAD_L = '#b4ada1';
 const P_FAR = 0.3, P_MID = 0.7, P_FG = 1.25;
 const FAR_BASE = 600;
-const BLOOM = [SB(5), SB(7)]; // 第 5～6 拍：颜色晕开
+const BLOOM = [GAG, GAG + 2]; // 第 9～10 拍：颜色晕开（两拍）
 const HELMET_SX = 560;        // 定格时钢盔在画面上的位置（单位）
 const BEAR_SX = 1010;
 const SIGN_SX = 860;
@@ -137,7 +137,7 @@ function signPts(s) {
   return { top, foot, plate: ellipsePts(top[0] + 26, top[1] - 18, 44, 44, 20) };
 }
 function midLines(env) {
-  const g = midGeo(env.camAt(SB(5)));
+  const g = midGeo(env.camAt(GAG));
   return sketchStrip('s05-mid', P_MID, {
     y0: 300, y1: 820,
     fills: (ctx, x0, x1) => {
@@ -197,7 +197,7 @@ function midLines(env) {
   });
 }
 function midWash(env) {
-  const g = midGeo(env.camAt(SB(5)));
+  const g = midGeo(env.camAt(GAG));
   return washStrip('s05-midw', P_MID, {
     y0: 300, y1: 820,
     wash: (B, x0, x1) => {
@@ -244,7 +244,7 @@ function bearPts(x) {
   };
 }
 function groundLines(env) {
-  const g = groundGeo(env.camAt(SB(5)));
+  const g = groundGeo(env.camAt(GAG));
   return sketchStrip('s05-ground', 1, {
     y0: ROAD_Y - 150, y1: 1000,
     fills: (ctx, x0, x1) => {
@@ -277,7 +277,7 @@ function groundLines(env) {
   });
 }
 function groundWash(env) {
-  const g = groundGeo(env.camAt(SB(5)));
+  const g = groundGeo(env.camAt(GAG));
   return washStrip('s05-groundw', 1, {
     y0: ROAD_Y - 150, y1: 1000,
     wash: (B, x0, x1) => {
@@ -295,7 +295,7 @@ function groundWash(env) {
 
 // ---------- 前景碎砖堆 ----------
 function fgLines(env) {
-  const c5 = env.camAt(SB(5));
+  const c5 = env.camAt(GAG);
   const piles = [-260 + c5 * P_FG, 1330 + c5 * P_FG, 2600 + c5 * P_FG];
   const R = R0('fg');
   const chunks = [];
@@ -406,9 +406,9 @@ function flower(ctx, x, y, s, col, seed) {
   ctx.restore();
 }
 function drawFlowers(ctx, b, env) {
-  // 每个拍点（走路时一拍一步）在前脚落地处冒一朵花；定格的第 5～6 拍不冒
-  for (let k = 0; k <= 7; k++) {
-    if (k === 4 || k === 5) continue;
+  // 每个拍点（走路时一拍一步）在前脚落地处冒一朵花；定格的第 9–12 拍不冒
+  for (let k = 0; k < 16; k++) {
+    if (k >= GAG && k < GAG + 4) continue;
     if (b < k) break;
     const wx = env.camAt(k) + CHAR_X + 92 + (hash2(k, 1, 5) - 0.5) * 14;
     const sx = wx - env.cam;
@@ -497,7 +497,7 @@ function sketchCassette(ctx, kind, cx, cy, s, spin) {
 export const s05 = {
   id: 's05',
   station: ST,
-  freezeBeat: SB(7.1), // Outro 展墙里定格成已经上色的样子
+  freezeBeat: GAG + 3, // Outro 展墙里定格成已经上色的样子
   drawFigure(ctx, fig, b, env) {
     // 人物：铅笔素描；颜色晕到他身上时，淡入上了水彩的版本
     drawWalker(ctx, { ...fig, style: 'sketch' });

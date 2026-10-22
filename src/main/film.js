@@ -18,7 +18,7 @@ import { keyframes, ease } from '../kit/math.js';
 
 export const CHAR_PX = OX + CHAR_X * K;
 export const ROAD_PX = ROAD_Y * K;
-const LEAD = 2;      // 画框提前 2 拍（第 7–8 拍）出现
+const LEAD = 2;      // 画框提前 2 拍（每站最后 2 拍）出现
 export const TAIL = 0.4; // 强拍后 0.4 拍画框完全扫出画面
 
 const sceneOf = (sec) => SCENES[sec.id];

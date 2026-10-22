@@ -16,7 +16,7 @@ const info = await page.evaluate(() => window.__film.info());
 
 const KEY = {
   intro: [1, 3, 5, 7, 9, 10, 11, 12],
-  station: [1, 1.25, 2, 4, 5, 5.5, 7, 7.75],
+  station: [1, 1.25, 3, 5, 7, 9, 10.5, 12, 13, 15, 15.75],
   outro: [1, 3, 5, 7, 9, 13, 17.2, 21, 24],
 };
 let specs = args._;

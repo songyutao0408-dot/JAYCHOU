@@ -4,8 +4,9 @@ import { font, SERIF, SANS } from '../kit/text.js';
 import { roundRect, circle, ellipse } from '../kit/shapes.js';
 import { clamp, ease, smoothstep, TAU } from '../kit/math.js';
 import { rgba, mix, readableOn } from '../kit/color.js';
+import { STATION } from '../beat/time.js';
 
-export const playerIn = (b) => ease.outBack(clamp((b - 0.5) / 1.1)) * (1 - smoothstep(7.25, 7.85, b));
+export const playerIn = (b, N = STATION.beats) => ease.outBack(clamp((b - 0.5) / 1.1)) * (1 - smoothstep(N - 0.75, N - 0.15, b));
 
 /** 每拍转 1/4 圈 */
 export const spinAt = (gb) => gb * (TAU / 4);

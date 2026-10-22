@@ -18,9 +18,10 @@
   var BPM = 127;
   var FIRST_DOWNBEAT = 0;
   var BEATS_PER_BAR = 4;
+  var STATION_BARS = 4;
   var SECTIONS = [
     { id: "intro", bars: 3 },
-    ...Array.from({ length: 16 }, (_, i) => ({ id: `s${String(i + 1).padStart(2, "0")}`, bars: 2, station: i + 1 })),
+    ...Array.from({ length: 16 }, (_, i) => ({ id: `s${String(i + 1).padStart(2, "0")}`, bars: STATION_BARS, station: i + 1 })),
     { id: "outro", bars: 6 }
   ];
 
@@ -32,7 +33,11 @@
   }
   var beatSec = () => 60 / grid.bpm;
   var B = (bar, beat = 1) => (bar - 1) * BEATS_PER_BAR + (beat - 1);
-  var SB = (n) => n - 1;
+  var STATION = (() => {
+    const N = STATION_BARS * BEATS_PER_BAR;
+    return { beats: N, enter: [0, 4], walk: [4, N - 8], gag: [N - 8, N - 4], leave: [N - 4, N] };
+  })();
+  var GAG = STATION.gag[0];
   var acc = 0;
   var sections = SECTIONS.map((s) => {
     const start = acc;
@@ -315,9 +320,9 @@
         });
       },
       drawFront(ctx, b, env) {
-        const k = smoothstep(SB(5) - 0.15, SB(5) + 0.1, b) * (1 - smoothstep(SB(7) - 0.2, SB(7), b));
+        const k = smoothstep(GAG - 0.15, GAG + 0.1, b) * (1 - smoothstep(GAG + 4 - 0.2, GAG + 4, b));
         if (k <= 0.01) return;
-        const pul = 1 + 0.08 * pulse(SB(5), SB(6), b) + 0.08 * pulse(SB(6), SB(7), b);
+        const pul = 1 + [0, 1, 2, 3].reduce((a, k2) => a + 0.08 * pulse(GAG + k2, GAG + k2 + 1, b), 0);
         ctx.save();
         ctx.globalAlpha = k;
         ctx.translate(CHAR_X, ROAD_Y - 190);
@@ -335,7 +340,7 @@
         ctx.save();
         ctx.globalAlpha = k;
         font(ctx, 38, { family: SANS, weight: 700 });
-        const lines = wrap(ctx, `\u7B2C 2 \u5C0F\u8282\u7684\u6897\uFF1A${st.gag}`, 760);
+        const lines = wrap(ctx, `\u7B2C 3 \u5C0F\u8282\u7684\u6897\uFF1A${st.gag}`, 760);
         const x = 520, y = 470;
         roundRect(ctx, x - 24, y - 54, 808, lines.length * 52 + 40, 12);
         ctx.fillStyle = rgba(mix(bg, "#ffffff", 0.5), 0.92);
@@ -1268,7 +1273,7 @@
 
   // src/kit/strip.js
   var CAM_MIN = -520;
-  var CAM_MAX = 1650;
+  var CAM_MAX = 2700;
   function strip(key, p, draw, { y0 = 0, y1 = 1e3, res = 1 } = {}) {
     const x0 = Math.floor(X_MIN + CAM_MIN * p) - 20, x1 = Math.ceil(X_MAX + CAM_MAX * p) + 20;
     const s = K * res;
@@ -1710,7 +1715,7 @@
     }, { y0: ROAD_Y - 2, y1: 1e3 });
   }
   var glanceIndex = (env) => {
-    const cam = env.camAt(SB(5));
+    const cam = env.camAt(GAG);
     const want = 560 + cam * P_WALL;
     const [x0] = stripRange(P_WALL);
     const i = Math.round((want - (x0 + 60)) / FIG_GAP);
@@ -1720,8 +1725,9 @@
     id: "s02",
     station: ST,
     figureAdjust(b) {
-      if (b >= SB(6.7) && b < SB(7)) return { pose: "stand", sx: lerp(1, 0.12, ease.inOut((b - SB(6.7)) / 0.3)) };
-      if (b >= SB(7) && b < SB(7.15)) return { sx: lerp(1.12, 1, (b - SB(7)) / 0.15) };
+      const E = GAG + 4;
+      if (b >= E - 0.3 && b < E) return { pose: "stand", sx: lerp(1, 0.12, ease.inOut((b - (E - 0.3)) / 0.3)) };
+      if (b >= E && b < E + 0.15) return { sx: lerp(1.12, 1, (b - E) / 0.15) };
       return null;
     },
     drawBack(ctx, b, env) {
@@ -1763,7 +1769,7 @@
       drawStrip(ctx, wallLayer(), cam);
       const pose = Math.floor(env.gb + 1e-6) % 2;
       drawStrip(ctx, reliefLayer(pose), cam);
-      const k = smoothstep(SB(5.6), SB(5.8), b) * (1 - smoothstep(SB(6.6), SB(6.8), b));
+      const k = smoothstep(GAG + 0.8, GAG + 1, b) * (1 - smoothstep(GAG + 3.4, GAG + 3.6, b));
       if (k > 0.5) {
         const { i, x } = glanceIndex(env);
         const sxp = x - cam * P_WALL;
@@ -1786,7 +1792,7 @@
       }
     },
     drawFront(ctx, b, env) {
-      const cam = env.cam, c4 = env.camAt(SB(5));
+      const cam = env.cam, c4 = env.camAt(GAG);
       const items = [[-260, "jar"], [1240, "frond"], [2100, "jar"]];
       for (const [sx0, kind] of items) {
         const x = sx0 + c4 * P_FG - cam * P_FG;
@@ -1965,7 +1971,7 @@
   var P_MID = 0.7;
   var P_FG2 = 1.25;
   var FAR_BASE = 600;
-  var BLOOM = [SB(5), SB(7)];
+  var BLOOM = [GAG, GAG + 2];
   var HELMET_SX = 560;
   var BEAR_SX = 1010;
   var SIGN_SX = 860;
@@ -2098,7 +2104,7 @@
     return { top, foot, plate: ellipsePts(top[0] + 26, top[1] - 18, 44, 44, 20) };
   }
   function midLines(env) {
-    const g = midGeo(env.camAt(SB(5)));
+    const g = midGeo(env.camAt(GAG));
     return sketchStrip("s05-mid", P_MID, {
       y0: 300,
       y1: 820,
@@ -2175,7 +2181,7 @@
     });
   }
   function midWash(env) {
-    const g = midGeo(env.camAt(SB(5)));
+    const g = midGeo(env.camAt(GAG));
     return washStrip("s05-midw", P_MID, {
       y0: 300,
       y1: 820,
@@ -2230,7 +2236,7 @@
     };
   }
   function groundLines(env) {
-    const g = groundGeo(env.camAt(SB(5)));
+    const g = groundGeo(env.camAt(GAG));
     return sketchStrip("s05-ground", 1, {
       y0: ROAD_Y - 150,
       y1: 1e3,
@@ -2271,7 +2277,7 @@
     });
   }
   function groundWash(env) {
-    const g = groundGeo(env.camAt(SB(5)));
+    const g = groundGeo(env.camAt(GAG));
     return washStrip("s05-groundw", 1, {
       y0: ROAD_Y - 150,
       y1: 1e3,
@@ -2291,7 +2297,7 @@
     });
   }
   function fgLines(env) {
-    const c5 = env.camAt(SB(5));
+    const c5 = env.camAt(GAG);
     const piles = [-260 + c5 * P_FG2, 1330 + c5 * P_FG2, 2600 + c5 * P_FG2];
     const R = R0("fg");
     const chunks = [];
@@ -2422,8 +2428,8 @@
     ctx.restore();
   }
   function drawFlowers(ctx, b, env) {
-    for (let k = 0; k <= 7; k++) {
-      if (k === 4 || k === 5) continue;
+    for (let k = 0; k < 16; k++) {
+      if (k >= GAG && k < GAG + 4) continue;
       if (b < k) break;
       const wx = env.camAt(k) + CHAR_X + 92 + (hash2(k, 1, 5) - 0.5) * 14;
       const sx = wx - env.cam;
@@ -2541,7 +2547,7 @@
   var s05 = {
     id: "s05",
     station: ST2,
-    freezeBeat: SB(7.1),
+    freezeBeat: GAG + 3,
     // Outro 展墙里定格成已经上色的样子
     drawFigure(ctx, fig, b, env) {
       drawWalker(ctx, { ...fig, style: "sketch" });
@@ -3054,11 +3060,11 @@
     })(), RED, { line: 2.2 });
     ctx.restore();
   }
-  var T_REACH = [SB(3.5), SB(5)];
-  var T_GIVE = SB(5);
-  var T_RISE = [SB(6.5), SB(6.8)];
-  var T_LAND = SB(7);
-  var T_LET = SB(8.2);
+  var T_REACH = [GAG - 1.5, GAG];
+  var T_GIVE = GAG;
+  var T_RISE = [GAG + 2.5, GAG + 3.8];
+  var T_LAND = GAG + 4;
+  var T_LET = GAG + 5.2;
   var s09 = {
     id: "s09",
     station: ST3,
@@ -3095,8 +3101,8 @@
       const c5 = env.camAt(T_GIVE);
       const cx = 690 + c5 - cam;
       if (cx > X_MIN - 200 && cx < X_MAX + 200) {
-        const reach = smoothstep(T_REACH[0], T_REACH[1], b) * (1 - smoothstep(SB(6), SB(6.5), b));
-        const laugh = smoothstep(T_RISE[0], T_RISE[1], b) * (1 - smoothstep(SB(7.5), SB(8), b)) + Math.max(0, Math.sin(b * Math.PI * 2)) * 0.15;
+        const reach = smoothstep(T_REACH[0], T_REACH[1], b) * (1 - smoothstep(GAG + 1, GAG + 1.5, b));
+        const laugh = smoothstep(T_RISE[0], T_RISE[1], b) * (1 - smoothstep(T_LAND + 0.5, T_LAND + 1, b)) + Math.max(0, Math.sin(b * Math.PI * 2)) * 0.15;
         ctx.fillStyle = rgba(NAVY, 0.25);
         ellipse(ctx, cx + 4, ROAD_Y + 4, 120, 16);
         ctx.fill();
@@ -3215,7 +3221,7 @@
 
   // src/main/walk.js
   var DOWNBEATS = sections.filter((s) => s.station).map((s) => s.start);
-  var FREEZE = [SB(5), SB(7)];
+  var FREEZE = STATION.gag;
   var BOOST_FROM = -0.55;
   var BOOST_LEN = 0.8;
   var BOOST_AMP = 0.45;
@@ -3290,7 +3296,7 @@
   }
 
   // src/hud/titlecard.js
-  var cardIn = (b) => ease.out(clamp(b / 1.1)) * (1 - smoothstep(7.25, 7.85, b));
+  var cardIn = (b, N = STATION.beats) => ease.out(clamp(b / 1.1)) * (1 - smoothstep(N - 0.75, N - 0.15, b));
   function drawTitleCard(ctx, st, b, style = {}) {
     const k = cardIn(b);
     if (k <= 1e-3) return;
@@ -3345,7 +3351,7 @@
   }
 
   // src/hud/players.js
-  var playerIn = (b) => ease.outBack(clamp((b - 0.5) / 1.1)) * (1 - smoothstep(7.25, 7.85, b));
+  var playerIn = (b, N = STATION.beats) => ease.outBack(clamp((b - 0.5) / 1.1)) * (1 - smoothstep(N - 0.75, N - 0.15, b));
   var spinAt = (gb) => gb * (TAU / 4);
   function drawCassette(ctx, cx, cy, s, spin, P) {
     const w = 200 * s, h = 128 * s;
@@ -3591,7 +3597,7 @@
   var GRID_H = CELL_H * ROWS + GAP * (ROWS - 1);
   var LEFT = (W - GRID_W) / 2;
   var TOP = 34;
-  var FREEZE_B = SB(5.5);
+  var FREEZE_B = GAG + 1.5;
   var CACHE_SCALE = 2 / 3;
   function cellRect(n) {
     const i = n - 1, c = i % COLS, r = Math.floor(i / COLS);

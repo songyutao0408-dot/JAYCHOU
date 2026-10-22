@@ -12,7 +12,7 @@ import { paperTexture } from '../kit/paper.js';
 import { clamp, ease, lerp, smoothstep } from '../kit/math.js';
 import { drawPlayerKind, playerPalette, spinAt } from '../hud/players.js';
 import { drawSubtitle } from '../hud/subtitle.js';
-import { SB } from '../beat/time.js';
+import { GAG } from '../beat/time.js';
 import { SCENES } from '../scenes/index.js';
 
 export const OUTRO_LINES = ['2000—2026，十六张专辑。', '下一站，未完待续。'];
@@ -23,7 +23,7 @@ const CELL_H = (CELL_W * 9) / 16;
 const GRID_H = CELL_H * ROWS + GAP * (ROWS - 1);
 const LEFT = (W - GRID_W) / 2;
 const TOP = 34;
-const FREEZE_B = SB(5.5); // 1–15 站定格在第 5–6 拍（梗的位置，人物为站立姿势）
+const FREEZE_B = GAG + 1.5; // 1–15 站定格在梗的中段（第 10.5 拍，人物为站立姿势）
 const CACHE_SCALE = 2 / 3; // 定格图 1280×720
 
 export function cellRect(n) {

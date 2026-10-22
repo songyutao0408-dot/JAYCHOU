@@ -1,5 +1,5 @@
 // 逐帧渲染 + ffmpeg 合成「无音轨」MP4。
-//   node tools/render.mjs [--fps 60] [--from 0] [--to 77.48] [--height 1080|720|480] [--crf 18]
+//   node tools/render.mjs [--fps 60] [--from 0] [--to 137.95] [--height 1080|720|480] [--crf 18]
 //                         [--workers 3] [--out render/film.mp4] [--frames 目录（同时保存 PNG）] [--walk side|34]
 // --from/--to 可以写秒数，也可以写 s03:7 这样的拍位（见 tools/lib/spec.mjs）。
 import fs from 'node:fs';

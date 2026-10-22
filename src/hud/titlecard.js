@@ -4,9 +4,10 @@ import { font, SERIF, SANS, MIN_TEXT_PX } from '../kit/text.js';
 import { roundRect } from '../kit/shapes.js';
 import { clamp, ease, smoothstep } from '../kit/math.js';
 import { rgba, readableOn } from '../kit/color.js';
+import { STATION } from '../beat/time.js';
 
-/** 标题卡出现/消失进度：第 1–2 拍滑入，第 8 拍前半淡出。 */
-export const cardIn = (b) => ease.out(clamp(b / 1.1)) * (1 - smoothstep(7.25, 7.85, b));
+/** 标题卡出现/消失进度：第 1–2 拍滑入，最后一拍前半淡出。 */
+export const cardIn = (b, N = STATION.beats) => ease.out(clamp(b / 1.1)) * (1 - smoothstep(N - 0.75, N - 0.15, b));
 
 export function drawTitleCard(ctx, st, b, style = {}) {
   const k = cardIn(b);
