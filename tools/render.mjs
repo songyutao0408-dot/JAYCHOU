@@ -1,5 +1,5 @@
 // 逐帧渲染 + ffmpeg 合成「无音轨」MP4。
-//   node tools/render.mjs [--fps 30] [--from 0] [--to 77.48] [--height 1080|720|480] [--crf 18]
+//   node tools/render.mjs [--fps 60] [--from 0] [--to 77.48] [--height 1080|720|480] [--crf 18]
 //                         [--workers 3] [--out render/film.mp4] [--frames 目录（同时保存 PNG）] [--walk side|34]
 // --from/--to 可以写秒数，也可以写 s03:7 这样的拍位（见 tools/lib/spec.mjs）。
 import fs from 'node:fs';
@@ -10,7 +10,7 @@ import { launch, openFilm } from './lib/browser.mjs';
 import { parseSpec } from './lib/spec.mjs';
 
 const args = parseArgs();
-const fps = parseFloat(args.fps || '30');
+const fps = parseFloat(args.fps || '60'); // 成片 60fps（镜头平移更顺）；小样可用 --fps 30
 const workers = parseInt(args.workers || '3', 10);
 const height = parseInt(args.height || '1080', 10);
 const crf = args.crf || (height <= 480 ? '26' : '18');

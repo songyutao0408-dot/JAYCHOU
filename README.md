@@ -10,7 +10,6 @@
 
 下载仓库压缩包，解压后**双击 `preview.html`**，用 Chrome 打开即可。
 
-- 地址后面加 `?walk=34` 可以切换到四分之三侧面的走路素材（默认正侧面）
 - 底部控制条：播放 / 暂停（空格）、拖动进度、逐帧前进后退（← →，按住 Shift 一次 1 秒）
 - 显示当前「小节:拍」和站名；左边的小圆点是节拍灯（红色 = 每小节强拍）
 - **对拍**：把本地音频文件拖进窗口（或点「音频」选择），会和画面同步播放。音频只在这个页面里，不保存、不上传。
@@ -42,8 +41,8 @@ npm run shot -- s01:5 12.3    # 截图（时间写法：秒数 / b:全局拍 / s
 npm run contact               # 全片接触表 → render/contact.png
 npm run style-check           # 人物 × 16 种画风对照表 → render/style-check.png
 npm run walk-sheet            # 走路循环检查表（全部帧、落在拍上的帧）
-npm run render -- --fps 30    # 成片（无音轨）→ render/film_1080p_30fps.mp4；--height 480 出小样
-npm run mux -- --video render/film_1080p_30fps.mp4 --audio 我的配乐.wav   # 把配乐合成进去
+npm run render                # 成片（无音轨，60fps）→ render/film_1080p_60fps.mp4；--height 480 --fps 30 出小样
+npm run mux -- --video render/film_1080p_60fps.mp4 --audio 我的配乐.wav   # 把配乐合成进去
 ```
 
 合成配乐的等价 ffmpeg 命令：

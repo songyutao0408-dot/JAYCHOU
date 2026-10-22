@@ -19,7 +19,7 @@ export async function loadWalkSets() {
 }
 export const walkSetNames = () => Object.keys(sets);
 
-/** 选用哪一套走路循环（side 正侧面 / 34 四分之三侧面）。返回该套对应的行走速度（单位/拍）。 */
+/** 选用哪一套走路循环（已选定 side 正侧面）。返回该套对应的行走速度（单位/拍）。 */
 export function useWalkSet(name) {
   active = sets[name] || sets[DEFAULT_SET] || Object.values(sets)[0] || null;
   return active ? walkSpeedOf(active.meta) : 105;
