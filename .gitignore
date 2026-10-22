@@ -19,3 +19,6 @@ render/
 
 .DS_Store
 Thumbs.db
+
+# 子代理的独立工作副本（第三阶段分批制作用，不提交）
+.claude/worktrees/
