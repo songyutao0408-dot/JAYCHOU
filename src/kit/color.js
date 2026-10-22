@@ -17,8 +17,6 @@ export const luminance = (hex) => {
   const [r, g, b] = hexToRgb(hex);
   return (0.2126 * r + 0.7152 * g + 0.0722 * b) / 255;
 };
-/** 全片共用的锚点颜色：红耳机。 */
-export const HEADPHONE_RED = '#d8262e';
 
 /** 在底色上可读的文字色：底色暗就用浅色，否则用给定的深色。 */
 export const readableOn = (bg, dark, light = '#f4efe4') => (luminance(bg) < 0.42 ? light : dark);

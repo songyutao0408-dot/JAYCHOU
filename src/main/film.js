@@ -5,11 +5,11 @@ import { W, H, K, OX, ROAD_Y, CHAR_X, applyUnits } from './layout.js';
 import { beatAt, sections, sectionAt, sectionById, quantizeBeats, TOTAL_BEATS } from '../beat/time.js';
 import { SCENES } from '../scenes/index.js';
 import { stationByN } from '../data/stations.js';
-import { LOOK } from '../rig/look.js';
-import { drawFigure } from '../rig/painter.js';
+import { drawWalker } from '../rig/walker.js';
+import { STATION_STYLE } from '../rig/styles.js';
 import { dist } from './walk.js';
 import { pushAt, PUSH_AMOUNT } from './camera.js';
-import { figurePose, WALK_START } from './figure.js';
+import { figureState, WALK_START } from './figure.js';
 import { drawDefaultFrame } from './frame.js';
 import { drawTitleCard } from '../hud/titlecard.js';
 import { drawPlayerHUD } from '../hud/players.js';
@@ -35,7 +35,6 @@ export function envFor(sec, gb, extra = {}) {
     sec, scene, st, gb, b,
     gbq: sec.start + b,
     cam: camDist(gb) - camDist(sec.start), // 镜头平移不量化
-    look: LOOK,
     ...extra,
   };
 }
@@ -51,27 +50,32 @@ export function drawSceneLayers(ctx, env, { back = true, front = true } = {}) {
 }
 
 /** 在像素空间画人物（站位固定在 CHAR_PX, ROAD_PX）。 */
-export function drawFigureFor(ctx, env) {
-  const { scene, sec, look, b } = env;
+export function drawFigureFor(ctx, env, { forceStand = false } = {}) {
+  const { scene, sec, b } = env;
   const adj = (scene.figureAdjust && scene.figureAdjust(b, env)) || {};
   if (adj.hidden) return;
-  const pose = figurePose(env.gbq, look);
-  const style = { sceneId: sec.id, ...(scene.figureStyle ? scene.figureStyle(b, env) : {}) };
+  const st = figureState(env.gbq, env);
+  const fig = {
+    pose: forceStand ? 'stand' : adj.pose || st.pose,
+    phase: st.phase,
+    lean: st.lean + (adj.rotate || 0),
+    style: adj.style || scene.figureStyle || (sec.station ? STATION_STYLE[sec.station] : 'comic'),
+  };
   ctx.save();
   applyUnits(ctx);
   ctx.translate(CHAR_X + (adj.dx || 0), ROAD_Y + (adj.dy || 0));
   if (adj.scale) ctx.scale(adj.scale, adj.scale);
   if (adj.alpha !== undefined) ctx.globalAlpha = adj.alpha;
-  if (scene.drawFigure) scene.drawFigure(ctx, pose, look, b, env, style);
-  else drawFigure(ctx, pose, look, style);
+  if (scene.drawFigure) scene.drawFigure(ctx, fig, b, env);
+  else drawWalker(ctx, fig);
   ctx.restore();
 }
 
 /** 一个段落的完整画面（背景 + 人物 + 前景）。 */
-export function drawSection(ctx, sec, gb, { figure = true } = {}) {
+export function drawSection(ctx, sec, gb, { figure = true, stand = false } = {}) {
   const env = envFor(sec, gb);
   drawSceneLayers(ctx, env, { front: false });
-  if (figure) drawFigureFor(ctx, env);
+  if (figure) drawFigureFor(ctx, env, { forceStand: stand });
   drawSceneLayers(ctx, env, { back: false });
   return env;
 }

@@ -2,11 +2,12 @@
 import { W, H } from './layout.js';
 import { renderAt, renderBeat } from './film.js';
 import { loadEmbeddedFonts } from '../kit/text.js';
-import { loadHeadAssets, headAssetKeys } from '../rig/head.js';
+import { loadWalkSets, useWalkSet, walkSetNames, activeWalk } from '../rig/walker.js';
+import { setWalkSpeed } from './walk.js';
 import { duration, sections, TOTAL_BEATS, grid, setGrid, timeAtBeat, beatAt } from '../beat/time.js';
 import { STATIONS } from '../data/stations.js';
 import { setupPreview } from './preview.js';
-import { contactSheet, headsCheck, rigSheet } from './sheets.js';
+import { contactSheet, styleCheck, walkSheet } from './sheets.js';
 
 const params = new URLSearchParams(location.search);
 const RENDER = params.has('render');
@@ -23,7 +24,9 @@ new window.p5((p) => {
     const ctx = p.drawingContext;
     const canvas = cnv.elt;
     const nFonts = await loadEmbeddedFonts();
-    const nHeads = await loadHeadAssets();
+    await loadWalkSets();
+    // 走路素材：默认 side（正侧面），?walk=34 切换到四分之三侧面
+    setWalkSpeed(useWalkSet(params.get('walk') || undefined));
     if (params.has('bpm')) setGrid({ bpm: parseFloat(params.get('bpm')) });
     if (params.has('offset')) setGrid({ firstDownbeat: parseFloat(params.get('offset')) });
 
@@ -33,7 +36,7 @@ new window.p5((p) => {
       info: () => ({
         duration: duration(), totalBeats: TOTAL_BEATS, bpm: grid.bpm, firstDownbeat: grid.firstDownbeat,
         sections: sections.map((s) => ({ ...s, t0: timeAtBeat(s.start), t1: timeAtBeat(s.end) })),
-        stations: STATIONS, fonts: nFonts, heads: headAssetKeys(),
+        stations: STATIONS, fonts: nFonts, walkSets: walkSetNames(), walk: activeWalk() && activeWalk().meta,
       }),
       renderAt: (t) => renderAt(ctx, t),
       renderBeat: (gb) => renderBeat(ctx, gb),
@@ -43,8 +46,8 @@ new window.p5((p) => {
         return canvasToB64(canvas);
       },
       contact: (o) => canvasToB64(contactSheet(ctx, canvas, o)),
-      headsCheck: (o) => canvasToB64(headsCheck(o)),
-      rigSheet: (o) => canvasToB64(rigSheet(o)),
+      styleCheck: (o) => canvasToB64(styleCheck(o)),
+      walkSheet: (o) => canvasToB64(walkSheet(o)),
       beatAt, timeAtBeat, setGrid,
     };
     if (!RENDER) setupPreview(p, canvas, ctx);

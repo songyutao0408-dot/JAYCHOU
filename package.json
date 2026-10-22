@@ -14,15 +14,16 @@
   "scripts": {
     "build": "node tools/build.mjs",
     "build:fonts": "node tools/build-fonts.mjs",
-    "build:heads": "node tools/build-heads.mjs",
     "test": "node tools/test-beat.mjs && node tools/lint-time.mjs",
     "shot": "node tools/shot.mjs",
     "contact": "node tools/contact.mjs",
-    "rig-sheet": "node tools/rig-sheet.mjs",
-    "heads-check": "node tools/heads-check.mjs",
     "render": "node tools/render.mjs",
     "render:demo": "node tools/render.mjs --height 480 --fps 30",
-    "mux": "node tools/mux-audio.mjs"
+    "mux": "node tools/mux-audio.mjs",
+    "build:walk": "node tools/build-walk.mjs",
+    "extract-walk": "python3 tools/extract-walk.py",
+    "style-check": "node tools/style-check.mjs",
+    "walk-sheet": "node tools/walk-sheet.mjs"
   },
   "engines": {
     "node": ">=20"

@@ -3,11 +3,10 @@ import { renderAt, renderBeat } from './film.js';
 import { makeCanvas } from '../kit/canvas.js';
 import { font, SANS } from '../kit/text.js';
 import { STATIONS } from '../data/stations.js';
-import { LOOK } from '../rig/look.js';
-import { drawHead, findHeadAsset } from '../rig/head.js';
-import { headTreatmentFor } from '../rig/treatments.js';
-import { SCENES } from '../scenes/index.js';
-import { mix } from '../kit/color.js';
+import { drawWalker, activeWalk, frameIndex, FIGURE_H } from '../rig/walker.js';
+import { STATION_STYLE, STYLE_LABEL } from '../rig/styles.js';
+import { dist } from './walk.js';
+import { SB } from '../beat/time.js';
 
 /** items: [{ t } | { beat }, label]，cols 列，cellW 每格宽（像素）。 */
 export function contactSheet(ctx, canvas, { items, cols = 6, cellW = 400, title = '' }) {
@@ -35,28 +34,30 @@ export function contactSheet(ctx, canvas, { items, cols = 6, cellW = 400, title 
   return sheet;
 }
 
-/** 换头对照表：这张头像（或占位头）在 16 种画风下的自动处理，左侧是原图。 */
-export function headsCheck({ cell = 300 } = {}) {
-  const cols = 4, rows = 4, pad = 8, refW = 420, top = 64;
-  const sheet = makeCanvas(refW + pad + cols * (cell + pad) + pad, top + rows * (cell + pad) + 44);
+/** 人物在 16 种画风下的对照表：每站一格（走路帧 + 站立帧），左侧是原样。 */
+export function styleCheck({ cell = 300, frame = 0 } = {}) {
+  const W0 = activeWalk();
+  const cols = 4, rows = 4, pad = 8, refW = 380, top = 64, ch = Math.round(cell * 1.25);
+  const sheet = makeCanvas(refW + pad + cols * (cell + pad) + pad, top + rows * (ch + pad) + 44);
   const sc = sheet.getContext('2d');
   sc.fillStyle = '#202020';
   sc.fillRect(0, 0, sheet.width, sheet.height);
-  const src = findHeadAsset(null);
   font(sc, 28, { family: SANS, weight: 700 });
   sc.fillStyle = '#eee';
-  sc.fillText(`换头对照表 · 素材：${src ? `assets/heads/${src.key}.png` : '没有素材（原创占位头）'} · 已按脖子底部向下旋转 12°`, 16, 42);
-  // 原图
-  const drawAt = (x, y, w, h, bg, treatment, sceneId, label) => {
+  sc.fillText(`人物 × 16 种画风 · 素材：${W0 ? W0.meta.source : '无'} · 每格左为走路帧、右为站立帧`, 16, 42);
+  const draw = (x, y, w, h, bg, style, label) => {
     sc.fillStyle = bg;
     sc.fillRect(x, y, w, h);
     sc.save();
     sc.beginPath(); sc.rect(x, y, w, h); sc.clip();
-    const side = Math.min(w, h);
-    sc.translate(x + w / 2 - side * 0.04, y + (h + side) / 2 - 6);
-    const k = (side * 0.95) / 160;
-    sc.scale(k, k);
-    drawHead(sc, LOOK, { sceneId, treatment });
+    const k = (Math.min(h, w * 1.25) * 0.9) / FIGURE_H;
+    for (const [dx, pose] of [[0.3, 'walk'], [0.72, 'stand']]) {
+      sc.save();
+      sc.translate(x + w * dx, y + (h + Math.min(h, w * 1.25)) / 2 - 10);
+      sc.scale(k, k);
+      drawWalker(sc, { pose, frame, style });
+      sc.restore();
+    }
     sc.restore();
     font(sc, 18, { family: SANS, weight: 700 });
     sc.fillStyle = 'rgba(0,0,0,0.55)';
@@ -64,49 +65,42 @@ export function headsCheck({ cell = 300 } = {}) {
     sc.fillStyle = '#fff';
     sc.fillText(label, x + 8, y + 22);
   };
-  drawAt(pad, top, refW - pad, rows * (cell + pad) - pad, '#f3efe6', { type: 'none' }, null, '原图（不处理）');
+  draw(pad, top, refW - pad, rows * (ch + pad) - pad, '#f3efe6', 'none', '原样（抠像后）');
   STATIONS.forEach((st, i) => {
-    const x = refW + pad + (i % cols) * (cell + pad), y = top + Math.floor(i / cols) * (cell + pad);
-    const t = headTreatmentFor(st);
-    const own = findHeadAsset(st.id);
-    const tag = own && own.key === st.id ? ' · 专用头像' : '';
-    drawAt(x, y, cell, cell, st.palette[0], t, st.id, `${st.n} ${st.style.slice(0, 9)} · ${t.type}${tag}`);
+    const x = refW + pad + (i % cols) * (cell + pad), y = top + Math.floor(i / cols) * (ch + pad);
+    const style = STATION_STYLE[st.n];
+    draw(x, y, cell, ch, st.palette[0], style, `${st.n} ${STYLE_LABEL[style]}`);
   });
   font(sc, 18, { family: SANS, weight: 400 });
   sc.fillStyle = '#aaa';
-  sc.fillText('处理方式：tone 调色板映射（保留红色）· ink 灰度晕染 · lines 刻线排线 · silhouette 皮影剪影 + 镂空。各站正式画风做好后会再细调。', 16, sheet.height - 14);
+  sc.fillText('所有站先统一做一层漫画化（平滑 + 色块简化 + 描边），再叠加各站处理；第 16 站保留更多原貌。各站正式场景做好后再细调。', 16, sheet.height - 14);
   return sheet;
 }
 
-/** 人物检查表：一个步态循环（2 拍）的 8 个相位，脚下画出地面和世界刻度，检查是否打滑。 */
-import { figurePose } from './figure.js';
-import { drawFigure as paintFigure } from '../rig/painter.js';
-import { dist } from './walk.js';
-export function rigSheet({ cell = 300, phases = 8, gb0 = 20, scale = 1.25 } = {}) {
-  const rowH = 600, left = 20;
-  const sheet = makeCanvas(left + phases * cell + 20, rowH + 60);
+/** 走路循环检查表：一个循环（2 拍）的全部帧，标出落在拍上的两帧，脚下画世界刻度检查是否打滑。 */
+export function walkSheet({ style = 'none', cols = 10, scale = 0.62 } = {}) {
+  const W0 = activeWalk();
+  const P = W0.meta.frames, rows = Math.ceil(P / cols);
+  const cw = 190, chh = Math.round(FIGURE_H * scale) + 70;
+  const sheet = makeCanvas(cols * cw + 20, rows * chh + 60);
   const sc = sheet.getContext('2d');
   sc.fillStyle = '#f3efe6';
   sc.fillRect(0, 0, sheet.width, sheet.height);
-  font(sc, 22, { family: SANS, weight: 700 });
+  font(sc, 24, { family: SANS, weight: 700 });
   sc.fillStyle = '#333';
-  for (let i = 0; i < phases; i++) sc.fillText(`第 ${(gb0 + (i * 2) / phases).toFixed(2)} 拍`, left + i * cell + 90, 34);
-  const y0 = 60 + rowH - 40;
-  for (let i = 0; i < phases; i++) {
-    const gb = gb0 + (i * 2) / phases;
-    const x0 = left + i * cell + cell / 2;
-    sc.strokeStyle = '#999';
-    sc.lineWidth = 2;
-    sc.beginPath(); sc.moveTo(x0 - cell / 2 + 6, y0); sc.lineTo(x0 + cell / 2 - 6, y0); sc.stroke();
-    // 世界刻度：随行走距离后退，支撑脚应与刻度保持相对静止
-    const off = (dist(gb) * scale) % 40;
-    sc.fillStyle = '#bbb';
-    for (let k = -4; k <= 4; k++) sc.fillRect(x0 + k * 40 - off, y0 + 4, 3, 10);
+  sc.fillText(`走路循环 · ${W0.meta.source} · ${P} 帧 = 2 拍 · ★ = 落在拍上的脚跟着地帧（第 ${W0.meta.strikes.join('、')} 帧）`, 12, 34);
+  for (let i = 0; i < P; i++) {
+    const x0 = 10 + (i % cols) * cw + cw / 2, y0 = 60 + Math.floor(i / cols) * chh + chh - 40;
+    sc.strokeStyle = '#999'; sc.lineWidth = 2;
+    sc.beginPath(); sc.moveTo(x0 - cw / 2 + 6, y0); sc.lineTo(x0 + cw / 2 - 6, y0); sc.stroke();
     sc.save();
     sc.translate(x0, y0);
     sc.scale(scale, scale);
-    paintFigure(sc, figurePose(gb, LOOK), LOOK, {});
+    drawWalker(sc, { frame: i, style });
     sc.restore();
+    font(sc, 18, { family: SANS, weight: 400 });
+    sc.fillStyle = W0.meta.strikes.includes(i) ? '#c0392b' : '#555';
+    sc.fillText(`${W0.meta.strikes.includes(i) ? '★ ' : ''}${i}`, x0 - cw / 2 + 8, y0 + 26);
   }
   return sheet;
 }

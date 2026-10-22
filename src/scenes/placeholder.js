@@ -23,8 +23,6 @@ export function placeholderScene(st) {
   return {
     id: st.id,
     station: st,
-    // 占位阶段身体不按画风变色，头像也保持原样，保证肤色一致；正式场景再按画风处理（见 heads-check）
-    figureStyle: () => ({ headTreatment: { type: 'none' } }),
     drawBack(ctx, b, env) {
       const cam = env.cam;
       // 天空
@@ -52,9 +50,9 @@ export function placeholderScene(st) {
       font(ctx, 46, { family: SANS, weight: 700 });
       ctx.textAlign = 'center';
       ctx.fillStyle = rgba(readableOn(bg, ink), 0.55);
-      ctx.fillText(`占位 · 第 ${st.n} 站 · ${st.style}`, 690, 330);
+      ctx.fillText(`占位 · 第 ${st.n} 站 · ${st.style}`, 690, 150);
       font(ctx, 40, { family: SERIF, weight: 400 });
-      ctx.fillText(`场景：${st.scene}`, 690, 390);
+      ctx.fillText(`场景：${st.scene}`, 690, 205);
       ctx.restore();
       // 路面
       ctx.fillStyle = road;

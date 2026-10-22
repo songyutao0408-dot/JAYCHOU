@@ -11,7 +11,7 @@ import { parseSpec } from './lib/spec.mjs';
 
 const args = parseArgs();
 const browser = await launch();
-const page = await openFilm(browser);
+const page = await openFilm(browser, args.walk ? `walk=${args.walk}` : '');
 const info = await page.evaluate(() => window.__film.info());
 
 const KEY = {

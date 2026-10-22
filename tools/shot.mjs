@@ -9,7 +9,7 @@ const args = parseArgs();
 const outDir = path.resolve(args.out || path.join(ROOT, 'render/shots'));
 fs.mkdirSync(outDir, { recursive: true });
 const browser = await launch();
-const page = await openFilm(browser);
+const page = await openFilm(browser, args.walk ? `walk=${args.walk}` : '');
 const info = await page.evaluate(() => window.__film.info());
 for (const spec of args._) {
   const it = parseSpec(spec, info);

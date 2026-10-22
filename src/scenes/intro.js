@@ -10,9 +10,7 @@ import { font, SERIF, SANS } from '../kit/text.js';
 import { roundRect, circle } from '../kit/shapes.js';
 import { clamp, ease, lerp, smoothstep, keyframes } from '../kit/math.js';
 import { B } from '../beat/time.js';
-import { figurePose, WALK_START } from '../main/figure.js';
-import { drawFigure } from '../rig/painter.js';
-import { LOOK } from '../rig/look.js';
+import { drawWalker } from '../rig/walker.js';
 
 const PAPER = '#efe6d2';
 const INK = '#3a3129';
@@ -32,12 +30,8 @@ const T_SUB2 = B(3, 1);
 const T_OUT = B(3, 1); // 人物走出标签
 export const SUBTITLES = ['2000 年，他出发了。', '前面是十六张专辑。'];
 
-// 铅笔纸面：身体所有颜色（含肤色）向纸色褪 42%，头像用同样的比例褪淡，保持一致
-const pencilStyle = {
-  ink: INK, lw: 1.3,
-  color: (hex) => mix(hex, PAPER, 0.42),
-  headTreatment: { type: 'fade', toward: PAPER, k: 0.42 },
-};
+// 铅笔纸面：人物先漫画化，再整体向纸色褪 42%（styles.js 的 pencil）
+const FIG_STYLE = 'pencil';
 
 function deckStrokes() {
   return bakeBrush('intro-deck', DECK.w * K + 20, DECK.h * K + 20, (Bx) => {
@@ -95,7 +89,7 @@ function cassetteY(b) {
 export const intro = {
   id: 'intro',
   station: null,
-  figureStyle: () => pencilStyle,
+  figureStyle: FIG_STYLE,
   figureAdjust(b, env) {
     if (b < T_OUT) return { hidden: true };
     const e = ease.inOut(clamp((b - T_OUT) / 1.15));
@@ -104,7 +98,7 @@ export const intro = {
     return {
       dx: lerp(lx - CHAR_X, 0, e),
       dy: lerp(ly - ROAD_Y, 0, e) - Math.sin(Math.PI * e) * 70,
-      scale: lerp(0.24, 1, e),
+      scale: lerp(0.17, 1, e),
     };
   },
   drawBack(ctx, b, env) {
@@ -164,9 +158,8 @@ export const intro = {
     if (b < T_OUT) {
       ctx.save();
       ctx.translate(LABEL.dx + LABEL.w * 0.5, LABEL.dy + LABEL.h - 6);
-      ctx.scale(0.24, 0.24);
-      const pose = figurePose(WALK_START, LOOK);
-      drawFigure(ctx, pose, LOOK, { ...pencilStyle, lw: 3 });
+      ctx.scale(0.17, 0.17);
+      drawWalker(ctx, { pose: 'stand', style: FIG_STYLE });
       ctx.restore();
     }
     ctx.restore();

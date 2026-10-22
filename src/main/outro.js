@@ -1,5 +1,5 @@
 // Outro（6 小节）：
-//   第 1–2 小节  镜头从第 16 站拉远，展墙 4×4，占画面宽约 85%，每格定格那一站、那个年纪的他
+//   第 1–2 小节  镜头从第 16 站拉远，展墙 4×4，占画面宽约 85%，每格定格着那一站的他（站立姿势）
 //   第 3 小节    下方居中字幕「2000—2026，十六张专辑。」
 //   第 5 小节强拍 16 个播放器同时停转
 //   第 6 小节    最后一行字幕「下一站，未完待续。」定格
@@ -22,7 +22,7 @@ const CELL_H = (CELL_W * 9) / 16;
 const GRID_H = CELL_H * ROWS + GAP * (ROWS - 1);
 const LEFT = (W - GRID_W) / 2;
 const TOP = 34;
-const FREEZE_B = SB(5.5); // 1–15 站定格在第 5–6 拍的梗上
+const FREEZE_B = SB(5.5); // 1–15 站定格在第 5–6 拍（梗的位置，人物为站立姿势）
 const CACHE_SCALE = 2 / 3; // 定格图 1280×720
 
 export function cellRect(n) {
@@ -35,7 +35,7 @@ function freezeImage(n, gbFreeze) {
     const c = makeCanvas(W * CACHE_SCALE, H * CACHE_SCALE);
     const ctx = c.getContext('2d');
     ctx.scale(CACHE_SCALE, CACHE_SCALE);
-    drawSection(ctx, stationSection(n), gbFreeze);
+    drawSection(ctx, stationSection(n), gbFreeze, { stand: true });
     return c;
   });
 }

@@ -1,6 +1,6 @@
 // 逐帧渲染 + ffmpeg 合成「无音轨」MP4。
 //   node tools/render.mjs [--fps 30] [--from 0] [--to 77.48] [--height 1080|720|480] [--crf 18]
-//                         [--workers 3] [--out render/film.mp4] [--frames 目录（同时保存 PNG）]
+//                         [--workers 3] [--out render/film.mp4] [--frames 目录（同时保存 PNG）] [--walk side|34]
 // --from/--to 可以写秒数，也可以写 s03:7 这样的拍位（见 tools/lib/spec.mjs）。
 import fs from 'node:fs';
 import path from 'node:path';
@@ -18,7 +18,8 @@ const out = path.resolve(args.out || path.join(ROOT, `render/film_${height}p_${f
 fs.mkdirSync(path.dirname(out), { recursive: true });
 
 const browser = await launch();
-const pages = await Promise.all(Array.from({ length: workers }, () => openFilm(browser)));
+const query = args.walk ? `walk=${args.walk}` : '';
+const pages = await Promise.all(Array.from({ length: workers }, () => openFilm(browser, query)));
 const info = await pages[0].evaluate(() => window.__film.info());
 const toSec = (v, dflt) => {
   if (v === undefined) return dflt;
