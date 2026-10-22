@@ -67,65 +67,27 @@
     return Math.floor(s * hz + 1e-6) / hz / beatSec();
   }
 
-  // src/data/stations.js
-  var raw = [
-    [2e3, "Jay", "Jay", "\u53EF\u7231\u5973\u4EBA", "\u9752\u6625\u8857\u89D2", "\u6F2B\u753B\u7F51\u70B9\u5206\u955C", "\u4ED6\u4E00\u56DE\u5934\uFF08\u5B9A\u683C\u6362\u6210\u6B63\u9762\u7AD9\u7ACB\u5E27\uFF09\uFF0C\u80CC\u666F\u77AC\u95F4\u94FA\u6EE1\u5C11\u5973\u6F2B\u753B\u95EA\u5149\u82B1\u6735\uFF0C\u4E0B\u4E00\u62CD\u590D\u539F", ["#f4efe4", "#c9c2b4", "#26232a", "#e8467c"]],
-    [2001, "\u8303\u7279\u897F", "Fantasy", "\u7231\u5728\u897F\u5143\u524D", "\u53E4\u5DF4\u6BD4\u4F26\u57CE\u5899", "\u4E24\u6CB3\u6D41\u57DF\u6D6E\u96D5", "\u6D6E\u96D5\u91CC\u4EBA\u4EBA\u4FA7\u8EAB\u884C\u8FDB\uFF0C\u53EA\u6709\u5B9A\u683C\u7684\u4ED6\u6B63\u9762\u7AD9\u7740\uFF1B\u4E0B\u4E00\u62CD\u4ED6\u4E5F\u88AB\u8FEB\u4FA7\u7740\u8EAB\u5B50\u7EE7\u7EED\u8D70", ["#e7d3a8", "#c49a5c", "#4a3320", "#2f6fb0"]],
-    [2002, "\u516B\u5EA6\u7A7A\u95F4", "The Eight Dimensions", "\u7237\u7237\u6CE1\u7684\u8336", "\u5C71\u95F4\u8336\u68DA", "\u6C34\u58A8", "\u8001\u4EBA\u659F\u8336\uFF0C\u8336\u6C34\u5012\u6210\u4E00\u9053\u58A8\u7EBF\u4E00\u8DEF\u6D41\u5230\u8DEF\u4E0A\uFF0C\u4ED6\u8E29\u7740\u58A8\u7EBF\u8D70", ["#f2eee3", "#a9a69c", "#1d1d1b", "#7a8c5a"]],
-    [2003, "\u53F6\u60E0\u7F8E", "Yeh Hui-Mei", "\u4EE5\u7236\u4E4B\u540D", "\u767D\u5929\u7684\u54E5\u7279\u6559\u5802\uFF1A\u9633\u5149\u900F\u8FC7\u5F69\u8272\u73BB\u7483\uFF0C\u5728\u6D45\u8272\u77F3\u5899\u548C\u5730\u9762\u6295\u4E0B\u5F69\u8272\u5149\u6591", "\u5F69\u8272\u73BB\u7483\uFF08\u767D\u5929\u3001\u94C5\u6761\u7EC6\uFF09", "\u4ED6\u8D70\u8FDB\u7A97\u683C\uFF0C\u88AB\u7EC6\u94C5\u6761\u5207\u6210\u4E00\u5757\u5757\u5F69\u8272\u73BB\u7483\uFF0C\u5F3A\u62CD\u4E0A\u4E00\u675F\u9633\u5149\u6253\u4E0B", ["#efe9dc", "#c9b99a", "#3c3a44", "#d9a73a"]],
-    [2004, "\u4E03\u91CC\u9999", "Common Jasmine Orange", "\u6B62\u6218\u4E4B\u6B87", "\u5E9F\u589F\u91CC\u7684\u767D\u9E3D", "\u94C5\u7B14\u901F\u5199 + \u8272\u5F69\u6655\u5F00", "\u94A2\u76D4\u91CC\u98DE\u51FA\u4E00\u53EA\u767D\u9E3D\uFF0C\u9E3D\u5B50\u98DE\u8FC7\u7684\u5730\u65B9\u989C\u8272\u50CF\u6C34\u5F69\u4E00\u6837\u6655\u5F00\uFF0C\u4E24\u62CD\u5185\u6574\u5E45\u753B\u4ECE\u7070\u8272\u901F\u5199\u53D8\u6210\u5F69\u8272", ["#f3ecdc", "#b4ada1", "#5f5a52", "#8fb8d8"]],
-    [2005, "\u5341\u4E00\u6708\u7684\u8427\u90A6", "November's Chopin", "\u591C\u66F2", "\u6708\u591C\u91CC\u7684\u4E00\u67B6\u94A2\u7434\uFF08\u5927\u800C\u4EAE\u7684\u6708\u4EAE\uFF09", "\u767D\u7EB8\u84DD\u9ED1\u58A8\u6C34\u94A2\u7B14\u753B\uFF08\u591C\u8272\u53EA\u7528\u5929\u7A7A\u7A00\u758F\u6392\u7EBF\uFF09", "\u7434\u76D6\u4E0A\u7684\u4E4C\u9E26\u6392\u6210\u4E00\u884C\u97F3\u7B26\uFF0C\u5F3A\u62CD\u4E0A\u540C\u65F6\u626D\u5934", ["#fbfaf6", "#c9d0dc", "#1f2a44", "#6c7a96"]],
-    [2006, "\u4F9D\u7136\u8303\u7279\u897F", "Still Fantasy", "\u591C\u7684\u7B2C\u4E03\u7AE0", "\u7EF4\u591A\u5229\u4E9A\u6D45\u7070\u8584\u96FE\uFF0C\u4FA6\u63A2\uFF0C\u7164\u6C14\u706F\u6696\u9EC4\u5149\u6655", "\u94DC\u7248\u753B\uFF08\u7C73\u9EC4\u7EB8\u3001\u68D5\u8910\u6CB9\u58A8\uFF09", "\u4E00\u53EA\u653E\u5927\u955C\u4ECE\u753B\u5916\u4F38\u8FDB\u6765\uFF0C\u5BF9\u51C6\u4ED6\u8033\u6735\u4E0A\u7684\u8033\u673A", ["#efe3c4", "#c9b48e", "#5a3a22", "#e8b54a"]],
-    [2007, "\u6211\u5F88\u5FD9", "On the Run!", "\u6700\u957F\u7684\u7535\u5F71", "\u8001\u7535\u5F71\u9662\uFF1A\u53D1\u5149\u7684\u94F6\u5E55\u5360\u753B\u9762\u5927\u90E8\u5206\uFF0C\u89C2\u4F17\u526A\u5F71\u53EA\u5728\u5E95\u90E8\u4E00\u7A84\u6761", "\u80F6\u7247\u5212\u75D5 + 4:3 \u753B\u5E45", "\u753B\u5E45\u7A81\u7136\u7F29\u6210 4:3\uFF0C\u4ED6\u8D70\u5728\u94F6\u5E55\u91CC\uFF0C\u524D\u6392\u89C2\u4F17\u526A\u5F71\u4E00\u8D77\u626D\u5934", ["#f2ead2", "#cfc3a4", "#2a2622", "#e8d9b0"]],
-    [2008, "\u9B54\u6770\u5EA7", "Capricorn", "\u4E54\u514B\u53D4\u53D4", "\u9A6C\u620F\u56E2\u5C0F\u4E11", "19 \u4E16\u7EAA\u77F3\u7248\u753B\u6D77\u62A5", "\u5C0F\u4E11\u9012\u6765\u4E00\u53EA\u6C14\u7403\uFF0C\u5B9A\u683C\u7684\u4ED6\u88AB\u6574\u4E2A\u5E26\u7740\u98D8\u8D77\u534A\u62CD\uFF0C\u5F3A\u62CD\u843D\u56DE", ["#efe0bf", "#d0533c", "#2b2a3a", "#2f7d6d"]],
-    [2010, "\u8DE8\u65F6\u4EE3", "The Era", "\u96E8\u4E0B\u4E00\u6574\u665A", "\u508D\u665A\u84DD\u8C03\u65F6\u523B\u7684\u57CE\u5E02\u8857\u9053\uFF0C\u8DEF\u9762\u6620\u7740\u9713\u8679\u548C\u8F66\u706F\u7684\u5F69\u8272\u5012\u5F71", "\u900F\u660E\u6C34\u5F69\u6655\u67D3", "\u96E8\u6C34\u628A\u989C\u6599\u6655\u5F00\uFF0C\u8FDE\u4ED6\u7684\u4F1E\u90FD\u5316\u6210\u4E00\u6EE9\u989C\u8272\uFF0C\u4E0B\u4E00\u62CD\u6536\u56DE", ["#dfe8f2", "#8fb0d4", "#3c5577", "#f08a6a"]],
-    [2011, "\u60CA\u53F9\u53F7", "Wow!", "\u8FF7\u9B42\u66F2", "\u4E2D\u56FD\u53E4\u4EE3\u76AE\u5F71\u620F", "\u76AE\u5F71", "\u6CB9\u706F\u4E00\u6643\uFF0C\u4ED6\u7684\u76AE\u5F71\uFF08\u540C\u4E00\u5E27\u526A\u5F71\uFF09\u4E00\u5206\u4E3A\u4E09\u5DE6\u53F3\u9519\u5F00\uFF0C\u5F3A\u62CD\u4E0A\u5408\u56DE\u4E00\u4E2A", ["#f0c77a", "#c46a2c", "#3a1d10", "#b8322a"]],
-    [2012, "\u5341\u4E8C\u65B0\u4F5C", "Opus 12", "\u7EA2\u5C18\u5BA2\u6808", "\u6B66\u4FA0\u5BA2\u6808", "\u6728\u7248\u5E74\u753B", "\u5E97\u5C0F\u4E8C\u628A\u4ED6\u5F53\u6210\u5927\u4FA0\uFF0C\u62B1\u62F3\u4F5C\u63D6", ["#f1e3c4", "#d4a02f", "#2d1f18", "#c23b2b"]],
-    [2014, "\u54CE\u5466\uFF0C\u4E0D\u9519\u54E6", "Aiyo, Not Bad", "\u978B\u5B50\u7279\u5927\u53F7", "\u8721\u7B14\u753B\u7684\u5C0F\u9547", "\u513F\u7AE5\u8721\u7B14\u753B", "\u6BD4\u4F8B\u5168\u9519\uFF0C\u4ED6\u811A\u4E0B\u90A3\u4E00\u622A\u88AB\u5355\u72EC\u653E\u5927\u6210\u7279\u5927\u53F7\u978B\u5B50\uFF0C\u4E00\u6B65\u8DE8\u8FC7\u534A\u4E2A\u753B\u9762", ["#fbf7ec", "#8cc06a", "#3a3a8c", "#f2a33a"]],
-    [2016, "\u5468\u6770\u4F26\u7684\u5E8A\u8FB9\u6545\u4E8B", "Jay Chou's Bedtime Stories", "\u524D\u4E16\u60C5\u4EBA", "\u6E29\u99A8\u7684\u7236\u5973\u573A\u666F", "\u7AE5\u4E66\u7ED8\u672C\u6C34\u5F69", "\u5C0F\u5973\u5B69\u8E2E\u811A\u7ED9\u5B9A\u683C\u7AD9\u7740\u7684\u4ED6\u6234\u4E0A\u4E00\u9876\u7EB8\u7687\u51A0", ["#fbf1e4", "#e6b8a2", "#5a4a5e", "#e8c25a"]],
-    [2022, "\u6700\u4F1F\u5927\u7684\u4F5C\u54C1", "Greatest Works of Art", "\u8FD8\u5728\u6D41\u6D6A", "\u516C\u8DEF\u65C5\u884C", "\u590D\u53E4\u660E\u4FE1\u7247", "\u4E00\u4E2A\u90AE\u6233\u300C\u556A\u300D\u5730\u76D6\u5728\u4ED6\u8EAB\u4E0A\uFF0C\u65E5\u671F 2022", ["#f0e2c4", "#5aa0b4", "#3a2c24", "#d6643a"]],
-    [2026, "\u592A\u9633\u4E4B\u5B50", "Children of the Sun", "\u90A3\u5929\u4E0B\u96E8\u4E86", "\u767D\u5929\u9635\u96E8\u91CC\u7684\u57CE\u5E02\u8857\u8FB9\u516C\u4EA4\u7AD9\u53F0\uFF0C\u4E00\u7537\u4E00\u5973\u5404\u6491\u4E00\u628A\u989C\u8272\u9C9C\u660E\u7684\u4F1E\u7B49\u8F66", "\u7535\u5F71\u611F\u539A\u6D82\u63D2\u753B\uFF08\u767D\u5929\u3001\u660E\u4EAE\u7684\u6D45\u7070\u5929\u7A7A\u3001\u67D4\u548C\u5747\u5300\u7684\u5149\uFF09", "\u516C\u4EA4\u8F66\u9A76\u8FC7\u6E85\u8D77\u6C34\u82B1\uFF0C\u4E24\u628A\u4F1E\u5728\u5F3A\u62CD\u4E0A\u540C\u65F6\u4E00\u6B6A", ["#e7ebee", "#a9b6c0", "#3d4a56", "#e8553f"]]
-  ];
-  var EN_CHECKED = new Set(Array.from({ length: 16 }, (_, i) => i + 1));
-  var STATIONS = raw.map(([year, albumZh, albumEn, song, scene, style, gag, palette], i) => {
-    const n = i + 1;
-    return {
-      n,
-      id: `s${String(n).padStart(2, "0")}`,
-      year,
-      albumZh,
-      albumEn,
-      enChecked: EN_CHECKED.has(n),
-      song,
-      scene,
-      style,
-      gag,
-      palette,
-      player: n <= 5 ? "cassette" : n <= 12 ? "cd" : "phone"
-    };
-  });
-  var stationByN = (n) => STATIONS[n - 1];
-
-  // src/kit/color.js
-  function hexToRgb(hex) {
-    const h = hex.replace("#", "");
-    const v = h.length === 3 ? h.split("").map((c) => c + c).join("") : h;
-    return [parseInt(v.slice(0, 2), 16), parseInt(v.slice(2, 4), 16), parseInt(v.slice(4, 6), 16)];
+  // src/kit/canvas.js
+  var cache = /* @__PURE__ */ new Map();
+  function makeCanvas(w, h) {
+    const c = document.createElement("canvas");
+    c.width = Math.max(1, Math.round(w));
+    c.height = Math.max(1, Math.round(h));
+    return c;
   }
-  var rgbToHex = ([r, g, b]) => "#" + [r, g, b].map((x) => Math.round(Math.max(0, Math.min(255, x))).toString(16).padStart(2, "0")).join("");
-  function mix(a, b, t) {
-    const A = hexToRgb(a), Bc = hexToRgb(b);
-    return rgbToHex(A.map((x, i) => x + (Bc[i] - x) * t));
+  function baked(key, w, h, draw) {
+    let c = cache.get(key);
+    if (!c) {
+      c = makeCanvas(w, h);
+      draw(c.getContext("2d"), c);
+      cache.set(key, c);
+    }
+    return c;
   }
-  function rgba(hex, a = 1) {
-    const [r, g, b] = hexToRgb(hex);
-    return `rgba(${r},${g},${b},${a})`;
+  function memo(key, make) {
+    if (!cache.has(key)) cache.set(key, make());
+    return cache.get(key);
   }
-  var luminance = (hex) => {
-    const [r, g, b] = hexToRgb(hex);
-    return (0.2126 * r + 0.7152 * g + 0.0722 * b) / 255;
-  };
-  var readableOn = (bg, dark, light = "#f4efe4") => luminance(bg) < 0.42 ? light : dark;
 
   // src/kit/rng.js
   function hashStr(s) {
@@ -164,6 +126,130 @@
     h = Math.imul(h ^ h >>> 13, 1274126177);
     h ^= h >>> 16;
     return (h >>> 0) / 4294967296;
+  }
+
+  // src/kit/noise.js
+  var fade = (t) => t * t * t * (t * (t * 6 - 15) + 10);
+  function noise2(x, y, seed = 0) {
+    const xi = Math.floor(x), yi = Math.floor(y);
+    const xf = x - xi, yf = y - yi;
+    const u = fade(xf), v = fade(yf);
+    const a = hash2(xi, yi, seed), b = hash2(xi + 1, yi, seed);
+    const c = hash2(xi, yi + 1, seed), d = hash2(xi + 1, yi + 1, seed);
+    return a + (b - a) * u + (c - a) * v + (a - b - c + d) * u * v;
+  }
+  function fbm(x, y, seed = 0, oct = 4) {
+    let s = 0, amp = 0.5, f = 1, n = 0;
+    for (let i = 0; i < oct; i++) {
+      s += amp * noise2(x * f, y * f, seed + i * 17);
+      n += amp;
+      amp *= 0.5;
+      f *= 2.03;
+    }
+    return s / n;
+  }
+
+  // src/kit/color.js
+  function hexToRgb(hex) {
+    const h = hex.replace("#", "");
+    const v = h.length === 3 ? h.split("").map((c) => c + c).join("") : h;
+    return [parseInt(v.slice(0, 2), 16), parseInt(v.slice(2, 4), 16), parseInt(v.slice(4, 6), 16)];
+  }
+  var rgbToHex = ([r, g, b]) => "#" + [r, g, b].map((x) => Math.round(Math.max(0, Math.min(255, x))).toString(16).padStart(2, "0")).join("");
+  function mix(a, b, t) {
+    const A = hexToRgb(a), Bc = hexToRgb(b);
+    return rgbToHex(A.map((x, i) => x + (Bc[i] - x) * t));
+  }
+  function rgba(hex, a = 1) {
+    const [r, g, b] = hexToRgb(hex);
+    return `rgba(${r},${g},${b},${a})`;
+  }
+  var luminance = (hex) => {
+    const [r, g, b] = hexToRgb(hex);
+    return (0.2126 * r + 0.7152 * g + 0.0722 * b) / 255;
+  };
+  var readableOn = (bg, dark, light = "#f4efe4") => luminance(bg) < 0.42 ? light : dark;
+
+  // src/kit/paper.js
+  function paperTexture(w, h, { base = "#efe6d2", seed = 1, amount = 1, fibers = 260 } = {}) {
+    return baked(`paper|${w}|${h}|${base}|${seed}|${amount}|${fibers}`, w, h, (ctx) => {
+      const [r0, g0, b0] = hexToRgb(base);
+      const sw = Math.ceil(w / 8), sh = Math.ceil(h / 8);
+      const small = document.createElement("canvas");
+      small.width = sw;
+      small.height = sh;
+      const sctx = small.getContext("2d");
+      const img = sctx.createImageData(sw, sh);
+      for (let y = 0; y < sh; y++) for (let x = 0; x < sw; x++) {
+        const n = fbm(x / 22, y / 22, seed, 4) - 0.5;
+        const k = 1 + n * 0.09 * amount;
+        const i = (y * sw + x) * 4;
+        img.data[i] = r0 * k;
+        img.data[i + 1] = g0 * k;
+        img.data[i + 2] = b0 * k * 0.995;
+        img.data[i + 3] = 255;
+      }
+      sctx.putImageData(img, 0, 0);
+      ctx.imageSmoothingQuality = "high";
+      ctx.drawImage(small, 0, 0, w, h);
+      const T = 256;
+      const tile = document.createElement("canvas");
+      tile.width = T;
+      tile.height = T;
+      const tctx = tile.getContext("2d");
+      const ti = tctx.createImageData(T, T);
+      const R = rng("grain", seed);
+      for (let i = 0; i < T * T; i++) {
+        const v = R() < 0.5 ? 0 : 255;
+        ti.data[i * 4] = ti.data[i * 4 + 1] = ti.data[i * 4 + 2] = v;
+        ti.data[i * 4 + 3] = R() * 16 * amount;
+      }
+      tctx.putImageData(ti, 0, 0);
+      ctx.fillStyle = ctx.createPattern(tile, "repeat");
+      ctx.fillRect(0, 0, w, h);
+      const F = rng("fiber", seed);
+      ctx.lineCap = "round";
+      for (let i = 0; i < fibers * amount; i++) {
+        const x = F() * w, y = F() * h, a = F() * Math.PI * 2, L = 6 + F() * 26;
+        ctx.strokeStyle = F() < 0.5 ? "rgba(90,70,40,0.07)" : "rgba(255,255,255,0.10)";
+        ctx.lineWidth = 0.6 + F() * 0.8;
+        ctx.beginPath();
+        ctx.moveTo(x, y);
+        ctx.quadraticCurveTo(x + Math.cos(a) * L * 0.5 + F() * 4, y + Math.sin(a) * L * 0.5, x + Math.cos(a) * L, y + Math.sin(a) * L);
+        ctx.stroke();
+      }
+    });
+  }
+
+  // src/kit/brush.js
+  var glCanvas = null;
+  var cache2 = /* @__PURE__ */ new Map();
+  var brushAvailable = () => typeof window !== "undefined" && !!window.brush;
+  function bakeBrush(key, w, h, draw) {
+    if (cache2.has(key)) return cache2.get(key);
+    const out = makeCanvas(w, h);
+    const B2 = brushAvailable() ? window.brush : null;
+    if (B2) {
+      if (!glCanvas) glCanvas = document.createElement("canvas");
+      glCanvas.width = Math.round(w);
+      glCanvas.height = Math.round(h);
+      B2.load(glCanvas);
+      B2.clear();
+      const gl = glCanvas.getContext("webgl2");
+      gl.clearColor(0, 0, 0, 0);
+      gl.clear(gl.COLOR_BUFFER_BIT);
+      const seed = hashStr(key);
+      B2.seed(seed);
+      B2.noiseSeed(seed);
+      B2.push();
+      B2.translate(-w / 2, -h / 2);
+      draw(B2);
+      B2.pop();
+      B2.render();
+      out.getContext("2d").drawImage(glCanvas, 0, 0);
+    }
+    cache2.set(key, out);
+    return out;
   }
 
   // src/kit/text.js
@@ -262,235 +348,6 @@
     return Math.sin(Math.PI * t);
   };
   var TAU = Math.PI * 2;
-
-  // src/scenes/placeholder.js
-  function placeholderScene(st) {
-    const [bg, mid, ink, acc2] = st.palette;
-    const dark = ["#1c2140", "#2a2622", "#1b2230", "#5b5852"].includes(bg);
-    const far = mix(bg, mid, 0.35), near = mix(mid, ink, 0.25), road = mix(mid, ink, 0.45);
-    function layer(ctx, cam, parallax, spacing, seedKey, drawOne) {
-      const off = cam * parallax;
-      const i0 = Math.floor((X_MIN + off) / spacing) - 1, i1 = Math.ceil((X_MAX + off) / spacing) + 1;
-      for (let i = i0; i <= i1; i++) drawOne(i * spacing - off, rng(st.id, seedKey, i));
-    }
-    return {
-      id: st.id,
-      station: st,
-      drawBack(ctx, b, env) {
-        const cam = env.cam;
-        const g = ctx.createLinearGradient(0, 0, 0, ROAD_Y);
-        g.addColorStop(0, mix(bg, mid, dark ? 0.15 : 0.05));
-        g.addColorStop(1, mix(bg, mid, dark ? 0.45 : 0.3));
-        ctx.fillStyle = g;
-        ctx.fillRect(X_MIN - 2, 0, X_MAX - X_MIN + 4, ROAD_Y + 2);
-        layer(ctx, cam, 0.2, 230, "far", (x, R) => {
-          const h = R.range(120, 260);
-          ctx.fillStyle = far;
-          roundRect(ctx, x, ROAD_Y - 120 - h, R.range(120, 200), h + 130, 18);
-          ctx.fill();
-        });
-        layer(ctx, cam, 0.55, 310, "mid", (x, R) => {
-          const h = R.range(150, 300);
-          ctx.fillStyle = mix(far, near, 0.55);
-          poly(ctx, [[x, ROAD_Y], [x + 40, ROAD_Y - h], [x + 110, ROAD_Y - h + 30], [x + 150, ROAD_Y]]);
-          ctx.fill();
-        });
-        ctx.save();
-        font(ctx, 46, { family: SANS, weight: 700 });
-        ctx.textAlign = "center";
-        ctx.fillStyle = rgba(readableOn(bg, ink), 0.55);
-        ctx.fillText(`\u5360\u4F4D \xB7 \u7B2C ${st.n} \u7AD9 \xB7 ${st.style}`, 690, 150);
-        font(ctx, 40, { family: SERIF, weight: 400 });
-        ctx.fillText(`\u573A\u666F\uFF1A${st.scene}`, 690, 205);
-        ctx.restore();
-        ctx.fillStyle = road;
-        ctx.fillRect(X_MIN - 2, ROAD_Y, X_MAX - X_MIN + 4, 1e3 - ROAD_Y + 2);
-        ctx.fillStyle = mix(road, ink, 0.35);
-        ctx.fillRect(X_MIN - 2, ROAD_Y, X_MAX - X_MIN + 4, 6);
-        layer(ctx, cam, 1, 120, "dash", (x) => {
-          ctx.fillStyle = rgba(bg, 0.55);
-          ctx.fillRect(x, ROAD_Y + 60, 60, 8);
-        });
-        layer(ctx, cam, 1, 520, "post", (x, R) => {
-          ctx.fillStyle = near;
-          ctx.fillRect(x, ROAD_Y - 260, 16, 262);
-          circle(ctx, x + 8, ROAD_Y - 268, 22);
-          ctx.fillStyle = acc2;
-          ctx.fill();
-        });
-      },
-      drawFront(ctx, b, env) {
-        const k = smoothstep(GAG - 0.15, GAG + 0.1, b) * (1 - smoothstep(GAG + 4 - 0.2, GAG + 4, b));
-        if (k <= 0.01) return;
-        const pul = 1 + [0, 1, 2, 3].reduce((a, k2) => a + 0.08 * pulse(GAG + k2, GAG + k2 + 1, b), 0);
-        ctx.save();
-        ctx.globalAlpha = k;
-        ctx.translate(CHAR_X, ROAD_Y - 190);
-        ctx.scale(pul, pul);
-        ctx.strokeStyle = acc2;
-        ctx.lineWidth = 8;
-        for (let i = 0; i < 12; i++) {
-          const a = i / 12 * Math.PI * 2;
-          ctx.beginPath();
-          ctx.moveTo(Math.cos(a) * 210, Math.sin(a) * 210);
-          ctx.lineTo(Math.cos(a) * 250, Math.sin(a) * 250);
-          ctx.stroke();
-        }
-        ctx.restore();
-        ctx.save();
-        ctx.globalAlpha = k;
-        font(ctx, 38, { family: SANS, weight: 700 });
-        const lines = wrap(ctx, `\u7B2C 3 \u5C0F\u8282\u7684\u6897\uFF1A${st.gag}`, 760);
-        const x = 520, y = 470;
-        roundRect(ctx, x - 24, y - 54, 808, lines.length * 52 + 40, 12);
-        ctx.fillStyle = rgba(mix(bg, "#ffffff", 0.5), 0.92);
-        ctx.fill();
-        ctx.strokeStyle = acc2;
-        ctx.lineWidth = 4;
-        ctx.stroke();
-        ctx.fillStyle = ink;
-        lines.forEach((l, i) => ctx.fillText(l, x, y + i * 52));
-        ctx.restore();
-      }
-    };
-  }
-  function wrap(ctx, str, maxW) {
-    const out = [];
-    let line = "";
-    for (const ch of str) {
-      if (ctx.measureText(line + ch).width > maxW) {
-        out.push(line);
-        line = ch;
-      } else line += ch;
-    }
-    if (line) out.push(line);
-    return out;
-  }
-
-  // src/kit/canvas.js
-  var cache = /* @__PURE__ */ new Map();
-  function makeCanvas(w, h) {
-    const c = document.createElement("canvas");
-    c.width = Math.max(1, Math.round(w));
-    c.height = Math.max(1, Math.round(h));
-    return c;
-  }
-  function baked(key, w, h, draw) {
-    let c = cache.get(key);
-    if (!c) {
-      c = makeCanvas(w, h);
-      draw(c.getContext("2d"), c);
-      cache.set(key, c);
-    }
-    return c;
-  }
-  function memo(key, make) {
-    if (!cache.has(key)) cache.set(key, make());
-    return cache.get(key);
-  }
-
-  // src/kit/noise.js
-  var fade = (t) => t * t * t * (t * (t * 6 - 15) + 10);
-  function noise2(x, y, seed = 0) {
-    const xi = Math.floor(x), yi = Math.floor(y);
-    const xf = x - xi, yf = y - yi;
-    const u = fade(xf), v = fade(yf);
-    const a = hash2(xi, yi, seed), b = hash2(xi + 1, yi, seed);
-    const c = hash2(xi, yi + 1, seed), d = hash2(xi + 1, yi + 1, seed);
-    return a + (b - a) * u + (c - a) * v + (a - b - c + d) * u * v;
-  }
-  function fbm(x, y, seed = 0, oct = 4) {
-    let s = 0, amp = 0.5, f = 1, n = 0;
-    for (let i = 0; i < oct; i++) {
-      s += amp * noise2(x * f, y * f, seed + i * 17);
-      n += amp;
-      amp *= 0.5;
-      f *= 2.03;
-    }
-    return s / n;
-  }
-
-  // src/kit/paper.js
-  function paperTexture(w, h, { base = "#efe6d2", seed = 1, amount = 1, fibers = 260 } = {}) {
-    return baked(`paper|${w}|${h}|${base}|${seed}|${amount}|${fibers}`, w, h, (ctx) => {
-      const [r0, g0, b0] = hexToRgb(base);
-      const sw = Math.ceil(w / 8), sh = Math.ceil(h / 8);
-      const small = document.createElement("canvas");
-      small.width = sw;
-      small.height = sh;
-      const sctx = small.getContext("2d");
-      const img = sctx.createImageData(sw, sh);
-      for (let y = 0; y < sh; y++) for (let x = 0; x < sw; x++) {
-        const n = fbm(x / 22, y / 22, seed, 4) - 0.5;
-        const k = 1 + n * 0.09 * amount;
-        const i = (y * sw + x) * 4;
-        img.data[i] = r0 * k;
-        img.data[i + 1] = g0 * k;
-        img.data[i + 2] = b0 * k * 0.995;
-        img.data[i + 3] = 255;
-      }
-      sctx.putImageData(img, 0, 0);
-      ctx.imageSmoothingQuality = "high";
-      ctx.drawImage(small, 0, 0, w, h);
-      const T = 256;
-      const tile = document.createElement("canvas");
-      tile.width = T;
-      tile.height = T;
-      const tctx = tile.getContext("2d");
-      const ti = tctx.createImageData(T, T);
-      const R = rng("grain", seed);
-      for (let i = 0; i < T * T; i++) {
-        const v = R() < 0.5 ? 0 : 255;
-        ti.data[i * 4] = ti.data[i * 4 + 1] = ti.data[i * 4 + 2] = v;
-        ti.data[i * 4 + 3] = R() * 16 * amount;
-      }
-      tctx.putImageData(ti, 0, 0);
-      ctx.fillStyle = ctx.createPattern(tile, "repeat");
-      ctx.fillRect(0, 0, w, h);
-      const F = rng("fiber", seed);
-      ctx.lineCap = "round";
-      for (let i = 0; i < fibers * amount; i++) {
-        const x = F() * w, y = F() * h, a = F() * Math.PI * 2, L = 6 + F() * 26;
-        ctx.strokeStyle = F() < 0.5 ? "rgba(90,70,40,0.07)" : "rgba(255,255,255,0.10)";
-        ctx.lineWidth = 0.6 + F() * 0.8;
-        ctx.beginPath();
-        ctx.moveTo(x, y);
-        ctx.quadraticCurveTo(x + Math.cos(a) * L * 0.5 + F() * 4, y + Math.sin(a) * L * 0.5, x + Math.cos(a) * L, y + Math.sin(a) * L);
-        ctx.stroke();
-      }
-    });
-  }
-
-  // src/kit/brush.js
-  var glCanvas = null;
-  var cache2 = /* @__PURE__ */ new Map();
-  var brushAvailable = () => typeof window !== "undefined" && !!window.brush;
-  function bakeBrush(key, w, h, draw) {
-    if (cache2.has(key)) return cache2.get(key);
-    const out = makeCanvas(w, h);
-    const B2 = brushAvailable() ? window.brush : null;
-    if (B2) {
-      if (!glCanvas) glCanvas = document.createElement("canvas");
-      glCanvas.width = Math.round(w);
-      glCanvas.height = Math.round(h);
-      B2.load(glCanvas);
-      B2.clear();
-      const gl = glCanvas.getContext("webgl2");
-      gl.clearColor(0, 0, 0, 0);
-      gl.clear(gl.COLOR_BUFFER_BIT);
-      const seed = hashStr(key);
-      B2.seed(seed);
-      B2.noiseSeed(seed);
-      B2.push();
-      B2.translate(-w / 2, -h / 2);
-      draw(B2);
-      B2.pop();
-      B2.render();
-      out.getContext("2d").drawImage(glCanvas, 0, 0);
-    }
-    cache2.set(key, out);
-    return out;
-  }
 
   // src/rig/styles.js
   var STATION_STYLE = {
@@ -1296,6 +1153,152 @@
     ctx.restore();
   }
 
+  // src/scenes/placeholder.js
+  function placeholderScene(st) {
+    const [bg, mid, ink, acc2] = st.palette;
+    const dark = ["#1c2140", "#2a2622", "#1b2230", "#5b5852"].includes(bg);
+    const far = mix(bg, mid, 0.35), near = mix(mid, ink, 0.25), road = mix(mid, ink, 0.45);
+    function layer(ctx, cam, parallax, spacing, seedKey, drawOne) {
+      const off = cam * parallax;
+      const i0 = Math.floor((X_MIN + off) / spacing) - 1, i1 = Math.ceil((X_MAX + off) / spacing) + 1;
+      for (let i = i0; i <= i1; i++) drawOne(i * spacing - off, rng(st.id, seedKey, i));
+    }
+    return {
+      id: st.id,
+      station: st,
+      drawBack(ctx, b, env) {
+        const cam = env.cam;
+        const g = ctx.createLinearGradient(0, 0, 0, ROAD_Y);
+        g.addColorStop(0, mix(bg, mid, dark ? 0.15 : 0.05));
+        g.addColorStop(1, mix(bg, mid, dark ? 0.45 : 0.3));
+        ctx.fillStyle = g;
+        ctx.fillRect(X_MIN - 2, 0, X_MAX - X_MIN + 4, ROAD_Y + 2);
+        layer(ctx, cam, 0.2, 230, "far", (x, R) => {
+          const h = R.range(120, 260);
+          ctx.fillStyle = far;
+          roundRect(ctx, x, ROAD_Y - 120 - h, R.range(120, 200), h + 130, 18);
+          ctx.fill();
+        });
+        layer(ctx, cam, 0.55, 310, "mid", (x, R) => {
+          const h = R.range(150, 300);
+          ctx.fillStyle = mix(far, near, 0.55);
+          poly(ctx, [[x, ROAD_Y], [x + 40, ROAD_Y - h], [x + 110, ROAD_Y - h + 30], [x + 150, ROAD_Y]]);
+          ctx.fill();
+        });
+        ctx.save();
+        font(ctx, 46, { family: SANS, weight: 700 });
+        ctx.textAlign = "center";
+        ctx.fillStyle = rgba(readableOn(bg, ink), 0.55);
+        ctx.fillText(`\u5360\u4F4D \xB7 \u7B2C ${st.n} \u7AD9 \xB7 ${st.style}`, 690, 150);
+        font(ctx, 40, { family: SERIF, weight: 400 });
+        ctx.fillText(`\u573A\u666F\uFF1A${st.scene}`, 690, 205);
+        ctx.restore();
+        ctx.fillStyle = road;
+        ctx.fillRect(X_MIN - 2, ROAD_Y, X_MAX - X_MIN + 4, 1e3 - ROAD_Y + 2);
+        ctx.fillStyle = mix(road, ink, 0.35);
+        ctx.fillRect(X_MIN - 2, ROAD_Y, X_MAX - X_MIN + 4, 6);
+        layer(ctx, cam, 1, 120, "dash", (x) => {
+          ctx.fillStyle = rgba(bg, 0.55);
+          ctx.fillRect(x, ROAD_Y + 60, 60, 8);
+        });
+        layer(ctx, cam, 1, 520, "post", (x, R) => {
+          ctx.fillStyle = near;
+          ctx.fillRect(x, ROAD_Y - 260, 16, 262);
+          circle(ctx, x + 8, ROAD_Y - 268, 22);
+          ctx.fillStyle = acc2;
+          ctx.fill();
+        });
+      },
+      drawFront(ctx, b, env) {
+        const k = smoothstep(GAG - 0.15, GAG + 0.1, b) * (1 - smoothstep(GAG + 4 - 0.2, GAG + 4, b));
+        if (k <= 0.01) return;
+        const pul = 1 + [0, 1, 2, 3].reduce((a, k2) => a + 0.08 * pulse(GAG + k2, GAG + k2 + 1, b), 0);
+        ctx.save();
+        ctx.globalAlpha = k;
+        ctx.translate(CHAR_X, ROAD_Y - 190);
+        ctx.scale(pul, pul);
+        ctx.strokeStyle = acc2;
+        ctx.lineWidth = 8;
+        for (let i = 0; i < 12; i++) {
+          const a = i / 12 * Math.PI * 2;
+          ctx.beginPath();
+          ctx.moveTo(Math.cos(a) * 210, Math.sin(a) * 210);
+          ctx.lineTo(Math.cos(a) * 250, Math.sin(a) * 250);
+          ctx.stroke();
+        }
+        ctx.restore();
+        ctx.save();
+        ctx.globalAlpha = k;
+        font(ctx, 38, { family: SANS, weight: 700 });
+        const lines = wrap(ctx, `\u7B2C 3 \u5C0F\u8282\u7684\u6897\uFF1A${st.gag}`, 760);
+        const x = 520, y = 470;
+        roundRect(ctx, x - 24, y - 54, 808, lines.length * 52 + 40, 12);
+        ctx.fillStyle = rgba(mix(bg, "#ffffff", 0.5), 0.92);
+        ctx.fill();
+        ctx.strokeStyle = acc2;
+        ctx.lineWidth = 4;
+        ctx.stroke();
+        ctx.fillStyle = ink;
+        lines.forEach((l, i) => ctx.fillText(l, x, y + i * 52));
+        ctx.restore();
+      }
+    };
+  }
+  function wrap(ctx, str, maxW) {
+    const out = [];
+    let line = "";
+    for (const ch of str) {
+      if (ctx.measureText(line + ch).width > maxW) {
+        out.push(line);
+        line = ch;
+      } else line += ch;
+    }
+    if (line) out.push(line);
+    return out;
+  }
+
+  // src/data/stations.js
+  var raw = [
+    [2e3, "Jay", "Jay", "\u53EF\u7231\u5973\u4EBA", "\u9752\u6625\u8857\u89D2", "\u6F2B\u753B\u7F51\u70B9\u5206\u955C", "\u4ED6\u4E00\u56DE\u5934\uFF08\u5B9A\u683C\u6362\u6210\u6B63\u9762\u7AD9\u7ACB\u5E27\uFF09\uFF0C\u80CC\u666F\u77AC\u95F4\u94FA\u6EE1\u5C11\u5973\u6F2B\u753B\u95EA\u5149\u82B1\u6735\uFF0C\u4E0B\u4E00\u62CD\u590D\u539F", ["#f4efe4", "#c9c2b4", "#26232a", "#e8467c"]],
+    [2001, "\u8303\u7279\u897F", "Fantasy", "\u7231\u5728\u897F\u5143\u524D", "\u53E4\u5DF4\u6BD4\u4F26\u57CE\u5899", "\u4E24\u6CB3\u6D41\u57DF\u6D6E\u96D5", "\u6D6E\u96D5\u91CC\u4EBA\u4EBA\u4FA7\u8EAB\u884C\u8FDB\uFF0C\u53EA\u6709\u5B9A\u683C\u7684\u4ED6\u6B63\u9762\u7AD9\u7740\uFF1B\u4E0B\u4E00\u62CD\u4ED6\u4E5F\u88AB\u8FEB\u4FA7\u7740\u8EAB\u5B50\u7EE7\u7EED\u8D70", ["#e7d3a8", "#c49a5c", "#4a3320", "#2f6fb0"]],
+    [2002, "\u516B\u5EA6\u7A7A\u95F4", "The Eight Dimensions", "\u7237\u7237\u6CE1\u7684\u8336", "\u5C71\u95F4\u8336\u68DA", "\u6C34\u58A8", "\u8001\u4EBA\u659F\u8336\uFF0C\u8336\u6C34\u5012\u6210\u4E00\u9053\u58A8\u7EBF\u4E00\u8DEF\u6D41\u5230\u8DEF\u4E0A\uFF0C\u4ED6\u8E29\u7740\u58A8\u7EBF\u8D70", ["#f2eee3", "#a9a69c", "#1d1d1b", "#7a8c5a"]],
+    [2003, "\u53F6\u60E0\u7F8E", "Yeh Hui-Mei", "\u4EE5\u7236\u4E4B\u540D", "\u767D\u5929\u7684\u54E5\u7279\u6559\u5802\uFF1A\u9633\u5149\u900F\u8FC7\u5F69\u8272\u73BB\u7483\uFF0C\u5728\u6D45\u8272\u77F3\u5899\u548C\u5730\u9762\u6295\u4E0B\u5F69\u8272\u5149\u6591", "\u5F69\u8272\u73BB\u7483\uFF08\u767D\u5929\u3001\u94C5\u6761\u7EC6\uFF09", "\u4ED6\u8D70\u8FDB\u7A97\u683C\uFF0C\u88AB\u7EC6\u94C5\u6761\u5207\u6210\u4E00\u5757\u5757\u5F69\u8272\u73BB\u7483\uFF0C\u5F3A\u62CD\u4E0A\u4E00\u675F\u9633\u5149\u6253\u4E0B", ["#efe9dc", "#c9b99a", "#3c3a44", "#d9a73a"]],
+    [2004, "\u4E03\u91CC\u9999", "Common Jasmine Orange", "\u6B62\u6218\u4E4B\u6B87", "\u5E9F\u589F\u91CC\u7684\u767D\u9E3D", "\u94C5\u7B14\u901F\u5199 + \u8272\u5F69\u6655\u5F00", "\u94A2\u76D4\u91CC\u98DE\u51FA\u4E00\u53EA\u767D\u9E3D\uFF0C\u9E3D\u5B50\u98DE\u8FC7\u7684\u5730\u65B9\u989C\u8272\u50CF\u6C34\u5F69\u4E00\u6837\u6655\u5F00\uFF0C\u4E24\u62CD\u5185\u6574\u5E45\u753B\u4ECE\u7070\u8272\u901F\u5199\u53D8\u6210\u5F69\u8272", ["#f3ecdc", "#b4ada1", "#5f5a52", "#8fb8d8"]],
+    [2005, "\u5341\u4E00\u6708\u7684\u8427\u90A6", "November's Chopin", "\u591C\u66F2", "\u6708\u591C\u91CC\u7684\u4E00\u67B6\u94A2\u7434\uFF08\u5927\u800C\u4EAE\u7684\u6708\u4EAE\uFF09", "\u767D\u7EB8\u84DD\u9ED1\u58A8\u6C34\u94A2\u7B14\u753B\uFF08\u591C\u8272\u53EA\u7528\u5929\u7A7A\u7A00\u758F\u6392\u7EBF\uFF09", "\u7434\u76D6\u4E0A\u7684\u4E4C\u9E26\u6392\u6210\u4E00\u884C\u97F3\u7B26\uFF0C\u5F3A\u62CD\u4E0A\u540C\u65F6\u626D\u5934", ["#fbfaf6", "#c9d0dc", "#1f2a44", "#6c7a96"]],
+    [2006, "\u4F9D\u7136\u8303\u7279\u897F", "Still Fantasy", "\u591C\u7684\u7B2C\u4E03\u7AE0", "\u7EF4\u591A\u5229\u4E9A\u6D45\u7070\u8584\u96FE\uFF0C\u4FA6\u63A2\uFF0C\u7164\u6C14\u706F\u6696\u9EC4\u5149\u6655", "\u94DC\u7248\u753B\uFF08\u7C73\u9EC4\u7EB8\u3001\u68D5\u8910\u6CB9\u58A8\uFF09", "\u4E00\u53EA\u653E\u5927\u955C\u4ECE\u753B\u5916\u4F38\u8FDB\u6765\uFF0C\u5BF9\u51C6\u4ED6\u8033\u6735\u4E0A\u7684\u8033\u673A", ["#efe3c4", "#c9b48e", "#5a3a22", "#e8b54a"]],
+    [2007, "\u6211\u5F88\u5FD9", "On the Run!", "\u6700\u957F\u7684\u7535\u5F71", "\u8001\u7535\u5F71\u9662\uFF1A\u53D1\u5149\u7684\u94F6\u5E55\u5360\u753B\u9762\u5927\u90E8\u5206\uFF0C\u89C2\u4F17\u526A\u5F71\u53EA\u5728\u5E95\u90E8\u4E00\u7A84\u6761", "\u80F6\u7247\u5212\u75D5 + 4:3 \u753B\u5E45", "\u753B\u5E45\u7A81\u7136\u7F29\u6210 4:3\uFF0C\u4ED6\u8D70\u5728\u94F6\u5E55\u91CC\uFF0C\u524D\u6392\u89C2\u4F17\u526A\u5F71\u4E00\u8D77\u626D\u5934", ["#f2ead2", "#cfc3a4", "#2a2622", "#e8d9b0"]],
+    [2008, "\u9B54\u6770\u5EA7", "Capricorn", "\u4E54\u514B\u53D4\u53D4", "\u9A6C\u620F\u56E2\u5C0F\u4E11", "19 \u4E16\u7EAA\u77F3\u7248\u753B\u6D77\u62A5", "\u5C0F\u4E11\u9012\u6765\u4E00\u53EA\u6C14\u7403\uFF0C\u5B9A\u683C\u7684\u4ED6\u88AB\u6574\u4E2A\u5E26\u7740\u98D8\u8D77\u534A\u62CD\uFF0C\u5F3A\u62CD\u843D\u56DE", ["#efe0bf", "#d0533c", "#2b2a3a", "#2f7d6d"]],
+    [2010, "\u8DE8\u65F6\u4EE3", "The Era", "\u96E8\u4E0B\u4E00\u6574\u665A", "\u508D\u665A\u84DD\u8C03\u65F6\u523B\u7684\u57CE\u5E02\u8857\u9053\uFF0C\u8DEF\u9762\u6620\u7740\u9713\u8679\u548C\u8F66\u706F\u7684\u5F69\u8272\u5012\u5F71", "\u900F\u660E\u6C34\u5F69\u6655\u67D3", "\u96E8\u6C34\u628A\u989C\u6599\u6655\u5F00\uFF0C\u8FDE\u4ED6\u7684\u4F1E\u90FD\u5316\u6210\u4E00\u6EE9\u989C\u8272\uFF0C\u4E0B\u4E00\u62CD\u6536\u56DE", ["#dfe8f2", "#8fb0d4", "#3c5577", "#f08a6a"]],
+    [2011, "\u60CA\u53F9\u53F7", "Wow!", "\u8FF7\u9B42\u66F2", "\u4E2D\u56FD\u53E4\u4EE3\u76AE\u5F71\u620F", "\u76AE\u5F71", "\u6CB9\u706F\u4E00\u6643\uFF0C\u4ED6\u7684\u76AE\u5F71\uFF08\u540C\u4E00\u5E27\u526A\u5F71\uFF09\u4E00\u5206\u4E3A\u4E09\u5DE6\u53F3\u9519\u5F00\uFF0C\u5F3A\u62CD\u4E0A\u5408\u56DE\u4E00\u4E2A", ["#f0c77a", "#c46a2c", "#3a1d10", "#b8322a"]],
+    [2012, "\u5341\u4E8C\u65B0\u4F5C", "Opus 12", "\u7EA2\u5C18\u5BA2\u6808", "\u6B66\u4FA0\u5BA2\u6808", "\u6728\u7248\u5E74\u753B", "\u5E97\u5C0F\u4E8C\u628A\u4ED6\u5F53\u6210\u5927\u4FA0\uFF0C\u62B1\u62F3\u4F5C\u63D6", ["#f1e3c4", "#d4a02f", "#2d1f18", "#c23b2b"]],
+    [2014, "\u54CE\u5466\uFF0C\u4E0D\u9519\u54E6", "Aiyo, Not Bad", "\u978B\u5B50\u7279\u5927\u53F7", "\u8721\u7B14\u753B\u7684\u5C0F\u9547", "\u513F\u7AE5\u8721\u7B14\u753B", "\u6BD4\u4F8B\u5168\u9519\uFF0C\u4ED6\u811A\u4E0B\u90A3\u4E00\u622A\u88AB\u5355\u72EC\u653E\u5927\u6210\u7279\u5927\u53F7\u978B\u5B50\uFF0C\u4E00\u6B65\u8DE8\u8FC7\u534A\u4E2A\u753B\u9762", ["#fbf7ec", "#8cc06a", "#3a3a8c", "#f2a33a"]],
+    [2016, "\u5468\u6770\u4F26\u7684\u5E8A\u8FB9\u6545\u4E8B", "Jay Chou's Bedtime Stories", "\u524D\u4E16\u60C5\u4EBA", "\u6E29\u99A8\u7684\u7236\u5973\u573A\u666F", "\u7AE5\u4E66\u7ED8\u672C\u6C34\u5F69", "\u5C0F\u5973\u5B69\u8E2E\u811A\u7ED9\u5B9A\u683C\u7AD9\u7740\u7684\u4ED6\u6234\u4E0A\u4E00\u9876\u7EB8\u7687\u51A0", ["#fbf1e4", "#e6b8a2", "#5a4a5e", "#e8c25a"]],
+    [2022, "\u6700\u4F1F\u5927\u7684\u4F5C\u54C1", "Greatest Works of Art", "\u8FD8\u5728\u6D41\u6D6A", "\u516C\u8DEF\u65C5\u884C", "\u590D\u53E4\u660E\u4FE1\u7247", "\u4E00\u4E2A\u90AE\u6233\u300C\u556A\u300D\u5730\u76D6\u5728\u4ED6\u8EAB\u4E0A\uFF0C\u65E5\u671F 2022", ["#f0e2c4", "#5aa0b4", "#3a2c24", "#d6643a"]],
+    [2026, "\u592A\u9633\u4E4B\u5B50", "Children of the Sun", "\u90A3\u5929\u4E0B\u96E8\u4E86", "\u767D\u5929\u9635\u96E8\u91CC\u7684\u57CE\u5E02\u8857\u8FB9\u516C\u4EA4\u7AD9\u53F0\uFF0C\u4E00\u7537\u4E00\u5973\u5404\u6491\u4E00\u628A\u989C\u8272\u9C9C\u660E\u7684\u4F1E\u7B49\u8F66", "\u7535\u5F71\u611F\u539A\u6D82\u63D2\u753B\uFF08\u767D\u5929\u3001\u660E\u4EAE\u7684\u6D45\u7070\u5929\u7A7A\u3001\u67D4\u548C\u5747\u5300\u7684\u5149\uFF09", "\u516C\u4EA4\u8F66\u9A76\u8FC7\u6E85\u8D77\u6C34\u82B1\uFF0C\u4E24\u628A\u4F1E\u5728\u5F3A\u62CD\u4E0A\u540C\u65F6\u4E00\u6B6A", ["#e7ebee", "#a9b6c0", "#3d4a56", "#e8553f"]]
+  ];
+  var EN_CHECKED = new Set(Array.from({ length: 16 }, (_, i) => i + 1));
+  var STATIONS = raw.map(([year, albumZh, albumEn, song, scene, style, gag, palette], i) => {
+    const n = i + 1;
+    return {
+      n,
+      id: `s${String(n).padStart(2, "0")}`,
+      year,
+      albumZh,
+      albumEn,
+      enChecked: EN_CHECKED.has(n),
+      song,
+      scene,
+      style,
+      gag,
+      palette,
+      player: n <= 5 ? "cassette" : n <= 12 ? "cd" : "phone"
+    };
+  });
+  var stationByN = (n) => STATIONS[n - 1];
+
+  // src/scenes/s01.js
+  var s01 = placeholderScene(stationByN(1));
+
   // src/kit/strip.js
   var CAM_MIN = -520;
   var CAM_MAX = 2700;
@@ -1900,6 +1903,12 @@
       palette: { body: "#d8b47e", label: CREAM, window: LAPIS_D, accent: LAPIS, tape: "#6b4a2b", ink: BROWN }
     }
   };
+
+  // src/scenes/s03.js
+  var s03 = placeholderScene(stationByN(3));
+
+  // src/scenes/s04.js
+  var s04 = placeholderScene(stationByN(4));
 
   // src/kit/sketch.js
   function sketchStrip(key, p, { fills, lines, y0 = 0, y1 = 1e3 }) {
@@ -2668,6 +2677,15 @@
     }
   };
 
+  // src/scenes/s06.js
+  var s06 = placeholderScene(stationByN(6));
+
+  // src/scenes/s07.js
+  var s07 = placeholderScene(stationByN(7));
+
+  // src/scenes/s08.js
+  var s08 = placeholderScene(stationByN(8));
+
   // src/kit/etch.js
   function grainPattern(ctx, { color = "20,18,30", density = 0.12, size = 256, seed = 7, alpha = 0.35 } = {}) {
     const tile = memo(`grain|${color}|${density}|${size}|${seed}|${alpha}`, () => {
@@ -3242,12 +3260,29 @@
     }
   };
 
+  // src/scenes/s10.js
+  var s10 = placeholderScene(stationByN(10));
+
+  // src/scenes/s11.js
+  var s11 = placeholderScene(stationByN(11));
+
+  // src/scenes/s12.js
+  var s12 = placeholderScene(stationByN(12));
+
+  // src/scenes/s13.js
+  var s13 = placeholderScene(stationByN(13));
+
+  // src/scenes/s14.js
+  var s14 = placeholderScene(stationByN(14));
+
+  // src/scenes/s15.js
+  var s15 = placeholderScene(stationByN(15));
+
+  // src/scenes/s16.js
+  var s16 = placeholderScene(stationByN(16));
+
   // src/scenes/index.js
-  var SCENES = { intro };
-  for (const st of STATIONS) SCENES[st.id] = placeholderScene(st);
-  SCENES.s02 = s02;
-  SCENES.s05 = s05;
-  SCENES.s09 = s09;
+  var SCENES = { intro, s01, s02, s03, s04, s05, s06, s07, s08, s09, s10, s11, s12, s13, s14, s15, s16 };
 
   // src/main/walk.js
   var DOWNBEATS = sections.filter((s) => s.station).map((s) => s.start);
@@ -3738,9 +3773,33 @@
     const { scene, b } = env;
     ctx.save();
     applyUnits(ctx);
-    if (back) scene.drawBack(ctx, b, env);
-    if (front && scene.drawFront) scene.drawFront(ctx, b, env);
+    guard(scene, () => {
+      if (back) scene.drawBack(ctx, b, env);
+      if (front && scene.drawFront) scene.drawFront(ctx, b, env);
+    }, ctx);
     ctx.restore();
+  }
+  var reported = /* @__PURE__ */ new Set();
+  function guard(scene, fn, ctx) {
+    try {
+      return fn();
+    } catch (e) {
+      if (!reported.has(scene.id)) {
+        reported.add(scene.id);
+        console.error(`[${scene.id}] \u6E32\u67D3\u51FA\u9519\uFF1A`, e && e.stack ? e.stack : e);
+      }
+      if (ctx) {
+        ctx.save();
+        ctx.setTransform(1, 0, 0, 1, 0, 0);
+        ctx.fillStyle = "rgba(200,0,0,0.85)";
+        ctx.fillRect(40, 300, 900, 90);
+        ctx.fillStyle = "#fff";
+        ctx.font = "40px sans-serif";
+        ctx.fillText(`${scene.id} \u6E32\u67D3\u51FA\u9519\uFF1A${String(e && e.message).slice(0, 40)}`, 60, 360);
+        ctx.restore();
+      }
+      return void 0;
+    }
   }
   function drawFigureFor(ctx, env, { forceStand = false } = {}) {
     const { scene, b } = env;
@@ -3751,8 +3810,7 @@
     ctx.translate(fig.x, fig.y);
     if (fig.sx !== 1 || fig.scale !== 1) ctx.scale(fig.scale * fig.sx, fig.scale);
     if (fig.alpha !== void 0) ctx.globalAlpha = fig.alpha;
-    if (scene.drawFigure) scene.drawFigure(ctx, fig, b, env);
-    else drawWalker(ctx, fig);
+    guard(scene, () => scene.drawFigure ? scene.drawFigure(ctx, fig, b, env) : drawWalker(ctx, fig), ctx);
     ctx.restore();
   }
   function figurePlacement(env, { forceStand = false } = {}) {
@@ -3832,6 +3890,19 @@
     const R = frameRect(x);
     const envPrev = envFor(prev, gb);
     const envNext = envFor(next, gb);
+    if (envPrev.scene.transitionOut) {
+      const done = guard(envPrev.scene, () => envPrev.scene.transitionOut(ctx, {
+        x,
+        R,
+        envPrev,
+        envNext,
+        gb,
+        drawSceneLayers,
+        drawFigureFor,
+        drawDefaultFrame
+      }), ctx);
+      if (done) return;
+    }
     drawSceneLayers(ctx, envPrev, { front: false });
     drawSceneLayers(ctx, envPrev, { back: false });
     ctx.save();

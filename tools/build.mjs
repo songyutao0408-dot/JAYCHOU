@@ -25,5 +25,11 @@ if (args.watch) {
   await ctx.watch();
   console.log('监听 src/ 变化中…');
 } else {
-  await esbuild.build(opts);
+  // 先写到内存，再整体写入临时文件、改名替换：多人同时构建时不会读到写了一半的文件
+  const r = await esbuild.build({ ...opts, write: false });
+  const out = r.outputFiles[0];
+  const tmp = `${out.path}.${process.pid}.tmp`;
+  fs.writeFileSync(tmp, out.contents);
+  fs.renameSync(tmp, out.path);
+  console.log(`  ${path.relative(ROOT, out.path)}  ${(out.contents.length / 1024).toFixed(1)}kb`);
 }

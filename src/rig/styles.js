@@ -469,6 +469,11 @@ function watercolor(I, stops, light) {
   return O;
 }
 
+/** 场景可以注册自己的人物画风（在场景文件里调用，不用改这个文件）：registerStyle('s03-ink', (I) => ...) */
+export function registerStyle(name, fn) { STYLES[name] = fn; }
+// 给场景文件用的构件：浮点图像操作与几种现成的画风处理
+export { smoothColor, sobel, lumaArray, blur, outline, mapTone, hatchStyle, watercolor, rgbf, mixc, luma, clone, sstep };
+
 /** 处理后的帧（按 key 缓存）。 */
 export function styledFrame(key, src, style) {
   if (!style || style === 'none') return src;

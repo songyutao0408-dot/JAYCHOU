@@ -50,9 +50,21 @@ export function drawSceneLayers(ctx, env, { back = true, front = true } = {}) {
   const { scene, b } = env;
   ctx.save();
   applyUnits(ctx);
-  if (back) scene.drawBack(ctx, b, env);
-  if (front && scene.drawFront) scene.drawFront(ctx, b, env);
+  guard(scene, () => {
+    if (back) scene.drawBack(ctx, b, env);
+    if (front && scene.drawFront) scene.drawFront(ctx, b, env);
+  }, ctx);
   ctx.restore();
+}
+
+// 某一站的代码出错时只影响这一站：画一块错误提示，其他站照常渲染
+const reported = new Set();
+export function guard(scene, fn, ctx) {
+  try { return fn(); } catch (e) {
+    if (!reported.has(scene.id)) { reported.add(scene.id); console.error(`[${scene.id}] 渲染出错：`, e && e.stack ? e.stack : e); }
+    if (ctx) { ctx.save(); ctx.setTransform(1, 0, 0, 1, 0, 0); ctx.fillStyle = 'rgba(200,0,0,0.85)'; ctx.fillRect(40, 300, 900, 90); ctx.fillStyle = '#fff'; ctx.font = '40px sans-serif'; ctx.fillText(`${scene.id} 渲染出错：${String(e && e.message).slice(0, 40)}`, 60, 360); ctx.restore(); }
+    return undefined;
+  }
 }
 
 /** 在像素空间画人物（站位固定在 CHAR_PX, ROAD_PX）。 */
@@ -65,8 +77,7 @@ export function drawFigureFor(ctx, env, { forceStand = false } = {}) {
   ctx.translate(fig.x, fig.y);
   if (fig.sx !== 1 || fig.scale !== 1) ctx.scale(fig.scale * fig.sx, fig.scale);
   if (fig.alpha !== undefined) ctx.globalAlpha = fig.alpha;
-  if (scene.drawFigure) scene.drawFigure(ctx, fig, b, env);
-  else drawWalker(ctx, fig);
+  guard(scene, () => (scene.drawFigure ? scene.drawFigure(ctx, fig, b, env) : drawWalker(ctx, fig)), ctx);
   ctx.restore();
 }
 
@@ -158,6 +169,12 @@ function drawTransition(ctx, tr, gb) {
   const R = frameRect(x);
   const envPrev = envFor(prev, gb);
   const envNext = envFor(next, gb);
+  // 离场的那一站可以自定义转场（比如第 14→15 站撕页折成明信片）：返回 true 表示已经画完
+  if (envPrev.scene.transitionOut) {
+    const done = guard(envPrev.scene, () => envPrev.scene.transitionOut(ctx, { x, R, envPrev, envNext, gb,
+      drawSceneLayers, drawFigureFor, drawDefaultFrame }), ctx);
+    if (done) return;
+  }
   // 旧站铺满
   drawSceneLayers(ctx, envPrev, { front: false });
   drawSceneLayers(ctx, envPrev, { back: false });
