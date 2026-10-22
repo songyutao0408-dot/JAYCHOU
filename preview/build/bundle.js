@@ -472,14 +472,14 @@
     return O;
   }
   function sobel(L, w, h) {
-    const M = new Float32Array(w * h);
+    const M2 = new Float32Array(w * h);
     const at = (x, y) => L[Math.min(h - 1, Math.max(0, y)) * w + Math.min(w - 1, Math.max(0, x))];
     for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) {
       const gx = at(x + 1, y - 1) + 2 * at(x + 1, y) + at(x + 1, y + 1) - at(x - 1, y - 1) - 2 * at(x - 1, y) - at(x - 1, y + 1);
       const gy = at(x - 1, y + 1) + 2 * at(x, y + 1) + at(x + 1, y + 1) - at(x - 1, y - 1) - 2 * at(x, y - 1) - at(x + 1, y - 1);
-      M[y * w + x] = Math.hypot(gx, gy);
+      M2[y * w + x] = Math.hypot(gx, gy);
     }
-    return M;
+    return M2;
   }
   function lumaArray(I, gamma = 1) {
     const L = new Float32Array(I.w * I.h);
@@ -1153,109 +1153,23 @@
     ctx.restore();
   }
 
-  // src/scenes/placeholder.js
-  function placeholderScene(st) {
-    const [bg, mid, ink, acc2] = st.palette;
-    const dark = ["#1c2140", "#2a2622", "#1b2230", "#5b5852"].includes(bg);
-    const far = mix(bg, mid, 0.35), near = mix(mid, ink, 0.25), road = mix(mid, ink, 0.45);
-    function layer(ctx, cam, parallax, spacing, seedKey, drawOne) {
-      const off = cam * parallax;
-      const i0 = Math.floor((X_MIN + off) / spacing) - 1, i1 = Math.ceil((X_MAX + off) / spacing) + 1;
-      for (let i = i0; i <= i1; i++) drawOne(i * spacing - off, rng(st.id, seedKey, i));
-    }
-    return {
-      id: st.id,
-      station: st,
-      drawBack(ctx, b, env) {
-        const cam = env.cam;
-        const g = ctx.createLinearGradient(0, 0, 0, ROAD_Y);
-        g.addColorStop(0, mix(bg, mid, dark ? 0.15 : 0.05));
-        g.addColorStop(1, mix(bg, mid, dark ? 0.45 : 0.3));
-        ctx.fillStyle = g;
-        ctx.fillRect(X_MIN - 2, 0, X_MAX - X_MIN + 4, ROAD_Y + 2);
-        layer(ctx, cam, 0.2, 230, "far", (x, R) => {
-          const h = R.range(120, 260);
-          ctx.fillStyle = far;
-          roundRect(ctx, x, ROAD_Y - 120 - h, R.range(120, 200), h + 130, 18);
-          ctx.fill();
-        });
-        layer(ctx, cam, 0.55, 310, "mid", (x, R) => {
-          const h = R.range(150, 300);
-          ctx.fillStyle = mix(far, near, 0.55);
-          poly(ctx, [[x, ROAD_Y], [x + 40, ROAD_Y - h], [x + 110, ROAD_Y - h + 30], [x + 150, ROAD_Y]]);
-          ctx.fill();
-        });
-        ctx.save();
-        font(ctx, 46, { family: SANS, weight: 700 });
-        ctx.textAlign = "center";
-        ctx.fillStyle = rgba(readableOn(bg, ink), 0.55);
-        ctx.fillText(`\u5360\u4F4D \xB7 \u7B2C ${st.n} \u7AD9 \xB7 ${st.style}`, 690, 150);
-        font(ctx, 40, { family: SERIF, weight: 400 });
-        ctx.fillText(`\u573A\u666F\uFF1A${st.scene}`, 690, 205);
-        ctx.restore();
-        ctx.fillStyle = road;
-        ctx.fillRect(X_MIN - 2, ROAD_Y, X_MAX - X_MIN + 4, 1e3 - ROAD_Y + 2);
-        ctx.fillStyle = mix(road, ink, 0.35);
-        ctx.fillRect(X_MIN - 2, ROAD_Y, X_MAX - X_MIN + 4, 6);
-        layer(ctx, cam, 1, 120, "dash", (x) => {
-          ctx.fillStyle = rgba(bg, 0.55);
-          ctx.fillRect(x, ROAD_Y + 60, 60, 8);
-        });
-        layer(ctx, cam, 1, 520, "post", (x, R) => {
-          ctx.fillStyle = near;
-          ctx.fillRect(x, ROAD_Y - 260, 16, 262);
-          circle(ctx, x + 8, ROAD_Y - 268, 22);
-          ctx.fillStyle = acc2;
-          ctx.fill();
-        });
-      },
-      drawFront(ctx, b, env) {
-        const k = smoothstep(GAG - 0.15, GAG + 0.1, b) * (1 - smoothstep(GAG + 4 - 0.2, GAG + 4, b));
-        if (k <= 0.01) return;
-        const pul = 1 + [0, 1, 2, 3].reduce((a, k2) => a + 0.08 * pulse(GAG + k2, GAG + k2 + 1, b), 0);
-        ctx.save();
-        ctx.globalAlpha = k;
-        ctx.translate(CHAR_X, ROAD_Y - 190);
-        ctx.scale(pul, pul);
-        ctx.strokeStyle = acc2;
-        ctx.lineWidth = 8;
-        for (let i = 0; i < 12; i++) {
-          const a = i / 12 * Math.PI * 2;
-          ctx.beginPath();
-          ctx.moveTo(Math.cos(a) * 210, Math.sin(a) * 210);
-          ctx.lineTo(Math.cos(a) * 250, Math.sin(a) * 250);
-          ctx.stroke();
-        }
-        ctx.restore();
-        ctx.save();
-        ctx.globalAlpha = k;
-        font(ctx, 38, { family: SANS, weight: 700 });
-        const lines = wrap(ctx, `\u7B2C 3 \u5C0F\u8282\u7684\u6897\uFF1A${st.gag}`, 760);
-        const x = 520, y = 470;
-        roundRect(ctx, x - 24, y - 54, 808, lines.length * 52 + 40, 12);
-        ctx.fillStyle = rgba(mix(bg, "#ffffff", 0.5), 0.92);
-        ctx.fill();
-        ctx.strokeStyle = acc2;
-        ctx.lineWidth = 4;
-        ctx.stroke();
-        ctx.fillStyle = ink;
-        lines.forEach((l, i) => ctx.fillText(l, x, y + i * 52));
-        ctx.restore();
-      }
-    };
+  // src/kit/strip.js
+  var CAM_MIN = -520;
+  var CAM_MAX = 2700;
+  function strip(key, p, draw, { y0 = 0, y1 = 1e3, res = 1 } = {}) {
+    const x0 = Math.floor(X_MIN + CAM_MIN * p) - 20, x1 = Math.ceil(X_MAX + CAM_MAX * p) + 20;
+    const s = K * res;
+    const canvas = baked(`strip|${key}|${p}|${y0}|${y1}|${res}`, (x1 - x0) * s, (y1 - y0) * s, (ctx) => {
+      ctx.scale(s, s);
+      ctx.translate(-x0, -y0);
+      draw(ctx, x0, x1);
+    });
+    return { canvas, x0, x1, y0, y1, p };
   }
-  function wrap(ctx, str, maxW) {
-    const out = [];
-    let line = "";
-    for (const ch of str) {
-      if (ctx.measureText(line + ch).width > maxW) {
-        out.push(line);
-        line = ch;
-      } else line += ch;
-    }
-    if (line) out.push(line);
-    return out;
+  function drawStrip(ctx, S, cam) {
+    ctx.drawImage(S.canvas, S.x0 - cam * S.p, S.y0, S.x1 - S.x0, S.y1 - S.y0);
   }
+  var stripRange = (p) => [Math.floor(X_MIN + CAM_MIN * p) - 20, Math.ceil(X_MAX + CAM_MAX * p) + 20];
 
   // src/data/stations.js
   var raw = [
@@ -1297,25 +1211,1437 @@
   var stationByN = (n) => STATIONS[n - 1];
 
   // src/scenes/s01.js
-  var s01 = placeholderScene(stationByN(1));
-
-  // src/kit/strip.js
-  var CAM_MIN = -520;
-  var CAM_MAX = 2700;
-  function strip(key, p, draw, { y0 = 0, y1 = 1e3, res = 1 } = {}) {
-    const x0 = Math.floor(X_MIN + CAM_MIN * p) - 20, x1 = Math.ceil(X_MAX + CAM_MAX * p) + 20;
-    const s = K * res;
-    const canvas = baked(`strip|${key}|${p}|${y0}|${y1}|${res}`, (x1 - x0) * s, (y1 - y0) * s, (ctx) => {
-      ctx.scale(s, s);
-      ctx.translate(-x0, -y0);
-      draw(ctx, x0, x1);
+  var ST = stationByN(1);
+  var PAPER2 = "#fbfaf6";
+  var INK2 = "#151515";
+  var DARK = "#3a3a3a";
+  var T_CAN = GAG - 3;
+  var T_FLOWER = [GAG, GAG + 1];
+  var T_PANEL = [GAG + 1, GAG + 2];
+  var T_SWEAT = GAG + 1.5;
+  var T_CAT = GAG + 3;
+  var T_OUT2 = GAG + 4;
+  var GX = { poleA: -1100, mirror: -620, kiosk: -360, vm: 70, tree: 700, poleB: 1010, bike: 1520, poleC: 3100 };
+  var BASE = ROAD_Y - 2;
+  function toneTile(S, level, color) {
+    return memo(`s01-tile|${S}|${level.toFixed(3)}|${color}`, () => {
+      const c = makeCanvas(S, S);
+      const g = c.getContext("2d");
+      const r = Math.min(S * 0.36, S * Math.sqrt(level / (2 * Math.PI)));
+      g.fillStyle = color;
+      g.beginPath();
+      for (const [x, y] of [[0, 0], [S, 0], [0, S], [S, S], [S / 2, S / 2]]) {
+        g.moveTo(x + r, y);
+        g.arc(x, y, r, 0, TAU);
+      }
+      g.fill();
+      return c;
     });
-    return { canvas, x0, x1, y0, y1, p };
   }
-  function drawStrip(ctx, S, cam) {
-    ctx.drawImage(S.canvas, S.x0 - cam * S.p, S.y0, S.x1 - S.x0, S.y1 - S.y0);
+  var tone = (ctx, level, { S = 8, color = INK2 } = {}) => ctx.createPattern(toneTile(S, level, color), "repeat");
+  function toneGrad(ctx, x0, y0, x1, y1, f, { S = 8, color = INK2 } = {}) {
+    ctx.fillStyle = color;
+    ctx.beginPath();
+    const h = S / 2;
+    const ax = Math.floor(x0 / S) * S, ay = Math.floor(y0 / h) * h;
+    for (let j = 0, y = ay; y <= y1; j++, y += h) {
+      for (let x = ax + (Math.round(y / h) % 2 ? h : 0); x <= x1; x += S) {
+        const l = f(x, y);
+        if (l <= 0.01) continue;
+        const r = Math.min(S * 0.4, S * Math.sqrt(Math.min(1, l) / (2 * Math.PI)));
+        ctx.moveTo(x + r, y);
+        ctx.arc(x, y, r, 0, TAU);
+      }
+    }
+    ctx.fill();
   }
-  var stripRange = (p) => [Math.floor(X_MIN + CAM_MIN * p) - 20, Math.ceil(X_MAX + CAM_MAX * p) + 20];
+  var pen = (ctx, w = 2, c = INK2) => {
+    ctx.strokeStyle = c;
+    ctx.lineWidth = w;
+    ctx.lineJoin = "round";
+    ctx.lineCap = "round";
+  };
+  function seg(ctx, x1, y1, x2, y2) {
+    ctx.beginPath();
+    ctx.moveTo(x1, y1);
+    ctx.lineTo(x2, y2);
+    ctx.stroke();
+  }
+  function inked(ctx, p, { fill = PAPER2, lv = 0, w = 2.2 } = {}) {
+    if (fill) {
+      ctx.fillStyle = fill;
+      ctx.fill(p);
+    }
+    if (lv > 0) {
+      ctx.fillStyle = tone(ctx, lv);
+      ctx.fill(p);
+    }
+    if (w > 0) {
+      pen(ctx, w);
+      ctx.stroke(p);
+    }
+  }
+  var rectP = (x, y, w, h) => {
+    const p = new Path2D();
+    p.rect(x, y, w, h);
+    return p;
+  };
+  function sparkle(ctx, x, y, r, w = 1.6) {
+    const p = new Path2D();
+    const q = r * 0.16;
+    p.moveTo(x, y - r);
+    p.quadraticCurveTo(x + q, y - q, x + r, y);
+    p.quadraticCurveTo(x + q, y + q, x, y + r);
+    p.quadraticCurveTo(x - q, y + q, x - r, y);
+    p.quadraticCurveTo(x - q, y - q, x, y - r);
+    ctx.fillStyle = PAPER2;
+    ctx.fill(p);
+    pen(ctx, w);
+    ctx.stroke(p);
+  }
+  function petalPath(s) {
+    const p = new Path2D();
+    p.moveTo(0, 6 * s);
+    p.quadraticCurveTo(-7.5 * s, 0, -4 * s, -6 * s);
+    p.lineTo(0, -3.4 * s);
+    p.lineTo(4 * s, -6 * s);
+    p.quadraticCurveTo(7.5 * s, 0, 0, 6 * s);
+    return p;
+  }
+  function petal(ctx, x, y, s, rot, w = 1.2) {
+    ctx.save();
+    ctx.translate(x, y);
+    ctx.rotate(rot);
+    const p = petalPath(s);
+    ctx.fillStyle = PAPER2;
+    ctx.fill(p);
+    pen(ctx, w);
+    ctx.stroke(p);
+    ctx.restore();
+  }
+  function blossom(ctx, x, y, r, rot = 0, w = 1.3) {
+    ctx.save();
+    ctx.translate(x, y);
+    ctx.rotate(rot);
+    const p = new Path2D();
+    for (let i = 0; i < 5; i++) {
+      const a = i / 5 * TAU;
+      const cx = Math.cos(a) * r * 0.55, cy = Math.sin(a) * r * 0.55;
+      p.moveTo(cx + r * 0.48, cy);
+      p.arc(cx, cy, r * 0.48, 0, TAU);
+    }
+    ctx.fillStyle = PAPER2;
+    ctx.fill(p);
+    pen(ctx, w);
+    ctx.stroke(p);
+    ctx.fillStyle = PAPER2;
+    circle(ctx, 0, 0, r * 0.42);
+    ctx.fill();
+    ctx.fillStyle = INK2;
+    circle(ctx, 0, 0, r * 0.16);
+    ctx.fill();
+    for (let i = 0; i < 5; i++) {
+      const a = i / 5 * TAU + 0.6;
+      circle(ctx, Math.cos(a) * r * 0.3, Math.sin(a) * r * 0.3, r * 0.06 + 0.4);
+      ctx.fill();
+    }
+    ctx.restore();
+  }
+  function bubble(ctx, x, y, r) {
+    ctx.fillStyle = rgba(PAPER2, 0.7);
+    circle(ctx, x, y, r);
+    ctx.fill();
+    pen(ctx, 1.5);
+    ctx.stroke();
+    pen(ctx, Math.max(1.2, r * 0.12));
+    ctx.beginPath();
+    ctx.arc(x, y, r * 0.68, Math.PI * 1.1, Math.PI * 1.45);
+    ctx.stroke();
+    ctx.fillStyle = INK2;
+    circle(ctx, x + r * 0.42, y + r * 0.4, Math.max(1, r * 0.07));
+    ctx.fill();
+  }
+  function leaf(ctx, x, y, L, a) {
+    ctx.save();
+    ctx.translate(x, y);
+    ctx.rotate(a);
+    const p = new Path2D();
+    p.moveTo(0, 0);
+    p.quadraticCurveTo(L * 0.5, -L * 0.32, L, 0);
+    p.quadraticCurveTo(L * 0.5, L * 0.32, 0, 0);
+    inked(ctx, p, { lv: 0.4, w: 1.6 });
+    pen(ctx, 1.1);
+    seg(ctx, L * 0.08, 0, L * 0.9, 0);
+    ctx.restore();
+  }
+  function rose(ctx, x, y, r, R) {
+    ctx.save();
+    ctx.translate(x, y);
+    for (let k = 0; k < 2; k++) {
+      const a = R() * TAU;
+      leaf(ctx, Math.cos(a) * r * 0.75, Math.sin(a) * r * 0.75, r * 0.95, a);
+    }
+    ctx.rotate(R() * TAU);
+    const n = 5, p = new Path2D();
+    for (let i = 0; i <= n; i++) {
+      const a = i / n * TAU;
+      if (!i) p.moveTo(Math.cos(a) * r, Math.sin(a) * r);
+      else {
+        const am = (i - 0.5) / n * TAU;
+        p.quadraticCurveTo(Math.cos(am) * r * 1.3, Math.sin(am) * r * 1.3, Math.cos(a) * r, Math.sin(a) * r);
+      }
+    }
+    ctx.fillStyle = PAPER2;
+    ctx.fill(p);
+    ctx.save();
+    ctx.clip(p);
+    ctx.fillStyle = tone(ctx, 0.3);
+    circle(ctx, r * 0.55, r * 0.55, r * 0.95);
+    ctx.fill();
+    ctx.restore();
+    pen(ctx, 2);
+    ctx.stroke(p);
+    pen(ctx, 1.8);
+    ctx.beginPath();
+    ctx.arc(0, r * 0.08, r * 0.62, Math.PI * 0.05, Math.PI * 0.95);
+    ctx.stroke();
+    ctx.beginPath();
+    ctx.arc(0, -r * 0.04, r * 0.5, Math.PI * 1.1, Math.PI * 1.9);
+    ctx.stroke();
+    ctx.beginPath();
+    for (let i = 0; i <= 60; i++) {
+      const th = i / 60 * TAU * 2.2, rr = r * 0.44 * (1 - i / 66);
+      const px = Math.cos(th) * rr, py = Math.sin(th) * rr * 0.85;
+      i ? ctx.lineTo(px, py) : ctx.moveTo(px, py);
+    }
+    pen(ctx, 1.5);
+    ctx.stroke();
+    ctx.restore();
+  }
+  function skyLayer() {
+    const w = X_MAX - X_MIN;
+    return baked("s01-sky", w * K, 330 * K, (ctx) => {
+      ctx.scale(K, K);
+      ctx.translate(-X_MIN, 0);
+      toneGrad(ctx, X_MIN, 0, X_MAX, 320, (x, y) => 0.3 * Math.pow(Math.max(0, 1 - y / 280), 1.8), { S: 9, color: DARK });
+    });
+  }
+  function cloudPath(cx, cy, w, h, R) {
+    const p = new Path2D();
+    const n = 4 + Math.floor(R() * 3);
+    p.moveTo(cx - w / 2, cy);
+    for (let i = 0; i < n; i++) {
+      const a = cx - w / 2 + i / n * w, b2 = cx - w / 2 + (i + 1) / n * w;
+      const bh = h * (0.7 + 0.6 * R()) * (i === 0 || i === n - 1 ? 0.65 : 1);
+      p.bezierCurveTo(a - 10, cy - bh, b2 + 10, cy - bh, b2, cy);
+    }
+    p.closePath();
+    return p;
+  }
+  function cloudLayer() {
+    return strip("s01-cloud", 0.05, (ctx, x0, x1) => {
+      const R = rng("s01-cloud");
+      for (let x = x0 + 80; x < x1; x += 420 + R() * 380) {
+        const y = 150 + R() * 140, w = 180 + R() * 200, h = 34 + R() * 26;
+        const p = cloudPath(x, y, w, h, R);
+        ctx.fillStyle = PAPER2;
+        ctx.fill(p);
+        ctx.save();
+        ctx.clip(p);
+        ctx.fillStyle = tone(ctx, 0.14);
+        ctx.fillRect(x - w, y - h * 0.35, w * 2, h);
+        ctx.restore();
+        pen(ctx, 1.8);
+        ctx.stroke(p);
+        pen(ctx, 1.1);
+        ctx.beginPath();
+        ctx.arc(x - w * 0.12, y - h * 0.3, h * 0.35, Math.PI * 1.1, Math.PI * 1.7);
+        ctx.stroke();
+      }
+    }, { y0: 40, y1: 330 });
+  }
+  function farLayer() {
+    return strip("s01-far", 0.22, (ctx, x0, x1) => {
+      const R = rng("s01-far");
+      for (let x = x0 - 40; x < x1; ) {
+        const w = 90 + R() * 160, top = 360 + R() * 140;
+        const p = rectP(x, top, w, 800 - top);
+        inked(ctx, p, { lv: 0.08 + R() * 0.1, w: 1.4 });
+        ctx.fillStyle = PAPER2;
+        for (let wy = top + 16; wy < 560; wy += 28) for (let wx = x + 12; wx < x + w - 18; wx += 24) if (R() > 0.3) ctx.fillRect(wx, wy, 11, 13);
+        const r = R();
+        if (r < 0.3) {
+          const tx = x + 20 + R() * (w - 60);
+          inked(ctx, rectP(tx, top - 34, 34, 24), { lv: 0.2, w: 1.3 });
+          pen(ctx, 1.2);
+          seg(ctx, tx + 4, top - 10, tx + 4, top);
+          seg(ctx, tx + 30, top - 10, tx + 30, top);
+        } else if (r < 0.55) {
+          const ax = x + w * (0.3 + R() * 0.4);
+          pen(ctx, 1.2);
+          seg(ctx, ax, top, ax, top - 46);
+          seg(ctx, ax - 14, top - 36, ax + 14, top - 36);
+          seg(ctx, ax - 9, top - 26, ax + 9, top - 26);
+        }
+        x += w + (R() < 0.3 ? 16 + R() * 40 : 0);
+      }
+    }, { y0: 300, y1: 800 });
+  }
+  function midLayer() {
+    return strip("s01-mid", 0.55, (ctx, x0, x1) => {
+      const R = rng("s01-mid");
+      for (let x = x0 - 60; x < x1; ) {
+        const W2 = 230 + R() * 140, top = 430 + R() * 60;
+        inked(ctx, rectP(x, top, W2, 800 - top), { w: 2 });
+        inked(ctx, rectP(x - 5, top - 12, W2 + 10, 12), { lv: 0.32, w: 1.8 });
+        const nw = W2 > 300 ? 3 : 2, ww = (W2 - 40 - (nw - 1) * 20) / nw;
+        for (let i = 0; i < nw; i++) {
+          const wx = x + 20 + i * (ww + 20), wy = top + 22;
+          inked(ctx, rectP(wx, wy, ww, 74), { lv: 0.22, w: 1.8 });
+          ctx.save();
+          ctx.beginPath();
+          ctx.rect(wx, wy, ww, 74);
+          ctx.clip();
+          pen(ctx, 5, PAPER2);
+          seg(ctx, wx + ww * 0.25, wy + 80, wx + ww * 0.75, wy - 6);
+          pen(ctx, 2.4, PAPER2);
+          seg(ctx, wx + ww * 0.55, wy + 80, wx + ww * 0.95, wy + 10);
+          ctx.restore();
+          pen(ctx, 1.2);
+          seg(ctx, wx + ww / 2, wy, wx + ww / 2, wy + 74);
+          if (R() < 0.35) {
+            const ax = wx + ww - 44;
+            inked(ctx, rectP(ax, wy + 82, 44, 26), { w: 1.4 });
+            pen(ctx, 1);
+            circle(ctx, ax + 30, wy + 95, 8);
+            ctx.stroke();
+            seg(ctx, ax + 5, wy + 88, ax + 16, wy + 88);
+            seg(ctx, ax + 5, wy + 94, ax + 16, wy + 94);
+          }
+        }
+        const sy = top + 112;
+        inked(ctx, rectP(x + 12, sy, W2 - 24, 46), { w: 2.2 });
+        pen(ctx, 1);
+        ctx.strokeRect(x + 19, sy + 7, W2 - 38, 32);
+        if (R() < 0.5) {
+          ctx.fillStyle = tone(ctx, 0.3);
+          ctx.fillRect(x + 19, sy + 7, (W2 - 38) * 0.18, 32);
+        }
+        const ay0 = top + 176, ay1 = ay0 + 50;
+        const aw = new Path2D();
+        aw.moveTo(x + 10, ay0);
+        aw.lineTo(x + W2 - 10, ay0);
+        aw.lineTo(x + W2 + 4, ay1);
+        const sc = Math.max(4, Math.round((W2 + 8) / 30)), step = (W2 + 8) / sc;
+        for (let k = 0; k < sc; k++) {
+          const ex = x + W2 + 4 - k * step;
+          aw.quadraticCurveTo(ex - step / 2, ay1 + 14, ex - step, ay1);
+        }
+        aw.closePath();
+        ctx.fillStyle = PAPER2;
+        ctx.fill(aw);
+        ctx.save();
+        ctx.clip(aw);
+        ctx.fillStyle = tone(ctx, 0.42);
+        for (let k = 0; k < sc; k += 2) ctx.fillRect(x - 4 + k * step, ay0, step, 70);
+        ctx.restore();
+        pen(ctx, 2);
+        ctx.stroke(aw);
+        const fy = ay1 + 12;
+        if (R() < 0.5) {
+          inked(ctx, rectP(x + 16, fy, W2 - 32, 800 - fy), { lv: 0.06, w: 1.8 });
+          pen(ctx, 1);
+          for (let y = fy + 8; y < 800; y += 8) seg(ctx, x + 16, y, x + W2 - 16, y);
+          ctx.fillStyle = INK2;
+          ctx.fillRect(x + W2 / 2 - 10, 790, 20, 4);
+        } else {
+          inked(ctx, rectP(x + 16, fy, W2 - 32, 800 - fy), { lv: 0.26, w: 1.8 });
+          ctx.save();
+          ctx.beginPath();
+          ctx.rect(x + 16, fy, W2 - 32, 800 - fy);
+          ctx.clip();
+          pen(ctx, 7, PAPER2);
+          seg(ctx, x + 40, 800, x + 100, fy - 4);
+          pen(ctx, 3, PAPER2);
+          seg(ctx, x + 90, 800, x + 140, fy - 4);
+          ctx.restore();
+          pen(ctx, 1.6);
+          seg(ctx, x + W2 * 0.62, fy, x + W2 * 0.62, 800);
+          pen(ctx, 2);
+          seg(ctx, x + W2 * 0.62 - 8, fy + 50, x + W2 * 0.62 - 8, fy + 70);
+        }
+        x += W2;
+        if (R() < 0.35) {
+          const gw = 34 + R() * 30;
+          const p = rectP(x, top + 30, gw, 770 - top);
+          ctx.fillStyle = PAPER2;
+          ctx.fill(p);
+          ctx.save();
+          ctx.clip(p);
+          toneGrad(ctx, x, top + 30, x + gw, 800, (xx, yy) => 0.5 - (yy - top) / 900, { S: 7 });
+          ctx.restore();
+          pen(ctx, 1.6);
+          ctx.stroke(p);
+          x += gw;
+        }
+      }
+      pen(ctx, 2);
+      seg(ctx, x0, 800, x1, 800);
+    }, { y0: 400, y1: 802 });
+  }
+  var CROSS = [250, 610];
+  function groundLayer() {
+    return strip("s01-ground", 1, (ctx, x0, x1) => {
+      const R = rng("s01-ground");
+      ctx.fillStyle = PAPER2;
+      ctx.fillRect(x0, 786, x1 - x0, 214);
+      ctx.fillStyle = tone(ctx, 0.3);
+      ctx.fillRect(x0, 786, x1 - x0, 14);
+      pen(ctx, 2.2);
+      seg(ctx, x0, 800, x1, 800);
+      toneGrad(ctx, x0, 803, x1, 834, (x, y) => 0.24 * (1 - (y - 803) / 31), { S: 7 });
+      const rows = [800, 821, 847, 880];
+      pen(ctx, 1.2);
+      for (let i = 0; i < rows.length; i++) {
+        const ya = rows[i], yb = i + 1 < rows.length ? rows[i + 1] : 900;
+        if (i) seg(ctx, x0, ya, x1, ya);
+        const tw = 60 + (ya - 800) * 1.4;
+        for (let x = x0 + i % 2 * tw * 0.5 - R() * 10; x < x1; x += tw) seg(ctx, x, ya, x + (yb - ya) * 0.12, yb);
+      }
+      pen(ctx, 2);
+      seg(ctx, x0, 900, x1, 900);
+      ctx.fillStyle = tone(ctx, 0.16);
+      ctx.fillRect(x0, 910, x1 - x0, 13);
+      pen(ctx, 1.4);
+      seg(ctx, x0, 910, x1, 910);
+      pen(ctx, 2);
+      seg(ctx, x0, 923, x1, 923);
+      ctx.fillStyle = tone(ctx, 0.32, { S: 7 });
+      ctx.fillRect(x0, 924, x1 - x0, 76);
+      const [c0, c1] = CROSS;
+      ctx.fillStyle = PAPER2;
+      ctx.fillRect(c0 - 10, 902, c1 - c0 + 20, 21);
+      pen(ctx, 1.4);
+      seg(ctx, c0 - 10, 902, c0 - 10, 923);
+      seg(ctx, c1 + 10, 902, c1 + 10, 923);
+      for (const [a, b] of [[930, 941], [951, 965], [977, 996]]) {
+        const p = rectP(c0, a, c1 - c0, b - a);
+        ctx.fillStyle = PAPER2;
+        ctx.fill(p);
+        pen(ctx, 1.2);
+        ctx.stroke(p);
+      }
+      for (let x = x0 + R() * 200; x < x1; x += 160 + R() * 260) {
+        const y = 810 + R() * 80;
+        pen(ctx, 1);
+        ctx.beginPath();
+        ctx.moveTo(x, y);
+        ctx.lineTo(x + 8, y + 3);
+        ctx.lineTo(x + 13, y + 1);
+        ctx.lineTo(x + 20, y + 5);
+        ctx.stroke();
+      }
+    }, { y0: 784, y1: 1e3 });
+  }
+  function sprite(key, w, h, draw) {
+    const c = baked(`s01-sp|${key}`, w * K, h * K, (ctx) => {
+      ctx.scale(K, K);
+      ctx.translate(w / 2, h - 24);
+      draw(ctx);
+    });
+    return { c, w, h };
+  }
+  var drawSprite = (ctx, S, x, y) => ctx.drawImage(S.c, x - S.w / 2, y - (S.h - 24), S.w, S.h);
+  function groundShadow(ctx, w) {
+    ctx.fillStyle = tone(ctx, 0.4);
+    ellipse(ctx, 0, 4, w, 10);
+    ctx.fill();
+  }
+  function kioskSprite() {
+    return sprite("kiosk", 520, 560, (ctx) => {
+      groundShadow(ctx, 230);
+      const W2 = 200;
+      inked(ctx, rectP(-W2, -400, 2 * W2, 400), { w: 0 });
+      inked(ctx, rectP(-W2, -175, 2 * W2, 175), { lv: 0.2, w: 2 });
+      pen(ctx, 1.2);
+      for (let x = -W2 + 50; x < W2; x += 50) seg(ctx, x, -165, x, -10);
+      const open = rectP(-130, -380, 260, 186);
+      inked(ctx, open, { lv: 0.55, w: 2 });
+      inked(ctx, (() => {
+        const p = new Path2D();
+        p.ellipse(-10, -318, 34, 18, 0, Math.PI, 0);
+        p.closePath();
+        return p;
+      })(), { lv: 0.3, w: 1.8 });
+      inked(ctx, (() => {
+        const p = new Path2D();
+        p.moveTo(-44, -320);
+        p.lineTo(-74, -314);
+        p.lineTo(-44, -308);
+        p.closePath();
+        return p;
+      })(), { fill: INK2, w: 1.2 });
+      const paper = new Path2D();
+      paper.moveTo(-80, -312);
+      paper.lineTo(64, -318);
+      paper.lineTo(70, -200);
+      paper.lineTo(-76, -196);
+      paper.closePath();
+      inked(ctx, paper, { w: 1.8 });
+      ctx.save();
+      ctx.clip(paper);
+      ctx.fillStyle = tone(ctx, 0.35);
+      ctx.fillRect(-70, -300, 56, 34);
+      ctx.fillRect(4, -300, 54, 18);
+      ctx.fillRect(-70, -250, 30, 40);
+      pen(ctx, 1);
+      seg(ctx, -4, -312, -2, -196);
+      ctx.fillStyle = tone(ctx, 0.12);
+      ctx.fillRect(4, -276, 54, 70);
+      ctx.fillRect(-36, -258, 28, 52);
+      ctx.restore();
+      for (const hx of [-82, 68]) {
+        ctx.fillStyle = PAPER2;
+        ellipse(ctx, hx, -262, 9, 12);
+        ctx.fill();
+        pen(ctx, 1.4);
+        ctx.stroke();
+      }
+      inked(ctx, rectP(-W2 - 12, -196, 2 * W2 + 24, 16), { w: 2 });
+      for (const sx of [-170, 80]) {
+        for (let k = 0; k < 4; k++) {
+          inked(ctx, rectP(sx + k % 2 * 3, -212 + k * 0 - k * 4, 86, 6), { w: 1.1 });
+        }
+      }
+      const R = rng("s01-kiosk");
+      for (const px of [-W2 + 6, W2 - 64]) {
+        for (let r2 = 0; r2 < 3; r2++) for (let c2 = 0; c2 < 2; c2++) {
+          const mx = px + c2 * 30, my = -372 + r2 * 58;
+          const p = rectP(mx, my, 26, 48);
+          inked(ctx, p, { lv: 0.1 + R() * 0.4, w: 1.2 });
+          ctx.fillStyle = PAPER2;
+          if (R() < 0.5) {
+            circle(ctx, mx + 13, my + 28, 7);
+            ctx.fill();
+            pen(ctx, 0.9);
+            ctx.stroke();
+          } else {
+            ctx.fillRect(mx + 3, my + 4, 20, 8);
+          }
+        }
+      }
+      pen(ctx, 2.4);
+      ctx.strokeRect(-W2, -400, 2 * W2, 400);
+      inked(ctx, rectP(-W2 - 34, -440, 2 * W2 + 68, 40), { lv: 0.36, w: 2.2 });
+      pen(ctx, 3, PAPER2);
+      seg(ctx, -W2 - 30, -434, W2 + 30, -434);
+      inked(ctx, rectP(-150, -500, 300, 58), { w: 2.4 });
+      pen(ctx, 1.1);
+      ctx.strokeRect(-142, -492, 284, 42);
+    });
+  }
+  var SLOT = { x: -96, y: -98, w: 132, h: 46 };
+  function vmSprite() {
+    return sprite("vm", 320, 520, (ctx) => {
+      groundShadow(ctx, 150);
+      inked(ctx, (() => {
+        const p = new Path2D();
+        p.moveTo(120, -436);
+        p.lineTo(142, -424);
+        p.lineTo(142, 0);
+        p.lineTo(120, 0);
+        p.closePath();
+        return p;
+      })(), { lv: 0.42, w: 2 });
+      const body = new Path2D();
+      body.roundRect ? body.roundRect(-120, -444, 240, 444, 10) : body.rect(-120, -444, 240, 444);
+      inked(ctx, body, { w: 0 });
+      ctx.fillStyle = tone(ctx, 0.3);
+      ctx.fillRect(-120, -436, 240, 22);
+      const disp = rectP(-104, -404, 164, 196);
+      inked(ctx, disp, { lv: 0.12, w: 2 });
+      for (let r2 = 0; r2 < 3; r2++) {
+        const yb = -346 + r2 * 64;
+        for (let i = 0; i < 5; i++) {
+          const cx = -88 + i * 31;
+          const p = new Path2D();
+          if ((i + r2) % 2) {
+            p.rect(cx - 9, yb - 40, 18, 40);
+          } else {
+            p.moveTo(cx - 9, yb);
+            p.lineTo(cx - 9, yb - 28);
+            p.quadraticCurveTo(cx - 9, yb - 36, cx - 4, yb - 40);
+            p.lineTo(cx - 4, yb - 48);
+            p.lineTo(cx + 4, yb - 48);
+            p.lineTo(cx + 4, yb - 40);
+            p.quadraticCurveTo(cx + 9, yb - 36, cx + 9, yb - 28);
+            p.lineTo(cx + 9, yb);
+            p.closePath();
+          }
+          inked(ctx, p, { w: 1.3 });
+          ctx.save();
+          ctx.clip(p);
+          ctx.fillStyle = tone(ctx, [0.5, 0.25, 0.4][(i + r2 * 2) % 3]);
+          ctx.fillRect(cx - 10, yb - 26, 20, 14);
+          ctx.restore();
+          inked(ctx, (() => {
+            const q = new Path2D();
+            q.roundRect ? q.roundRect(cx - 7, yb + 6, 14, 7, 2) : q.rect(cx - 7, yb + 6, 14, 7);
+            return q;
+          })(), { w: 1 });
+        }
+      }
+      inked(ctx, rectP(70, -404, 38, 196), { w: 1.8 });
+      ctx.fillStyle = INK2;
+      ctx.fillRect(84, -384, 10, 24);
+      inked(ctx, rectP(76, -340, 26, 12), { lv: 0.5, w: 1.2 });
+      circle(ctx, 89, -300, 8);
+      inked(ctx, (() => {
+        const p = new Path2D();
+        p.arc(89, -300, 8, 0, TAU);
+        return p;
+      })(), { w: 1.4 });
+      inked(ctx, rectP(78, -262, 22, 36), { lv: 0.3, w: 1.2 });
+      const ad = rectP(-104, -196, 212, 80);
+      inked(ctx, ad, { w: 1.8 });
+      ctx.save();
+      ctx.clip(ad);
+      ctx.fillStyle = tone(ctx, 0.35);
+      for (let k = -4; k < 10; k++) {
+        ctx.beginPath();
+        ctx.moveTo(-104 + k * 34, -116);
+        ctx.lineTo(-104 + k * 34 + 16, -116);
+        ctx.lineTo(-104 + k * 34 + 96, -196);
+        ctx.lineTo(-104 + k * 34 + 80, -196);
+        ctx.closePath();
+        ctx.fill();
+      }
+      ctx.restore();
+      inked(ctx, rectP(SLOT.x, SLOT.y, SLOT.w, SLOT.h), { fill: INK2, w: 2 });
+      inked(ctx, rectP(SLOT.x, SLOT.y, SLOT.w, 12), { lv: 0.5, w: 1.4 });
+      inked(ctx, rectP(-120, -30, 240, 30), { lv: 0.28, w: 1.8 });
+      pen(ctx, 2.6);
+      ctx.stroke(body);
+    });
+  }
+  function poleSprite() {
+    return sprite("pole", 240, 900, (ctx) => {
+      groundShadow(ctx, 30);
+      const p = new Path2D();
+      p.moveTo(-16, 0);
+      p.lineTo(-10, -860);
+      p.lineTo(10, -860);
+      p.lineTo(16, 0);
+      p.closePath();
+      inked(ctx, p, { w: 0 });
+      ctx.save();
+      ctx.clip(p);
+      ctx.fillStyle = tone(ctx, 0.4);
+      ctx.fillRect(1, -870, 20, 880);
+      ctx.restore();
+      pen(ctx, 2.2);
+      ctx.stroke(p);
+      for (const [y, L] of [[-770, 96], [-712, 70]]) {
+        inked(ctx, rectP(-L, y, 2 * L, 9), { lv: 0.3, w: 1.8 });
+        for (const x of [-L + 8, 0, L - 8]) {
+          if (!x && y > -760) continue;
+          inked(ctx, (() => {
+            const q = new Path2D();
+            q.roundRect ? q.roundRect(x - 5, y - 13, 10, 13, 3) : q.rect(x - 5, y - 13, 10, 13);
+            return q;
+          })(), { w: 1.3 });
+        }
+      }
+      pen(ctx, 1.6);
+      seg(ctx, -60, -761, -14, -730);
+      seg(ctx, 60, -761, 14, -730);
+      const tr = new Path2D();
+      tr.roundRect ? tr.roundRect(16, -600, 46, 86, 8) : tr.rect(16, -600, 46, 86);
+      inked(ctx, tr, { w: 2 });
+      ctx.save();
+      ctx.clip(tr);
+      toneGrad(ctx, 16, -600, 62, -514, (x) => 0.05 + (x - 16) / 46 * 0.45, { S: 6 });
+      ctx.restore();
+      pen(ctx, 2);
+      ctx.stroke(tr);
+      pen(ctx, 1.4);
+      seg(ctx, 16, -580, 12, -580);
+      seg(ctx, 16, -530, 12, -530);
+      seg(ctx, 30, -600, 30, -640);
+      seg(ctx, 48, -600, 48, -650);
+      pen(ctx, 2.2);
+      for (let y = -170, s = 1; y > -680; y -= 46, s = -s) seg(ctx, s * 12, y, s * 26, y);
+      inked(ctx, rectP(-12, -330, 24, 40), { w: 1.4 });
+    });
+  }
+  var WIRE = [[-88, -770], [0, -770], [88, -770], [-62, -712], [62, -712]];
+  function treeSprite() {
+    return sprite("tree", 700, 800, (ctx) => {
+      groundShadow(ctx, 90);
+      const R = rng("s01-tree");
+      const trunk = new Path2D();
+      trunk.moveTo(-30, 0);
+      trunk.bezierCurveTo(-24, -120, -34, -220, -14, -330);
+      trunk.lineTo(10, -330);
+      trunk.bezierCurveTo(4, -220, 16, -110, 28, 0);
+      trunk.closePath();
+      inked(ctx, trunk, { lv: 0.5, w: 2.4 });
+      pen(ctx, 1.2, PAPER2);
+      for (let y = -40; y > -310; y -= 34) seg(ctx, -14 + R() * 6, y, 2 + R() * 8, y - 6);
+      const blobs = [[-230, -360, 105], [-120, -470, 150], [60, -540, 165], [210, -430, 140], [-30, -360, 120], [130, -330, 95], [-60, -650, 120], [160, -680, 105], [-230, -560, 100]];
+      pen(ctx, 9);
+      ctx.strokeStyle = INK2;
+      for (const [bx, by] of blobs) {
+        ctx.lineWidth = 6 + R() * 6;
+        ctx.beginPath();
+        ctx.moveTo(-2, -320);
+        ctx.quadraticCurveTo((bx - 2) * 0.4, -340 + (by + 320) * 0.3, bx * 0.8, by * 0.95);
+        ctx.stroke();
+      }
+      for (const [bx, by, r] of blobs) {
+        const p = new Path2D();
+        const n = 11;
+        const pt = (a, rr) => [bx + Math.cos(a) * rr, by + Math.sin(a) * rr * 0.82];
+        p.moveTo(...pt(0, r));
+        for (let i = 1; i <= n; i++) {
+          const a = i / n * TAU, am = (i - 0.5) / n * TAU;
+          p.quadraticCurveTo(...pt(am, r * (1.16 + 0.06 * Math.sin(i * 3.1 + bx))), ...pt(a, r));
+        }
+        p.closePath();
+        ctx.fillStyle = PAPER2;
+        ctx.fill(p);
+        ctx.save();
+        ctx.clip(p);
+        toneGrad(ctx, bx - r * 1.3, by - r, bx + r * 1.3, by + r * 1.2, (x, y) => 0.3 * smoothstep(by + r * 0.05, by + r * 0.95, y), { S: 7 });
+        ctx.restore();
+        pen(ctx, 2);
+        ctx.stroke(p);
+      }
+      for (let k = 0; k < 70; k++) {
+        const [bx, by, r] = blobs[k % blobs.length];
+        const a = R() * TAU, rr = Math.sqrt(R()) * r * 0.85;
+        blossom(ctx, bx + Math.cos(a) * rr, by + Math.sin(a) * rr * 0.8, 6 + R() * 5, R() * TAU, 1.1);
+      }
+    });
+  }
+  function bikeSprite() {
+    return sprite("bike", 360, 260, (ctx) => {
+      groundShadow(ctx, 130);
+      const wheel = (x) => {
+        pen(ctx, 5);
+        circle(ctx, x, -62, 60);
+        ctx.stroke();
+        pen(ctx, 1.2);
+        circle(ctx, x, -62, 52);
+        ctx.stroke();
+        pen(ctx, 0.9);
+        for (let k = 0; k < 12; k++) {
+          const a = k / 12 * TAU;
+          seg(ctx, x, -62, x + Math.cos(a) * 52, -62 + Math.sin(a) * 52);
+        }
+        ctx.fillStyle = INK2;
+        circle(ctx, x, -62, 5);
+        ctx.fill();
+        pen(ctx, 2.4);
+        ctx.beginPath();
+        ctx.arc(x, -62, 68, Math.PI * 1.08, Math.PI * 1.9);
+        ctx.stroke();
+      };
+      wheel(-100);
+      wheel(100);
+      pen(ctx, 5);
+      ctx.beginPath();
+      ctx.moveTo(-100, -62);
+      ctx.lineTo(-6, -62);
+      ctx.lineTo(-40, -170);
+      ctx.stroke();
+      ctx.beginPath();
+      ctx.moveTo(-6, -62);
+      ctx.quadraticCurveTo(30, -70, 74, -176);
+      ctx.stroke();
+      ctx.beginPath();
+      ctx.moveTo(-100, -62);
+      ctx.lineTo(-40, -160);
+      ctx.stroke();
+      ctx.beginPath();
+      ctx.moveTo(100, -62);
+      ctx.lineTo(80, -190);
+      ctx.stroke();
+      pen(ctx, 4);
+      ctx.beginPath();
+      ctx.moveTo(80, -190);
+      ctx.quadraticCurveTo(70, -214, 48, -206);
+      ctx.stroke();
+      inked(ctx, (() => {
+        const p = new Path2D();
+        p.ellipse(-44, -178, 26, 8, -0.08, 0, TAU);
+        return p;
+      })(), { fill: INK2, w: 1 });
+      const bk = new Path2D();
+      bk.moveTo(92, -206);
+      bk.lineTo(160, -206);
+      bk.lineTo(152, -150);
+      bk.lineTo(98, -150);
+      bk.closePath();
+      inked(ctx, bk, { lv: 0.08, w: 2 });
+      pen(ctx, 1);
+      for (let x = 102; x < 158; x += 10) seg(ctx, x, -206, x - 2, -150);
+      seg(ctx, 94, -178, 156, -178);
+      ctx.fillStyle = INK2;
+      circle(ctx, -6, -62, 11);
+      ctx.fill();
+      pen(ctx, 3);
+      seg(ctx, -6, -62, 12, -40);
+      seg(ctx, -6, -62, -24, -84);
+      pen(ctx, 2.4);
+      seg(ctx, -20, -60, -34, 0);
+    });
+  }
+  function mirrorSprite() {
+    return sprite("mirror", 200, 640, (ctx) => {
+      groundShadow(ctx, 22);
+      inked(ctx, rectP(-5, -500, 10, 500), { lv: 0.3, w: 1.6 });
+      pen(ctx, 2);
+      seg(ctx, -5, -505, 0, -520);
+      const m = new Path2D();
+      m.ellipse(0, -548, 54, 58, 0, 0, TAU);
+      ctx.fillStyle = PAPER2;
+      ctx.fill(m);
+      ctx.save();
+      ctx.clip(m);
+      toneGrad(ctx, -60, -610, 60, -490, (x, y) => 0.08 + Math.max(0, (x + y + 548) / 120) * 0.35, { S: 6 });
+      pen(ctx, 6, PAPER2);
+      seg(ctx, -34, -540, -6, -588);
+      pen(ctx, 3, PAPER2);
+      seg(ctx, -24, -520, 6, -572);
+      ctx.restore();
+      pen(ctx, 8);
+      ctx.stroke(m);
+      pen(ctx, 2, PAPER2);
+      ctx.beginPath();
+      ctx.ellipse(0, -548, 54, 58, 0, Math.PI * 1.15, Math.PI * 1.45);
+      ctx.stroke();
+      inked(ctx, (() => {
+        const p = new Path2D();
+        p.ellipse(0, -604, 46, 14, 0, Math.PI, 0);
+        p.closePath();
+        return p;
+      })(), { lv: 0.4, w: 1.8 });
+    });
+  }
+  function cat(ctx, x, y, awake) {
+    ctx.save();
+    ctx.translate(x, y);
+    const body = new Path2D();
+    body.ellipse(4, -22, 48, 23, 0, 0, TAU);
+    inked(ctx, body, { w: 2 });
+    ctx.save();
+    ctx.clip(body);
+    ctx.fillStyle = tone(ctx, 0.45);
+    for (const sx of [-6, 14, 34]) {
+      ctx.beginPath();
+      ctx.moveTo(sx, -46);
+      ctx.lineTo(sx + 10, -46);
+      ctx.lineTo(sx + 4, -26);
+      ctx.closePath();
+      ctx.fill();
+    }
+    ctx.restore();
+    const tail = new Path2D();
+    tail.moveTo(46, -14);
+    tail.quadraticCurveTo(66, 0, 40, 2);
+    tail.quadraticCurveTo(10, 4, -20, 0);
+    pen(ctx, 7);
+    ctx.stroke(tail);
+    pen(ctx, 4, PAPER2);
+    ctx.stroke(tail);
+    const hx = -40, hy = awake ? -46 : -24;
+    const head = new Path2D();
+    head.ellipse(hx, hy, 22, 19, 0, 0, TAU);
+    const ears = new Path2D();
+    ears.moveTo(hx - 20, hy - 8);
+    ears.lineTo(hx - 18, hy - (awake ? 30 : 24));
+    ears.lineTo(hx - 6, hy - 16);
+    ears.closePath();
+    ears.moveTo(hx + 4, hy - 17);
+    ears.lineTo(hx + 14, hy - (awake ? 32 : 26));
+    ears.lineTo(hx + 20, hy - 8);
+    ears.closePath();
+    inked(ctx, ears, { lv: 0.4, w: 2 });
+    inked(ctx, head, { w: 2 });
+    pen(ctx, 1.6);
+    if (awake) {
+      for (const ex of [-10, 6]) {
+        ctx.fillStyle = PAPER2;
+        circle(ctx, hx + ex, hy - 2, 5.5);
+        ctx.fill();
+        ctx.stroke();
+        ctx.fillStyle = INK2;
+        circle(ctx, hx + ex + 2.2, hy - 2, 2.6);
+        ctx.fill();
+      }
+      seg(ctx, hx - 2, hy + 7, hx + 2, hy + 7);
+      pen(ctx, 1);
+      seg(ctx, hx + 16, hy + 4, hx + 32, hy + 1);
+      seg(ctx, hx + 16, hy + 8, hx + 32, hy + 9);
+      seg(ctx, hx - 18, hy + 4, hx - 32, hy + 1);
+    } else {
+      for (const ex of [-10, 6]) {
+        ctx.beginPath();
+        ctx.arc(hx + ex, hy - 1, 4.5, 0.2, Math.PI - 0.2);
+        ctx.stroke();
+      }
+      pen(ctx, 1);
+      seg(ctx, hx - 18, hy + 5, hx - 32, hy + 3);
+    }
+    ctx.restore();
+  }
+  var HALO = [CHAR_X, 480];
+  function shoujoLayer() {
+    const w = X_MAX - X_MIN;
+    return baked("s01-shoujo", w * K, 1e3 * K, (ctx) => {
+      ctx.scale(K, K);
+      ctx.translate(-X_MIN, 0);
+      const R = rng("s01-shoujo");
+      ctx.fillStyle = PAPER2;
+      ctx.fillRect(X_MIN, 0, w, 1e3);
+      const dn = (x, y) => Math.hypot((x - HALO[0]) / 1e3, (y - HALO[1]) / 660);
+      toneGrad(ctx, X_MIN, 0, X_MAX, 1e3, (x, y) => 0.6 * smoothstep(0.4, 1.12, dn(x, y)), { S: 8, color: DARK });
+      ctx.fillStyle = PAPER2;
+      for (let i = 0; i < 96; i++) {
+        const a = i / 96 * TAU + R() * 0.04, r0 = 300 + R() * 260, r1 = 1600, hw = 3e-3 + R() * 9e-3;
+        poly(ctx, [[HALO[0] + Math.cos(a) * r0, HALO[1] + Math.sin(a) * r0], [HALO[0] + Math.cos(a - hw) * r1, HALO[1] + Math.sin(a - hw) * r1], [HALO[0] + Math.cos(a + hw) * r1, HALO[1] + Math.sin(a + hw) * r1]]);
+        ctx.fill();
+      }
+      const free = (x, y, r) => !(x > 170 - r && x < 470 + r && y > 250 - r && y < 830 + r) && !(x < -20 + r && y < 250 + r);
+      const roses = [
+        [-300, 400, 66],
+        [-190, 560, 54],
+        [-330, 730, 82],
+        [-170, 880, 66],
+        [-10, 970, 62],
+        [90, 760, 44],
+        [560, 960, 58],
+        [720, 870, 76],
+        [900, 960, 62],
+        [1080, 890, 56],
+        [1260, 960, 70],
+        [1320, 760, 78],
+        [1170, 650, 56],
+        [1330, 560, 58],
+        [1240, 400, 70],
+        [1340, 220, 62],
+        [1180, 110, 72],
+        [990, 70, 54],
+        [800, 60, 58],
+        [630, 120, 48],
+        [-110, 320, 44],
+        [580, 300, 40],
+        [700, 640, 46],
+        [-300, 990, 50]
+      ];
+      for (const [x, y, r] of roses) rose(ctx, x, y, r, R);
+      for (let k = 0; k < 400 && k >= 0; k++) {
+        const x = X_MIN + R() * w, y = R() * 1e3, r = 9 + R() * 14;
+        if (!free(x, y, r)) continue;
+        const t = R();
+        if (t < 0.32) blossom(ctx, x, y, r, R() * TAU);
+        else if (t < 0.6) bubble(ctx, x, y, r * (0.5 + R() * 1.6));
+        else if (t < 0.88) petal(ctx, x, y, 1.4 + R() * 1.4, R() * TAU);
+        else sparkle(ctx, x, y, r * 1.4, 1.3);
+      }
+    });
+  }
+  var TWINKLES = Array.from({ length: 16 }, (_, i) => {
+    const a = hash2(i, 1, 101) * TAU, d = 0.55 + hash2(i, 2, 101) * 0.45;
+    return [HALO[0] + Math.cos(a) * d * 900, HALO[1] + Math.sin(a) * d * 520, 16 + hash2(i, 3, 101) * 22, hash2(i, 4, 101)];
+  }).filter(([x, y]) => !(x > 150 && x < 490 && y > 230 && y < 840) && !(x < 0 && y < 260));
+  function drawShoujo(ctx, b) {
+    const t = b - T_FLOWER[0];
+    const pop = 1.07 - 0.07 * ease.out(clamp(t / 0.14));
+    ctx.save();
+    ctx.translate(HALO[0], HALO[1]);
+    ctx.scale(pop, pop);
+    ctx.translate(-HALO[0], -HALO[1]);
+    ctx.drawImage(shoujoLayer(), X_MIN, 0, X_MAX - X_MIN, 1e3);
+    ctx.restore();
+    for (const [x, y, r, ph] of TWINKLES) {
+      const k = 0.45 + 0.55 * Math.abs(Math.sin(TAU * (t * 1.5 + ph)));
+      sparkle(ctx, x, y, r * k, 1.8);
+      pen(ctx, 1.2);
+      seg(ctx, x - r * 1.5 * k, y, x - r * 1.05 * k, y);
+      seg(ctx, x + r * 1.05 * k, y, x + r * 1.5 * k, y);
+    }
+    for (let i = 0; i < 6; i++) {
+      const a = -1.9 + i * 0.32, rr = 230 + i % 2 * 40;
+      const k = 0.5 + 0.5 * Math.abs(Math.sin(TAU * (t * 2 + i * 0.17)));
+      sparkle(ctx, CHAR_X + Math.cos(a) * rr * 0.9, 520 + Math.sin(a) * rr, (8 + i % 3 * 4) * k, 1.4);
+    }
+  }
+  function drawPetals(ctx, b, treeX) {
+    for (let i = 0; i < 22; i++) {
+      const P = 3.2 + hash2(i, 1, 7) * 2.4;
+      const t = (b + hash2(i, 2, 7) * P) / P % 1;
+      const tt = t < 0 ? t + 1 : t;
+      const x0 = treeX + (hash2(i, 3, 7) - 0.5) * 560, y0 = BASE - 660 + hash2(i, 4, 7) * 260;
+      const x = x0 - tt * (180 + hash2(i, 5, 7) * 160) + Math.sin(tt * TAU * 1.3 + i) * 26;
+      const y = lerp(y0, BASE + 60 + hash2(i, 6, 7) * 120, tt);
+      if (x < X_MIN - 20 || x > X_MAX + 20) continue;
+      petal(ctx, x, y, 1.3 + hash2(i, 7, 7) * 0.6, tt * 9 + i);
+    }
+  }
+  var PANELS = [
+    { t: T_PANEL[0], q: [[808, 58], [1092, 58], [1070, 322], [808, 322]], draw: drawGirl },
+    { t: T_PANEL[1], q: [[1106, 58], [1366, 58], [1366, 322], [1084, 322]], draw: drawUncle }
+  ];
+  function drawPanel(ctx, P, b) {
+    if (b < P.t || b >= T_OUT2 + 0.4) return;
+    const pin = ease.out(clamp((b - P.t) / 0.12));
+    const out = ease.in(clamp((b - T_OUT2) / 0.35));
+    const cx = (P.q[0][0] + P.q[1][0]) / 2, cy = (P.q[0][1] + P.q[2][1]) / 2;
+    const path = new Path2D();
+    P.q.forEach(([x, y], i) => i ? path.lineTo(x, y) : path.moveTo(x, y));
+    path.closePath();
+    ctx.save();
+    ctx.translate(out * 700, 0);
+    ctx.translate(cx, cy);
+    ctx.scale(1.14 - 0.14 * pin, 1.14 - 0.14 * pin);
+    ctx.translate(-cx, -cy);
+    ctx.globalAlpha *= clamp(pin * 3);
+    pen(ctx, 16, PAPER2);
+    ctx.stroke(path);
+    ctx.fillStyle = PAPER2;
+    ctx.fill(path);
+    ctx.save();
+    ctx.clip(path);
+    P.draw(ctx, b - P.t);
+    ctx.restore();
+    pen(ctx, 4.5);
+    ctx.stroke(path);
+    ctx.restore();
+  }
+  function speedLinesH(ctx, x0, y0, x1, y1, seed) {
+    pen(ctx, 1.4);
+    for (let i = 0; i < 26; i++) {
+      const y = y0 + (y1 - y0) * hash2(i, 1, seed), L = (x1 - x0) * (0.3 + 0.6 * hash2(i, 2, seed));
+      const xs = x1 - L * hash2(i, 3, seed) * 0.4;
+      ctx.lineWidth = 0.8 + hash2(i, 4, seed) * 1.6;
+      seg(ctx, xs - L, y, xs, y);
+    }
+  }
+  function drawGirl(ctx, t) {
+    ctx.fillStyle = tone(ctx, 0.12);
+    ctx.fillRect(800, 50, 300, 280);
+    ctx.fillStyle = PAPER2;
+    ctx.fillRect(800, 50, 300, 120);
+    speedLinesH(ctx, 800, 60, 1100, 190, 21);
+    const turn = ease.out(clamp(t / 0.2));
+    const hx = 958 - 6 * turn, hy = 178;
+    const back = new Path2D();
+    back.moveTo(842, 330);
+    back.quadraticCurveTo(850, 252, 930, 240);
+    back.lineTo(1e3, 240);
+    back.quadraticCurveTo(1066, 252, 1078, 330);
+    back.closePath();
+    inked(ctx, back, { w: 2.2 });
+    const collar = new Path2D();
+    collar.moveTo(904, 244);
+    collar.lineTo(1022, 244);
+    collar.lineTo(1034, 306);
+    collar.lineTo(894, 306);
+    collar.closePath();
+    inked(ctx, collar, { fill: INK2, w: 2 });
+    pen(ctx, 3, PAPER2);
+    seg(ctx, 902, 292, 1026, 292);
+    seg(ctx, 900, 282, 1028, 282);
+    const tail = new Path2D();
+    tail.moveTo(1e3, 150);
+    tail.bezierCurveTo(1050 + 20 * turn, 150, 1070 + 14 * turn, 210, 1046 + 26 * turn, 262);
+    tail.bezierCurveTo(1040, 214, 1022, 186, 992, 182);
+    tail.closePath();
+    inked(ctx, tail, { fill: INK2, w: 2 });
+    pen(ctx, 1.8, PAPER2);
+    ctx.beginPath();
+    ctx.moveTo(1018, 166);
+    ctx.quadraticCurveTo(1046, 182, 1048, 220);
+    ctx.stroke();
+    pen(ctx, 1.4);
+    for (let k = 0; k < 3; k++) {
+      ctx.beginPath();
+      ctx.arc(1004, 196, 66 + k * 12, -0.5, 0.55);
+      ctx.stroke();
+    }
+    const hair = new Path2D();
+    hair.ellipse(hx + 6, hy - 6, 56, 60, 0, 0, TAU);
+    inked(ctx, hair, { fill: INK2, w: 2 });
+    const face = new Path2D();
+    face.moveTo(hx - 44, hy - 16);
+    face.quadraticCurveTo(hx - 50, hy + 30, hx - 22, hy + 52);
+    face.quadraticCurveTo(hx + 4, hy + 60, hx + 18, hy + 34);
+    face.quadraticCurveTo(hx + 10, hy - 10, hx - 44, hy - 16);
+    face.closePath();
+    inked(ctx, face, { w: 2 });
+    ctx.fillStyle = INK2;
+    poly(ctx, [[hx - 50, hy - 24], [hx - 40, hy + 4], [hx - 30, hy - 14], [hx - 20, hy + 2], [hx - 8, hy - 14], [hx + 4, hy + 4], [hx + 14, hy - 20], [hx - 6, hy - 46]]);
+    ctx.fill();
+    pen(ctx, 2.4, PAPER2);
+    ctx.beginPath();
+    ctx.ellipse(hx + 8, hy - 24, 40, 18, -0.15, Math.PI * 1.05, Math.PI * 1.9);
+    ctx.stroke();
+    ctx.fillStyle = PAPER2;
+    circle(ctx, 1e3, 160, 7);
+    ctx.fill();
+    pen(ctx, 1.6);
+    ctx.stroke();
+    ctx.fillStyle = INK2;
+    ellipse(ctx, hx - 30, hy + 14, 4.5, 6.5);
+    ctx.fill();
+    ellipse(ctx, hx - 6, hy + 14, 4.5, 6.5);
+    ctx.fill();
+    pen(ctx, 1.6);
+    seg(ctx, hx - 36, hy + 2, hx - 24, hy + 1);
+    seg(ctx, hx - 12, hy + 1, hx, hy + 2);
+    seg(ctx, hx - 20, hy + 38, hx - 12, hy + 38);
+  }
+  function drawUncle(ctx, t) {
+    ctx.fillStyle = tone(ctx, 0.2);
+    ctx.fillRect(1080, 50, 300, 280);
+    pen(ctx, 1);
+    for (let i = 0; i < 18; i++) {
+      const x = 1090 + i * 16;
+      seg(ctx, x, 50, x + 30, 330);
+    }
+    const turn = ease.out(clamp(t / 0.2));
+    const hx = 1218 - 10 * turn, hy = 168;
+    const head = new Path2D();
+    head.ellipse(hx, hy, 50, 56, 0, 0, TAU);
+    inked(ctx, head, { w: 2.2 });
+    const crown = new Path2D();
+    crown.ellipse(hx + 4, hy - 34, 56, 34, 0, Math.PI, 0);
+    crown.closePath();
+    inked(ctx, crown, { lv: 0.35, w: 2.2 });
+    const bill = new Path2D();
+    bill.moveTo(hx - 50, hy - 36);
+    bill.quadraticCurveTo(hx - 92, hy - 30, hx - 96, hy - 22);
+    bill.lineTo(hx - 46, hy - 26);
+    bill.closePath();
+    inked(ctx, bill, { fill: INK2, w: 1.6 });
+    for (const ex of [-26, 8]) {
+      const g = new Path2D();
+      g.ellipse(hx + ex, hy - 4, 16, 12, 0, 0, TAU);
+      inked(ctx, g, { lv: 0.18, w: 2.4 });
+      pen(ctx, 3, PAPER2);
+      seg(ctx, hx + ex - 8, hy + 4, hx + ex + 4, hy - 12);
+    }
+    pen(ctx, 2);
+    seg(ctx, hx - 10, hy - 5, hx - 8, hy - 5);
+    ctx.fillStyle = INK2;
+    ellipse(ctx, hx - 12, hy + 26, 20, 7);
+    ctx.fill();
+    const np = new Path2D();
+    np.moveTo(1094, 232);
+    np.lineTo(1360, 222);
+    np.lineTo(1372, 334);
+    np.lineTo(1088, 334);
+    np.closePath();
+    inked(ctx, np, { w: 2.2 });
+    ctx.save();
+    ctx.clip(np);
+    ctx.fillStyle = tone(ctx, 0.4);
+    ctx.fillRect(1108, 244, 70, 40);
+    ctx.fillRect(1250, 240, 90, 22);
+    ctx.fillStyle = tone(ctx, 0.15);
+    ctx.fillRect(1190, 246, 48, 80);
+    ctx.fillRect(1108, 292, 70, 40);
+    ctx.fillRect(1250, 270, 90, 60);
+    pen(ctx, 1);
+    seg(ctx, 1184, 236, 1186, 334);
+    seg(ctx, 1244, 232, 1246, 334);
+    ctx.restore();
+    for (const hx2 of [1100, 1350]) {
+      ctx.fillStyle = PAPER2;
+      ellipse(ctx, hx2, 250, 12, 16);
+      ctx.fill();
+      pen(ctx, 1.8);
+      ctx.stroke();
+    }
+  }
+  function sweat(ctx, fig, b) {
+    if (b < T_SWEAT || b >= T_OUT2) return;
+    const k = ease.outBack(clamp((b - T_SWEAT) / 0.18));
+    const slide = (b - T_SWEAT) * 9;
+    const a = ANCHORS.stand.headTop;
+    const x = fig.x + (a[0] + 66) * fig.scale, y = fig.y + (a[1] + 44) * fig.scale + slide;
+    ctx.save();
+    ctx.translate(x, y);
+    ctx.scale(k * 1.35, k * 1.35);
+    const p = new Path2D();
+    p.moveTo(0, -24);
+    p.bezierCurveTo(6, -8, 15, 2, 15, 12);
+    p.arc(0, 12, 15, 0, Math.PI);
+    p.bezierCurveTo(-15, 2, -6, -8, 0, -24);
+    p.closePath();
+    ctx.fillStyle = PAPER2;
+    ctx.fill(p);
+    pen(ctx, 3);
+    ctx.stroke(p);
+    pen(ctx, 2.2);
+    ctx.beginPath();
+    ctx.arc(0, 12, 9, Math.PI * 0.15, Math.PI * 0.55);
+    ctx.stroke();
+    ctx.restore();
+  }
+  function focusLines(ctx, b) {
+    const k = 1 - smoothstep(0.05, 0.6, b);
+    if (b < 0 || k <= 0) return;
+    ctx.save();
+    ctx.fillStyle = rgba(INK2, 0.9 * k);
+    const C = [CHAR_X + 30, 520];
+    for (let i = 0; i < 120; i++) {
+      const a = i / 120 * TAU + hash2(i, 1, 33) * 0.05;
+      const r0 = 560 + hash2(i, 2, 33) * 260 + (1 - k) * 160, r1 = 1700, hw = 2e-3 + hash2(i, 3, 33) * 7e-3;
+      poly(ctx, [[C[0] + Math.cos(a) * r0, C[1] + Math.sin(a) * r0], [C[0] + Math.cos(a - hw) * r1, C[1] + Math.sin(a - hw) * r1], [C[0] + Math.cos(a + hw) * r1, C[1] + Math.sin(a + hw) * r1]]);
+      ctx.fill();
+    }
+    ctx.restore();
+  }
+  var M = 12;
+  function pageBorder(ctx) {
+    const p = new Path2D();
+    p.rect(X_MIN - 10, -10, X_MAX - X_MIN + 20, 1020);
+    p.rect(X_MIN + M, M, X_MAX - X_MIN - 2 * M, 1e3 - 2 * M);
+    ctx.fillStyle = PAPER2;
+    ctx.fill(p, "evenodd");
+    pen(ctx, 3.5);
+    ctx.strokeRect(X_MIN + M, M, X_MAX - X_MIN - 2 * M, 1e3 - 2 * M);
+  }
+  var s01 = {
+    id: "s01",
+    station: ST,
+    // 漫画里人物压在网点上时的「白边」：保证经过灰网点马路、售货机、树干时也拉得开
+    figureRim: { color: PAPER2, width: 6, alpha: 1 },
+    freezeBeat: GAG + 0.5,
+    // Outro 展墙定格在少女漫画闪光那一拍
+    drawBack(ctx, b, env) {
+      if (b >= T_FLOWER[0] && b < T_FLOWER[1]) {
+        drawShoujo(ctx, b);
+        return;
+      }
+      const cam = env.cam, cg = env.camAt(GAG);
+      const X = (gx) => gx + cg - cam;
+      ctx.fillStyle = PAPER2;
+      ctx.fillRect(X_MIN - 2, 0, X_MAX - X_MIN + 4, 1e3);
+      ctx.drawImage(skyLayer(), X_MIN, 0, X_MAX - X_MIN, 330);
+      drawStrip(ctx, cloudLayer(), cam);
+      drawStrip(ctx, farLayer(), cam);
+      drawStrip(ctx, midLayer(), cam);
+      drawStrip(ctx, groundLayer(), cam);
+      const vis = (x, w) => x > X_MIN - w && x < X_MAX + w;
+      if (vis(X(GX.mirror), 120)) drawSprite(ctx, mirrorSprite(), X(GX.mirror), BASE);
+      if (vis(X(GX.kiosk), 280)) drawSprite(ctx, kioskSprite(), X(GX.kiosk), BASE);
+      const vx = X(GX.vm);
+      if (vis(vx, 200)) {
+        const sh = b >= T_CAN && b < T_CAN + 0.3 ? Math.sin((b - T_CAN) * 60) * 3 * (1 - (b - T_CAN) / 0.3) : 0;
+        drawSprite(ctx, vmSprite(), vx + sh, BASE);
+        if (b >= T_CAN) {
+          const cx = vx + sh + SLOT.x + 40, cy = BASE + SLOT.y + SLOT.h - 12;
+          const drop = ease.in(clamp((b - T_CAN) / 0.08));
+          const can = new Path2D();
+          can.roundRect ? can.roundRect(cx - 26, cy - 11 - (1 - drop) * 20, 52, 22, 6) : can.rect(cx - 26, cy - 11, 52, 22);
+          inked(ctx, can, { w: 1.6 });
+          ctx.save();
+          ctx.clip(can);
+          ctx.fillStyle = tone(ctx, 0.45);
+          ctx.fillRect(cx - 8, cy - 40, 16, 60);
+          ctx.restore();
+          const k = 1 - smoothstep(T_CAN + 0.25, T_CAN + 0.7, b);
+          if (k > 0) {
+            ctx.save();
+            ctx.globalAlpha *= k;
+            pen(ctx, 2.4);
+            const sx0 = vx + sh + SLOT.x, sy0 = BASE + SLOT.y;
+            for (const [ax, ay, dx, dy] of [[-6, 10, -26, -8], [-6, 26, -30, 4], [-2, 44, -24, 18], [SLOT.w + 6, 10, 26, -8], [SLOT.w + 6, 26, 30, 4], [SLOT.w + 2, 44, 24, 18]]) {
+              seg(ctx, sx0 + ax, sy0 + ay, sx0 + ax + dx, sy0 + ay + dy);
+            }
+            ctx.restore();
+          }
+        }
+        cat(ctx, vx + sh - 34, BASE - 444, b >= T_CAT && b < T_OUT2 + 1.5);
+      }
+      if (vis(X(GX.tree), 360)) drawSprite(ctx, treeSprite(), X(GX.tree), BASE);
+      if (vis(X(GX.bike), 200)) drawSprite(ctx, bikeSprite(), X(GX.bike), BASE + 6);
+      const poles = [GX.poleA, GX.poleB, GX.poleC].map(X);
+      for (let i = 0; i + 1 < poles.length; i++) {
+        const a = poles[i], c = poles[i + 1];
+        if (c < X_MIN - 200 || a > X_MAX + 200) continue;
+        WIRE.forEach(([dx, dy], k) => {
+          pen(ctx, k < 3 ? 1.8 : 1.3);
+          const y = BASE + dy - 10, sag = 70 + k * 12;
+          ctx.beginPath();
+          ctx.moveTo(a + dx, y);
+          ctx.quadraticCurveTo((a + c) / 2 + dx, y + sag * 2, c + dx, y);
+          ctx.stroke();
+        });
+      }
+      for (const x of poles) if (vis(x, 150)) drawSprite(ctx, poleSprite(), x, BASE);
+      drawPetals(ctx, b, X(GX.tree));
+    },
+    drawFront(ctx, b, env) {
+      focusLines(ctx, b);
+      if (b >= T_FLOWER[1] && b < T_FLOWER[1] + 2.6) {
+        const t = (b - T_FLOWER[1]) / 2.6;
+        petal(ctx, lerp(CHAR_X + 170, CHAR_X - 150, t) + Math.sin(t * TAU * 1.2) * 34, lerp(240, 700, t), 2.6, t * 7, 1.6);
+      }
+      sweat(ctx, env.figure(), b);
+      for (const P of PANELS) drawPanel(ctx, P, b);
+      pageBorder(ctx);
+    },
+    drawFrame(ctx, R) {
+      const t = 64 * R.s, { x, y, w, h } = R, s = R.s;
+      ctx.save();
+      pen(ctx, 1);
+      for (let i = 0; i < 18; i++) {
+        const yy = y - t + (h + 2 * t) * hash2(i, 1, 11), L = (90 + 260 * hash2(i, 2, 11)) * s, x0 = x + w + t + (20 + 40 * hash2(i, 3, 11)) * s;
+        ctx.lineWidth = Math.max(1, (1.5 + 3.5 * hash2(i, 4, 11)) * s);
+        seg(ctx, x0, yy, x0 + L, yy);
+      }
+      const o = 16 * s, S = Math.max(4, Math.round(9 * s));
+      const sh = new Path2D();
+      sh.rect(x - t + o, y - t + o, w + 2 * t, h + 2 * t);
+      sh.rect(x - t, y - t, w + 2 * t, h + 2 * t);
+      ctx.fillStyle = tone(ctx, 0.55, { S });
+      ctx.fill(sh, "evenodd");
+      const band = new Path2D();
+      band.rect(x - t, y - t, w + 2 * t, h + 2 * t);
+      band.rect(x, y, w, h);
+      ctx.fillStyle = PAPER2;
+      ctx.fill(band, "evenodd");
+      pen(ctx, Math.max(1, 3 * s));
+      ctx.strokeRect(x - t, y - t, w + 2 * t, h + 2 * t);
+      pen(ctx, Math.max(1.5, 7 * s));
+      ctx.strokeRect(x - 2 * s, y - 2 * s, w + 4 * s, h + 4 * s);
+      ctx.fillStyle = tone(ctx, 0.4, { S });
+      ctx.fillRect(x - t * 0.7, y - t * 0.7, t * 0.4, t * 0.4);
+      ctx.fillRect(x + w + t * 0.3, y + h + t * 0.3, t * 0.4, t * 0.4);
+      ctx.restore();
+    },
+    cardStyle: {
+      ink: INK2,
+      accent: INK2,
+      bar: false,
+      bgDraw(ctx, x, y, w, h) {
+        ctx.save();
+        ctx.fillStyle = INK2;
+        ctx.fillRect(x + 10, y + 10, w, h);
+        ctx.fillStyle = PAPER2;
+        ctx.fillRect(x, y, w, h);
+        ctx.beginPath();
+        ctx.rect(x + 16, y + 18, 16, h - 36);
+        ctx.save();
+        ctx.clip();
+        toneGrad(ctx, x + 12, y + 14, x + 36, y + h - 14, (xx, yy) => 0.15 + 0.6 * (yy - y) / h, { S: 7 });
+        ctx.restore();
+        pen(ctx, 1.5);
+        ctx.strokeRect(x + 16, y + 18, 16, h - 36);
+        pen(ctx, 5);
+        ctx.strokeRect(x, y, w, h);
+        pen(ctx, 1.4);
+        for (let i = 0; i < 5; i++) seg(ctx, x + w - 70 + i * 4, y + 14 + i * 7, x + w - 14, y + 14 + i * 7);
+        ctx.restore();
+      }
+    },
+    playerStyle: {
+      plate: PAPER2,
+      ink: INK2,
+      noteColor: INK2,
+      backdrop: false,
+      family: SANS,
+      plateDraw(ctx, x, y, w, h) {
+        const tail = new Path2D();
+        tail.moveTo(x + w - 46, y + h - 14);
+        tail.lineTo(x + w + 34, y + h + 12);
+        tail.lineTo(x + w - 20, y + h - 34);
+        tail.closePath();
+        const bub = new Path2D();
+        bub.roundRect ? bub.roundRect(x, y, w, h, h / 2) : bub.rect(x, y, w, h);
+        pen(ctx, 8);
+        ctx.stroke(tail);
+        ctx.stroke(bub);
+        ctx.fillStyle = PAPER2;
+        ctx.fill(tail);
+        ctx.fill(bub);
+      },
+      drawPlayer(ctx, kind, cx, cy, s, spin) {
+        const w = 200 * s, h = 128 * s;
+        ctx.save();
+        ctx.translate(cx, cy);
+        ctx.fillStyle = INK2;
+        roundRect(ctx, -w / 2 + 9, -h / 2 + 9, w, h, 10 * s);
+        ctx.fill();
+        roundRect(ctx, -w / 2, -h / 2, w, h, 10 * s);
+        ctx.fillStyle = PAPER2;
+        ctx.fill();
+        pen(ctx, 3.5 * s);
+        ctx.stroke();
+        roundRect(ctx, -w / 2 + 14 * s, -h / 2 + 12 * s, w - 28 * s, 66 * s, 5 * s);
+        ctx.save();
+        ctx.clip();
+        toneGrad(ctx, -w / 2, -h / 2, w / 2, 20 * s, (x) => 0.05 + 0.4 * clamp((x + w / 2) / w), { S: 6 });
+        ctx.restore();
+        pen(ctx, 2.2 * s);
+        ctx.stroke();
+        ctx.fillStyle = INK2;
+        ctx.fillRect(-w / 2 + 14 * s, -h / 2 + 22 * s, w - 28 * s, 6 * s);
+        roundRect(ctx, -52 * s, -h / 2 + 34 * s, 104 * s, 34 * s, 16 * s);
+        ctx.fillStyle = INK2;
+        ctx.fill();
+        for (const sx of [-1, 1]) {
+          const rx = sx * 34 * s, ry = -h / 2 + 51 * s;
+          ctx.fillStyle = PAPER2;
+          circle(ctx, rx, ry, 10 * s);
+          ctx.fill();
+          pen(ctx, 1.6 * s);
+          ctx.stroke();
+          ctx.save();
+          ctx.translate(rx, ry);
+          ctx.rotate(spin * (sx < 0 ? 1 : 1.3));
+          ctx.fillStyle = INK2;
+          for (let i = 0; i < 6; i++) {
+            ctx.rotate(TAU / 6);
+            ctx.fillRect(-1.4 * s, -9 * s, 2.8 * s, 4.5 * s);
+          }
+          pen(ctx, 1.6 * s, PAPER2);
+          ctx.beginPath();
+          ctx.arc(0, 0, 14 * s, 0, 1.1);
+          ctx.stroke();
+          ctx.beginPath();
+          ctx.arc(0, 0, 14 * s, Math.PI, Math.PI + 1.1);
+          ctx.stroke();
+          ctx.restore();
+        }
+        ctx.beginPath();
+        ctx.moveTo(-60 * s, h / 2);
+        ctx.lineTo(-48 * s, h / 2 - 30 * s);
+        ctx.lineTo(48 * s, h / 2 - 30 * s);
+        ctx.lineTo(60 * s, h / 2);
+        ctx.closePath();
+        ctx.fillStyle = tone(ctx, 0.3, { S: 6 });
+        ctx.fill();
+        pen(ctx, 2.4 * s);
+        ctx.stroke();
+        ctx.fillStyle = INK2;
+        for (const sx of [-1, 1]) {
+          circle(ctx, sx * 30 * s, h / 2 - 14 * s, 5 * s);
+          ctx.fill();
+        }
+        for (const [sx, sy] of [[-1, -1], [1, -1], [-1, 1], [1, 1]]) {
+          circle(ctx, sx * (w / 2 - 8 * s), sy * (h / 2 - 8 * s), 2.6 * s);
+          ctx.fill();
+        }
+        ctx.restore();
+      }
+    }
+  };
 
   // src/main/frame.js
   function drawDefaultFrame(ctx, rect, s, o = {}) {
@@ -1365,7 +2691,7 @@
   }
 
   // src/scenes/s02.js
-  var ST = stationByN(2);
+  var ST2 = stationByN(2);
   var SAND = "#e7d3a8";
   var OCHRE = "#c49a5c";
   var BROWN = "#4a3320";
@@ -1384,7 +2710,7 @@
   var P_WALL = 0.85;
   var P_FAR = 0.22;
   var P_FG = 1.3;
-  function farLayer() {
+  function farLayer2() {
     return strip("s02-far", P_FAR, (ctx, x0, x1) => {
       const R = rng("s02-far");
       const c1 = mix(SAND, OCHRE, 0.5), c2 = mix(OCHRE, BROWN, 0.25);
@@ -1425,8 +2751,8 @@
       }
     }, { y0: 150, y1: 380 });
   }
-  function rosette(ctx, x, y, r, petal, center) {
-    ctx.fillStyle = petal;
+  function rosette(ctx, x, y, r, petal2, center) {
+    ctx.fillStyle = petal2;
     for (let k = 0; k < 8; k++) {
       const a = k / 8 * Math.PI * 2;
       ellipse(ctx, x + Math.cos(a) * r * 0.55, y + Math.sin(a) * r * 0.55, r * 0.45, r * 0.22, a);
@@ -1751,7 +3077,7 @@
   };
   var s02 = {
     id: "s02",
-    station: ST,
+    station: ST2,
     // 沙色人物贴在沙色浮雕上：加一圈深褐色描边（像浮雕的阴刻线），保证反差
     figureRim: { color: "#3d2712", width: 4, alpha: 0.9 },
     figureAdjust(b) {
@@ -1795,7 +3121,7 @@
           ctx.restore();
         }
       }
-      drawStrip(ctx, farLayer(), cam);
+      drawStrip(ctx, farLayer2(), cam);
       drawStrip(ctx, wallLayer(), cam);
       const pose = Math.floor(env.gb + 1e-6) % 2;
       drawStrip(ctx, reliefLayer(pose), cam);
@@ -1905,7 +3231,7 @@
   };
 
   // src/kit/ink.js
-  var INK2 = {
+  var INK3 = {
     paper: "#f4efe2",
     // 宣纸
     jiao: "#1b1a17",
@@ -1925,7 +3251,7 @@
     seal: "#b8402e"
     // 印章红（朱砂）
   };
-  function xuanPaper(w, h, { base = INK2.paper, seed = 3, amount = 1 } = {}) {
+  function xuanPaper(w, h, { base = INK3.paper, seed = 3, amount = 1 } = {}) {
     w = Math.round(w);
     h = Math.round(h);
     return baked(`xuan|${w}|${h}|${base}|${seed}|${amount}`, w, h, (ctx) => {
@@ -2012,7 +3338,7 @@
   }
   var profile = (t, [a, m, z]) => t < 0.18 ? lerp(a, m, smoothstep(0, 0.18, t)) : t > 0.65 ? lerp(m, z, smoothstep(0.65, 1, t)) : m;
   function bristleStroke(ctx, pts, o = {}) {
-    const { width = 6, color = INK2.jiao, alpha = 0.9, bristles = 8, dry = 0.2, seed = 1, taper = [0.45, 1, 0.35], wet = 0, px = 1, spacing = 2.2 } = o;
+    const { width = 6, color = INK3.jiao, alpha = 0.9, bristles = 8, dry = 0.2, seed = 1, taper = [0.45, 1, 0.35], wet = 0, px = 1, spacing = 2.2 } = o;
     if (pts.length < 2) return;
     const P = resample(pts, spacing);
     if (P.length < 2) return;
@@ -2074,7 +3400,7 @@
     p.closePath();
     return p;
   }
-  function inkDot(ctx, x, y, r, { color = INK2.jiao, alpha = 0.9, seed = 1, bleed = 0.35, ry = null, rot = 0, px = 1, rough = 0.22 } = {}) {
+  function inkDot(ctx, x, y, r, { color = INK3.jiao, alpha = 0.9, seed = 1, bleed = 0.35, ry = null, rot = 0, px = 1, rough = 0.22 } = {}) {
     if (r <= 0.05) return;
     ctx.save();
     ctx.fillStyle = color;
@@ -2086,7 +3412,7 @@
     ctx.fill(blobPath(x, y, r, ry ?? r, { seed, rough, rot }));
     ctx.restore();
   }
-  function mossDots(ctx, pts, { gap = 26, size = 4, color = INK2.jiao, alpha = 0.85, seed = 7, chance = 0.6 } = {}) {
+  function mossDots(ctx, pts, { gap = 26, size = 4, color = INK3.jiao, alpha = 0.85, seed = 7, chance = 0.6 } = {}) {
     const P = resample(pts, gap);
     P.forEach(([x, y], i) => {
       if (hash2(i, 1, seed) > chance) return;
@@ -2118,7 +3444,7 @@
     }
     return out;
   }
-  function washShape(ctx, pts, { color = INK2.dan, alpha = 0.8, top = null, fadeY = null, blur: blur2 = 3, edge = 0.25, edgeW = 3, px = 1, seed = 1 } = {}) {
+  function washShape(ctx, pts, { color = INK3.dan, alpha = 0.8, top = null, fadeY = null, blur: blur2 = 3, edge = 0.25, edgeW = 3, px = 1, seed = 1 } = {}) {
     let ymin = Infinity, ymax = -Infinity;
     for (const [, y] of pts) {
       ymin = Math.min(ymin, y);
@@ -2151,7 +3477,7 @@
     return path;
   }
   function mountain(ctx, x0, x1, o = {}) {
-    const { base = 600, height = 260, color = INK2.dan, alpha = 0.7, fadeY = base, seed = 1, peaks = 2.2, layers = 3, cun = 0, moss = 0, px = 1, blur: blur2 = 3, steep = 1.6, rough = 0.18 } = o;
+    const { base = 600, height = 260, color = INK3.dan, alpha = 0.7, fadeY = base, seed = 1, peaks = 2.2, layers = 3, cun = 0, moss = 0, px = 1, blur: blur2 = 3, steep = 1.6, rough = 0.18 } = o;
     const top = ridge(x0, x1, { base, height, seed, peaks, steep, rough });
     const ymin = Math.min(...top.map((p) => p[1]));
     for (let k = 0; k < layers; k++) {
@@ -2160,11 +3486,11 @@
       pts.push([x1, fadeY + 40], [x0, fadeY + 40]);
       washShape(ctx, pts, { color, alpha: alpha * (k ? 0.5 : 1), top: ymin + sink, fadeY, blur: blur2 * (k ? 1.6 : 1), edge: k ? 0 : 0.35, px, seed: seed + k });
     }
-    if (cun > 0) cunStrokes(ctx, top, { base: fadeY, color: mix(color, INK2.jiao, 0.45), density: cun, seed: seed + 21, px });
-    if (moss > 0) mossDots(ctx, top.map(([x, y]) => [x, y + 3]), { gap: 30 / moss, size: 3.6, color: mix(color, INK2.jiao, 0.7), seed: seed + 31, chance: 0.45 });
+    if (cun > 0) cunStrokes(ctx, top, { base: fadeY, color: mix(color, INK3.jiao, 0.45), density: cun, seed: seed + 21, px });
+    if (moss > 0) mossDots(ctx, top.map(([x, y]) => [x, y + 3]), { gap: 30 / moss, size: 3.6, color: mix(color, INK3.jiao, 0.7), seed: seed + 31, chance: 0.45 });
     return top;
   }
-  function cunStrokes(ctx, top, { base = 800, color = INK2.zhong, density = 1, seed = 5, px = 1, alpha = 0.55, len = 0.45 } = {}) {
+  function cunStrokes(ctx, top, { base = 800, color = INK3.zhong, density = 1, seed = 5, px = 1, alpha = 0.55, len = 0.45 } = {}) {
     const R = rng("cun", seed);
     const x0 = top[0][0], x1 = top[top.length - 1][0];
     const yAt = (x) => {
@@ -2187,7 +3513,7 @@
       bristleStroke(ctx, pts, { width: 3 + R() * 4, color, alpha: alpha * (0.6 + R() * 0.4), bristles: 5, dry: 0.45, seed: seed + k, taper: [0.8, 1, 0.15], px });
     }
   }
-  function mistBand(ctx, x0, x1, y, h, { color = INK2.paper, alpha = 0.95 } = {}) {
+  function mistBand(ctx, x0, x1, y, h, { color = INK3.paper, alpha = 0.95 } = {}) {
     const [r, g, b] = hexToRgb(color);
     const gr = ctx.createLinearGradient(0, y - h / 2, 0, y + h / 2);
     gr.addColorStop(0, `rgba(${r},${g},${b},0)`);
@@ -2197,7 +3523,7 @@
     ctx.fillStyle = gr;
     ctx.fillRect(x0, y - h / 2, x1 - x0, h);
   }
-  function pine(ctx, x, y, h, { seed = 1, color = INK2.nong, alpha = 0.85, lean = 0.15, px = 1 } = {}) {
+  function pine(ctx, x, y, h, { seed = 1, color = INK3.nong, alpha = 0.85, lean = 0.15, px = 1 } = {}) {
     const R = rng("pine", seed);
     const trunk = [];
     for (let s = 0; s <= 8; s++) {
@@ -2221,19 +3547,19 @@
     const [hx, hy] = trunk[8];
     inkDot(ctx, hx, hy - h * 0.02, h * 0.12, { ry: h * 0.05, color, alpha: alpha * 0.9, seed: seed + 99, bleed: 0.3, rough: 0.35 });
   }
-  function bamboo(ctx, x, y, h, { seed = 1, color = INK2.nong, alpha = 0.8, stems = 3, px = 1 } = {}) {
+  function bamboo(ctx, x, y, h, { seed = 1, color = INK3.nong, alpha = 0.8, stems = 3, px = 1 } = {}) {
     const R = rng("bamboo", seed);
     for (let s = 0; s < stems; s++) {
       const bx = x + (s - (stems - 1) / 2) * h * 0.07 + (R() - 0.5) * h * 0.04;
       const hh = h * (0.7 + R() * 0.3), lean = (R() - 0.5) * 0.25;
-      const tone = s % 2 ? mix(color, INK2.paper, 0.35) : color;
+      const tone2 = s % 2 ? mix(color, INK3.paper, 0.35) : color;
       let yy = y, xx = bx;
       const segs = 5 + Math.floor(R() * 2);
       for (let k = 0; k < segs; k++) {
         const L = hh / segs;
         const nx = xx + lean * L, ny = yy - L;
-        bristleStroke(ctx, [[xx, yy - 2], [nx, ny + 3]], { width: h * 0.022, color: tone, alpha, bristles: 4, dry: 0.15, seed: seed + s * 13 + k, taper: [1.1, 0.9, 1.15], px });
-        bristleStroke(ctx, [[nx - h * 0.014, ny + 1], [nx + h * 0.014, ny - 1]], { width: 2.2, color: INK2.jiao, alpha: alpha * 0.9, bristles: 2, dry: 0, seed: seed + k, px });
+        bristleStroke(ctx, [[xx, yy - 2], [nx, ny + 3]], { width: h * 0.022, color: tone2, alpha, bristles: 4, dry: 0.15, seed: seed + s * 13 + k, taper: [1.1, 0.9, 1.15], px });
+        bristleStroke(ctx, [[nx - h * 0.014, ny + 1], [nx + h * 0.014, ny - 1]], { width: 2.2, color: INK3.jiao, alpha: alpha * 0.9, bristles: 2, dry: 0, seed: seed + k, px });
         xx = nx;
         yy = ny;
         if (k >= segs - 3 && R() < 0.85) {
@@ -2242,13 +3568,13 @@
           for (let j = 0; j < nL; j++) {
             const a = (dir < 0 ? Math.PI : 0) + dir * (0.35 + j * 0.28 + (R() - 0.5) * 0.2) * -1 + (dir < 0 ? -0.15 : 0.15);
             const len = h * (0.09 + R() * 0.06);
-            bambooLeaf(ctx, xx, yy, a + Math.PI * 0.08 * dir, len, { color: tone, alpha: alpha * 0.95, seed: seed * 7 + j });
+            bambooLeaf(ctx, xx, yy, a + Math.PI * 0.08 * dir, len, { color: tone2, alpha: alpha * 0.95, seed: seed * 7 + j });
           }
         }
       }
     }
   }
-  function bambooLeaf(ctx, x, y, a, len, { color = INK2.nong, alpha = 0.85, seed = 1 } = {}) {
+  function bambooLeaf(ctx, x, y, a, len, { color = INK3.nong, alpha = 0.85, seed = 1 } = {}) {
     const w = len * 0.17;
     const c = Math.cos(a), s = Math.sin(a);
     const bend = (hash2(seed, 1, 3) - 0.5) * len * 0.25;
@@ -2264,7 +3590,7 @@
     ctx.fill(p);
     ctx.restore();
   }
-  function grassTuft(ctx, x, y, h, { seed = 1, color = INK2.zhong, alpha = 0.7, blades = 6, spread = 0.9, px = 1 } = {}) {
+  function grassTuft(ctx, x, y, h, { seed = 1, color = INK3.zhong, alpha = 0.7, blades = 6, spread = 0.9, px = 1 } = {}) {
     for (let k = 0; k < blades; k++) {
       const a = -Math.PI / 2 + (k / Math.max(1, blades - 1) - 0.5) * spread + (hash2(k, 1, seed) - 0.5) * 0.3;
       const L = h * (0.55 + hash2(k, 2, seed) * 0.5);
@@ -2277,7 +3603,7 @@
       bristleStroke(ctx, pts, { width: 2.6 + hash2(k, 4, seed) * 2, color, alpha, bristles: 3, dry: 0.2, seed: seed + k, taper: [1, 0.7, 0.05], px });
     }
   }
-  function rock(ctx, x, y, w, h, { seed = 1, color = INK2.zhong, alpha = 0.8, px = 1 } = {}) {
+  function rock(ctx, x, y, w, h, { seed = 1, color = INK3.zhong, alpha = 0.8, px = 1 } = {}) {
     const R = rng("rock", seed);
     const pts = [];
     const n = 9;
@@ -2287,14 +3613,14 @@
       pts.push([x - w / 2 + w * t, yy]);
     }
     const shape = [...pts, [x + w / 2, y], [x - w / 2, y]];
-    washShape(ctx, shape, { color: mix(color, INK2.paper, 0.45), alpha: alpha * 0.55, top: y - h, fadeY: y + 6, blur: 1.5, edge: 0, px });
+    washShape(ctx, shape, { color: mix(color, INK3.paper, 0.45), alpha: alpha * 0.55, top: y - h, fadeY: y + 6, blur: 1.5, edge: 0, px });
     bristleStroke(ctx, pts, { width: Math.max(3, h * 0.07), color, alpha, bristles: 6, dry: 0.35, seed, taper: [0.9, 1, 0.5], px });
     for (let k = 0; k < 2; k++) {
       const t = 0.3 + R() * 0.4;
       const top = pts[Math.round(t * n)];
       bristleStroke(ctx, [[top[0], top[1] + 4], [top[0] + (R() - 0.5) * w * 0.2, top[1] + h * 0.45], [top[0] + (R() - 0.5) * w * 0.25, y - 2]], { width: Math.max(2.5, h * 0.05), color, alpha: alpha * 0.6, bristles: 4, dry: 0.5, seed: seed + k + 7, taper: [0.9, 0.8, 0.1], px });
     }
-    mossDots(ctx, pts.slice(2, 7), { gap: Math.max(10, w / 5), size: Math.max(2, h * 0.06), color: INK2.jiao, seed: seed + 3, chance: 0.5 });
+    mossDots(ctx, pts.slice(2, 7), { gap: Math.max(10, w / 5), size: Math.max(2, h * 0.06), color: INK3.jiao, seed: seed + 3, chance: 0.5 });
   }
   function ribbonPath(pts, widthAt) {
     const N = normals(pts);
@@ -2310,7 +3636,7 @@
     p.closePath();
     return p;
   }
-  function inkRibbon(ctx, pts, { width = 12, vary = 0.35, color = INK2.jiao, seed = 1, px = 1, bleed = 4, dry = 0.35, taper = 40 } = {}) {
+  function inkRibbon(ctx, pts, { width = 12, vary = 0.35, color = INK3.jiao, seed = 1, px = 1, bleed = 4, dry = 0.35, taper = 40 } = {}) {
     const P = resample(pts, 3);
     const S = [0];
     for (let i = 1; i < P.length; i++) S.push(S[i - 1] + Math.hypot(P[i][0] - P[i - 1][0], P[i][1] - P[i - 1][1]));
@@ -2328,11 +3654,11 @@
     ctx.fill(core);
     ctx.filter = "none";
     ctx.globalAlpha = 0.5;
-    ctx.strokeStyle = INK2.jiao;
+    ctx.strokeStyle = INK3.jiao;
     ctx.lineWidth = 1.2;
     ctx.stroke(core);
     if (dry > 0) {
-      ctx.strokeStyle = INK2.paper;
+      ctx.strokeStyle = INK3.paper;
       ctx.lineCap = "round";
       for (let j = 0; j < 5; j++) {
         const off = (j / 4 - 0.5) * 0.7;
@@ -2363,7 +3689,7 @@
     const u = 1 - t;
     return [u * u * p0[0] + 2 * u * t * p1[0] + t * t * p2[0], u * u * p0[1] + 2 * u * t * p1[1] + t * t * p2[1]];
   };
-  function inkStream(ctx, p0, p1, p2, t0, t1, { w0 = 5, w1 = 7, color = INK2.jiao, alpha = 0.92, wobble = 2, phase = 0, seed = 1 } = {}) {
+  function inkStream(ctx, p0, p1, p2, t0, t1, { w0 = 5, w1 = 7, color = INK3.jiao, alpha = 0.92, wobble = 2, phase = 0, seed = 1 } = {}) {
     if (t1 - t0 < 2e-3) return;
     const n = Math.max(4, Math.ceil((t1 - t0) * 48));
     const P = [];
@@ -2385,7 +3711,7 @@
     ctx.fill();
     ctx.restore();
   }
-  function sealStamp(ctx, x, y, size, { color = INK2.seal, seed = 1, rot = -0.04, alpha = 0.92 } = {}) {
+  function sealStamp(ctx, x, y, size, { color = INK3.seal, seed = 1, rot = -0.04, alpha = 0.92 } = {}) {
     const s = size / 2;
     ctx.save();
     ctx.translate(x, y);
@@ -2400,8 +3726,8 @@
     p.closePath();
     ctx.fillStyle = color;
     ctx.fill(p);
-    ctx.strokeStyle = INK2.paper;
-    ctx.fillStyle = INK2.paper;
+    ctx.strokeStyle = INK3.paper;
+    ctx.fillStyle = INK3.paper;
     ctx.lineCap = "round";
     ctx.lineJoin = "round";
     ctx.lineWidth = Math.max(1, size * 0.07);
@@ -2432,7 +3758,7 @@
     }
     ctx.restore();
   }
-  function paperCard(w, h, { seed = 1, seal = true, sealSize = 46, border = INK2.nong, key = "" } = {}) {
+  function paperCard(w, h, { seed = 1, seal = true, sealSize = 46, border = INK3.nong, key = "" } = {}) {
     const pad = 24;
     w = Math.round(w);
     h = Math.round(h);
@@ -2466,13 +3792,13 @@
       ctx.shadowColor = "rgba(60,45,25,0.22)";
       ctx.shadowBlur = 14;
       ctx.shadowOffsetY = 5;
-      ctx.fillStyle = INK2.paper;
+      ctx.fillStyle = INK3.paper;
       ctx.fill(edge);
       ctx.restore();
       ctx.save();
       ctx.clip(edge);
       ctx.drawImage(xuanPaper(w, h, { seed: seed + 50, amount: 1.1 }), 0, 0);
-      ctx.fillStyle = rgba(INK2.dan, 0.08);
+      ctx.fillStyle = rgba(INK3.dan, 0.08);
       ctx.fill(blobPath(w * 0.8, h * 0.75, w * 0.35, h * 0.4, { seed, rough: 0.3 }));
       ctx.restore();
       const m = 12;
@@ -2511,13 +3837,13 @@
       }
     }
     ctx.restore();
-    ctx.strokeStyle = INK2.nong;
+    ctx.strokeStyle = INK3.nong;
     ctx.lineWidth = Math.max(1, 3 * s);
     ctx.strokeRect(x - 1.5 * s, y - 1.5 * s, w + 3 * s, h + 3 * s);
-    ctx.strokeStyle = INK2.zheshi;
+    ctx.strokeStyle = INK3.zheshi;
     ctx.lineWidth = Math.max(1, 5 * s);
     ctx.strokeRect(x - 9 * s, y - 9 * s, w + 18 * s, h + 18 * s);
-    ctx.strokeStyle = rgba(INK2.nong, 0.7);
+    ctx.strokeStyle = rgba(INK3.nong, 0.7);
     ctx.lineWidth = Math.max(0.8, 1.6 * s);
     ctx.strokeRect(x - t, y - t * 0.8, w + 2 * t, h + t * 1.6);
     for (const side of [-1, 1]) {
@@ -2538,7 +3864,7 @@
         ctx.beginPath();
         ctx.ellipse(cx, ky + dir * 12 * s, rw * 0.62, 14 * s, 0, 0, Math.PI * 2);
         ctx.fill();
-        ctx.strokeStyle = rgba(INK2.nong, 0.6);
+        ctx.strokeStyle = rgba(INK3.nong, 0.6);
         ctx.lineWidth = Math.max(0.6, 1.2 * s);
         ctx.stroke();
       }
@@ -2548,7 +3874,7 @@
   }
 
   // src/scenes/s03.js
-  var ST2 = stationByN(3);
+  var ST3 = stationByN(3);
   var PX = K;
   var P_SKY = 0.03;
   var P_FAR1 = 0.1;
@@ -2576,7 +3902,7 @@
   var T_NOD = [GAG + 4.1, GAG + 4.9];
   var R0 = (k) => rng("s03", k);
   var lineY = (x) => ROAD_Y + 11 + Math.sin(x / 131) * 4.5 + (fbm(x / 190, 0.4, 33, 3) - 0.5) * 12;
-  function skyLayer() {
+  function skyLayer2() {
     return strip("s03-sky", P_SKY, (ctx, x0, x1) => {
       ctx.save();
       ctx.filter = `blur(${6 * PX}px)`;
@@ -2590,16 +3916,16 @@
   }
   function far1Layer() {
     return strip("s03-far1", P_FAR1, (ctx, x0, x1) => {
-      mountain(ctx, x0, x1, { base: 600, height: 330, color: mix(INK2.qing, INK2.huaqing, 0.35), alpha: 0.75, fadeY: 600, seed: 11, peaks: 2.4, layers: 2, px: PX, blur: 4, steep: 1.3 });
+      mountain(ctx, x0, x1, { base: 600, height: 330, color: mix(INK3.qing, INK3.huaqing, 0.35), alpha: 0.75, fadeY: 600, seed: 11, peaks: 2.4, layers: 2, px: PX, blur: 4, steep: 1.3 });
     }, { y0: 160, y1: 660 });
   }
   function far2Layer() {
     return strip("s03-far2", P_FAR2, (ctx, x0, x1) => {
-      const top = mountain(ctx, x0, x1, { base: 660, height: 250, color: mix(INK2.dan, INK2.huaqing, 0.3), alpha: 0.72, fadeY: 650, seed: 23, peaks: 3.2, layers: 3, px: PX, blur: 3, steep: 1.5 });
+      const top = mountain(ctx, x0, x1, { base: 660, height: 250, color: mix(INK3.dan, INK3.huaqing, 0.3), alpha: 0.72, fadeY: 650, seed: 23, peaks: 3.2, layers: 3, px: PX, blur: 3, steep: 1.5 });
       const R = R0("far2pine");
       for (let i = 8; i < top.length - 8; i += 9) {
         const [x, y] = top[i];
-        if (y < top[i - 6][1] && y < top[i + 6][1] && R() < 0.7) for (let k = 0; k < 3; k++) inkDot(ctx, x - 8 + k * 8 + R() * 4, y - 4 - R() * 6, 3 + R() * 2, { ry: 5 + R() * 3, color: mix(INK2.zhong, INK2.huaqing, 0.25), alpha: 0.75, seed: i * 3 + k, bleed: 0.3 });
+        if (y < top[i - 6][1] && y < top[i + 6][1] && R() < 0.7) for (let k = 0; k < 3; k++) inkDot(ctx, x - 8 + k * 8 + R() * 4, y - 4 - R() * 6, 3 + R() * 2, { ry: 5 + R() * 3, color: mix(INK3.zhong, INK3.huaqing, 0.25), alpha: 0.75, seed: i * 3 + k, bleed: 0.3 });
       }
     }, { y0: 300, y1: 700 });
   }
@@ -2608,22 +3934,22 @@
       mistBand(ctx, x0, x1, 650, 90, { alpha: 0.9 });
       ctx.save();
       ctx.filter = `blur(${10 * PX}px)`;
-      ctx.fillStyle = rgba(INK2.paper, 0.85);
+      ctx.fillStyle = rgba(INK3.paper, 0.85);
       const R = R0("mist");
       for (let x = x0; x < x1; x += 160 + R() * 220) ctx.fill(blobPath(x, 600 + R() * 50, 120 + R() * 140, 18 + R() * 16, { seed: x, rough: 0.3 }));
       ctx.restore();
     }, { y0: 520, y1: 720 });
   }
-  function midLayer(cg) {
+  function midLayer2(cg) {
     return strip("s03-mid", P_MID, (ctx, x0, x1) => {
-      const color = mix(INK2.zhong, INK2.huaqing, 0.12);
+      const color = mix(INK3.zhong, INK3.huaqing, 0.12);
       const top = mountain(ctx, x0, x1, { base: 760, height: 210, color, alpha: 0.62, fadeY: 760, seed: 37, peaks: 2.6, layers: 3, px: PX, blur: 2.2, steep: 1.9, cun: 2.6, moss: 0.3, rough: 0.25 });
       const R = R0("midpine");
       for (let i = 12; i < top.length - 12; i += 6) {
         const [x, y] = top[i];
         const sx = x - cg * P_MID;
         if (sx > 150 && sx < 470) continue;
-        if (y <= top[i - 10][1] && y <= top[i + 10][1] && R() < 0.85) pine(ctx, x + (R() - 0.5) * 20, y + 6, 70 + R() * 50, { seed: i, color: INK2.nong, alpha: 0.82, lean: (R() - 0.5) * 0.4, px: PX });
+        if (y <= top[i - 10][1] && y <= top[i + 10][1] && R() < 0.85) pine(ctx, x + (R() - 0.5) * 20, y + 6, 70 + R() * 50, { seed: i, color: INK3.nong, alpha: 0.82, lean: (R() - 0.5) * 0.4, px: PX });
       }
       mistBand(ctx, x0, x1, 772, 70, { alpha: 0.8 });
     }, { y0: 420, y1: 810 });
@@ -2633,28 +3959,28 @@
       const R = R0("near");
       const pts = [];
       for (let x = x0; x <= x1; x += 8) pts.push([x, 742 - 26 * fbm(x / 210, 0.2, 51, 3) - 14 * Math.sin(x / 330)]);
-      washShape(ctx, [...pts, [x1, 805], [x0, 805]], { color: mix(INK2.zheshi, INK2.dan, 0.4), alpha: 0.35, fadeY: 805, blur: 3, edge: 0.4, px: PX });
-      bristleStroke(ctx, pts.filter((_, i) => i % 3 === 0), { width: 3.5, color: INK2.zhong, alpha: 0.55, bristles: 6, dry: 0.55, seed: 52, px: PX, spacing: 3 });
+      washShape(ctx, [...pts, [x1, 805], [x0, 805]], { color: mix(INK3.zheshi, INK3.dan, 0.4), alpha: 0.35, fadeY: 805, blur: 3, edge: 0.4, px: PX });
+      bristleStroke(ctx, pts.filter((_, i) => i % 3 === 0), { width: 3.5, color: INK3.zhong, alpha: 0.55, bristles: 6, dry: 0.55, seed: 52, px: PX, spacing: 3 });
       for (let x = x0 + 80; x < x1; x += 260 + R() * 320) {
         const sx = x - cg * P_NEAR;
         if (sx > 120 && sx < 1120) continue;
         const kind = R();
-        if (kind < 0.35) rock(ctx, x, 798, 80 + R() * 70, 46 + R() * 34, { seed: Math.round(x), color: INK2.zhong, px: PX });
-        else if (kind < 0.7) bamboo(ctx, x, 796, 240 + R() * 120, { seed: Math.round(x), color: INK2.nong, alpha: 0.75, stems: 2 + Math.floor(R() * 2), px: PX });
+        if (kind < 0.35) rock(ctx, x, 798, 80 + R() * 70, 46 + R() * 34, { seed: Math.round(x), color: INK3.zhong, px: PX });
+        else if (kind < 0.7) bamboo(ctx, x, 796, 240 + R() * 120, { seed: Math.round(x), color: INK3.nong, alpha: 0.75, stems: 2 + Math.floor(R() * 2), px: PX });
         else {
           grassTuft(ctx, x, 798, 40 + R() * 30, { seed: Math.round(x), px: PX });
           rock(ctx, x + 50, 798, 50, 26, { seed: Math.round(x) + 1, px: PX });
         }
       }
-      for (let x = x0; x < x1; x += 170 + R() * 260) grassTuft(ctx, x, 800, 22 + R() * 22, { seed: Math.round(x) + 7, color: INK2.zhong, alpha: 0.6, blades: 4 + Math.floor(R() * 3), px: PX });
+      for (let x = x0; x < x1; x += 170 + R() * 260) grassTuft(ctx, x, 800, 22 + R() * 22, { seed: Math.round(x) + 7, color: INK3.zhong, alpha: 0.6, blades: 4 + Math.floor(R() * 3), px: PX });
     }, { y0: 480, y1: 812 });
   }
   function roadLayer2() {
     return strip("s03-road", 1, (ctx, x0, x1) => {
       const g = ctx.createLinearGradient(0, ROAD_Y, 0, 1e3);
-      g.addColorStop(0, rgba(INK2.zheshi, 0.42));
-      g.addColorStop(0.35, rgba(INK2.zheshi, 0.16));
-      g.addColorStop(1, rgba(INK2.zheshi, 0.05));
+      g.addColorStop(0, rgba(INK3.zheshi, 0.42));
+      g.addColorStop(0.35, rgba(INK3.zheshi, 0.16));
+      g.addColorStop(1, rgba(INK3.zheshi, 0.05));
       ctx.fillStyle = g;
       ctx.fillRect(x0, ROAD_Y - 2, x1 - x0, 1e3 - ROAD_Y + 2);
       const R = R0("road");
@@ -2662,15 +3988,15 @@
         const L = 120 + R() * 260;
         const pts = [];
         for (let u = 0; u <= L; u += 20) pts.push([x + u, ROAD_Y + 1 + Math.sin((x + u) / 47) * 1.5]);
-        bristleStroke(ctx, pts, { width: 3.4, color: INK2.zhong, alpha: 0.55, bristles: 6, dry: 0.55, seed: Math.round(x), taper: [0.7, 1, 0.3], px: PX });
+        bristleStroke(ctx, pts, { width: 3.4, color: INK3.zhong, alpha: 0.55, bristles: 6, dry: 0.55, seed: Math.round(x), taper: [0.7, 1, 0.3], px: PX });
         x += L + 20 + R() * 60;
       }
       for (let x = x0; x < x1; x += 70 + R() * 130) {
         const y = ROAD_Y + 30 + R() * 160, L = 40 + R() * 110;
-        bristleStroke(ctx, [[x, y], [x + L * 0.5, y + (R() - 0.5) * 4], [x + L, y + (R() - 0.5) * 6]], { width: 3 + R() * 3, color: INK2.dan, alpha: 0.45, bristles: 5, dry: 0.65, seed: Math.round(x) + 3, taper: [0.8, 1, 0.1], px: PX });
+        bristleStroke(ctx, [[x, y], [x + L * 0.5, y + (R() - 0.5) * 4], [x + L, y + (R() - 0.5) * 6]], { width: 3 + R() * 3, color: INK3.dan, alpha: 0.45, bristles: 5, dry: 0.65, seed: Math.round(x) + 3, taper: [0.8, 1, 0.1], px: PX });
       }
-      for (let x = x0; x < x1; x += 40 + R() * 90) inkDot(ctx, x, ROAD_Y + 20 + R() * 170, 2 + R() * 3.5, { ry: 1.4 + R() * 2, color: INK2.zhong, alpha: 0.6, seed: Math.round(x), bleed: 0.2 });
-      for (let x = x0; x < x1; x += 300) bristleStroke(ctx, [[x, 975], [x + 140, 972], [x + 290, 976]], { width: 4, color: INK2.dan, alpha: 0.35, bristles: 5, dry: 0.6, seed: Math.round(x) + 9, px: PX });
+      for (let x = x0; x < x1; x += 40 + R() * 90) inkDot(ctx, x, ROAD_Y + 20 + R() * 170, 2 + R() * 3.5, { ry: 1.4 + R() * 2, color: INK3.zhong, alpha: 0.6, seed: Math.round(x), bleed: 0.2 });
+      for (let x = x0; x < x1; x += 300) bristleStroke(ctx, [[x, 975], [x + 140, 972], [x + 290, 976]], { width: 4, color: INK3.dan, alpha: 0.35, bristles: 5, dry: 0.6, seed: Math.round(x) + 9, px: PX });
     }, { y0: ROAD_Y - 6, y1: 1e3 });
   }
   var SHED_BOX = { x0: 440, x1: 1290, y0: 200, y1: 812 };
@@ -2685,18 +4011,18 @@
   }
   function shedBack(ctx) {
     const o = { px: PX };
-    bamboo(ctx, 1040, MAN_BASE - 10, 380, { seed: 301, color: mix(INK2.zhong, INK2.huaqing, 0.15), alpha: 0.6, stems: 3, ...o });
-    bamboo(ctx, 560, MAN_BASE - 10, 300, { seed: 307, color: mix(INK2.dan, INK2.huaqing, 0.2), alpha: 0.55, stems: 2, ...o });
-    for (const x of [600, 1010]) bristleStroke(ctx, [[x, MAN_BASE - 14], [x + 2, SHED.eave - 40]], { width: 9, color: INK2.zhong, alpha: 0.65, bristles: 6, dry: 0.25, seed: x, taper: [1, 0.9, 1], ...o });
+    bamboo(ctx, 1040, MAN_BASE - 10, 380, { seed: 301, color: mix(INK3.zhong, INK3.huaqing, 0.15), alpha: 0.6, stems: 3, ...o });
+    bamboo(ctx, 560, MAN_BASE - 10, 300, { seed: 307, color: mix(INK3.dan, INK3.huaqing, 0.2), alpha: 0.55, stems: 2, ...o });
+    for (const x of [600, 1010]) bristleStroke(ctx, [[x, MAN_BASE - 14], [x + 2, SHED.eave - 40]], { width: 9, color: INK3.zhong, alpha: 0.65, bristles: 6, dry: 0.25, seed: x, taper: [1, 0.9, 1], ...o });
     ctx.save();
     ctx.filter = `blur(${4 * PX}px)`;
-    ctx.fillStyle = rgba(INK2.dan, 0.25);
+    ctx.fillStyle = rgba(INK3.dan, 0.25);
     ctx.fill(blobPath(800, MAN_BASE + 4, 300, 12, { seed: 3, rough: 0.2 }));
     ctx.restore();
     const sx = 965;
     const stove = [[sx - 34, MAN_BASE], [sx - 28, MAN_BASE - 92], [sx + 28, MAN_BASE - 92], [sx + 34, MAN_BASE]];
-    washShape(ctx, [...stove], { color: mix(INK2.zheshi, INK2.zhong, 0.35), alpha: 0.55, blur: 1, edge: 0, ...o });
-    bristleStroke(ctx, stove, { width: 4, color: INK2.nong, alpha: 0.85, bristles: 6, dry: 0.35, seed: 41, ...o });
+    washShape(ctx, [...stove], { color: mix(INK3.zheshi, INK3.zhong, 0.35), alpha: 0.55, blur: 1, edge: 0, ...o });
+    bristleStroke(ctx, stove, { width: 4, color: INK3.nong, alpha: 0.85, bristles: 6, dry: 0.35, seed: 41, ...o });
     ctx.save();
     ctx.filter = `blur(${5 * PX}px)`;
     ctx.fillStyle = rgba("#d9824e", 0.55);
@@ -2704,53 +4030,53 @@
     ctx.ellipse(sx, MAN_BASE - 38, 13, 9, 0, 0, Math.PI * 2);
     ctx.fill();
     ctx.restore();
-    bristleStroke(ctx, [[sx - 16, MAN_BASE - 40], [sx + 16, MAN_BASE - 40]], { width: 3, color: INK2.nong, alpha: 0.7, bristles: 3, ...o });
-    inkDot(ctx, sx, MAN_BASE - 112, 26, { ry: 20, color: mix(INK2.zhong, INK2.zheshi, 0.25), alpha: 0.85, seed: 5, bleed: 0.2, rough: 0.08 });
-    bristleStroke(ctx, [[sx - 8, MAN_BASE - 132], [sx + 8, MAN_BASE - 132]], { width: 5, color: INK2.jiao, alpha: 0.9, bristles: 3, ...o });
-    bristleStroke(ctx, [[520, MAN_BASE - 46], [575, MAN_BASE - 48]], { width: 7, color: INK2.nong, alpha: 0.8, bristles: 6, dry: 0.3, seed: 61, ...o });
-    for (const x of [527, 567]) bristleStroke(ctx, [[x, MAN_BASE - 44], [x + (x < 540 ? -3 : 3), MAN_BASE]], { width: 4, color: INK2.nong, alpha: 0.8, bristles: 4, seed: x, ...o });
+    bristleStroke(ctx, [[sx - 16, MAN_BASE - 40], [sx + 16, MAN_BASE - 40]], { width: 3, color: INK3.nong, alpha: 0.7, bristles: 3, ...o });
+    inkDot(ctx, sx, MAN_BASE - 112, 26, { ry: 20, color: mix(INK3.zhong, INK3.zheshi, 0.25), alpha: 0.85, seed: 5, bleed: 0.2, rough: 0.08 });
+    bristleStroke(ctx, [[sx - 8, MAN_BASE - 132], [sx + 8, MAN_BASE - 132]], { width: 5, color: INK3.jiao, alpha: 0.9, bristles: 3, ...o });
+    bristleStroke(ctx, [[520, MAN_BASE - 46], [575, MAN_BASE - 48]], { width: 7, color: INK3.nong, alpha: 0.8, bristles: 6, dry: 0.3, seed: 61, ...o });
+    for (const x of [527, 567]) bristleStroke(ctx, [[x, MAN_BASE - 44], [x + (x < 540 ? -3 : 3), MAN_BASE]], { width: 4, color: INK3.nong, alpha: 0.8, bristles: 4, seed: x, ...o });
   }
   function shedFront(ctx) {
     const o = { px: PX };
     for (const x of [SHED.x0 + 14, SHED.x1 - 18]) {
-      bristleStroke(ctx, [[x, ROAD_Y - 4], [x - 2, SHED.eave - 30]], { width: 12, color: INK2.nong, alpha: 0.85, bristles: 8, dry: 0.3, seed: x + 1, taper: [1.1, 0.9, 1], ...o });
-      for (let y = ROAD_Y - 90; y > SHED.eave; y -= 92) bristleStroke(ctx, [[x - 8, y], [x + 7, y - 2]], { width: 2.5, color: INK2.jiao, alpha: 0.85, bristles: 2, ...o });
+      bristleStroke(ctx, [[x, ROAD_Y - 4], [x - 2, SHED.eave - 30]], { width: 12, color: INK3.nong, alpha: 0.85, bristles: 8, dry: 0.3, seed: x + 1, taper: [1.1, 0.9, 1], ...o });
+      for (let y = ROAD_Y - 90; y > SHED.eave; y -= 92) bristleStroke(ctx, [[x - 8, y], [x + 7, y - 2]], { width: 2.5, color: INK3.jiao, alpha: 0.85, bristles: 2, ...o });
     }
     const roof = [[SHED.x0 - 60, SHED.eave + 6], [SHED.x0 + 70, SHED.eave - 120], [SHED.x1 - 40, SHED.eave - 150], [SHED.x1 + 70, SHED.eave - 8]];
     const roofPts = [...roof, [SHED.x1 + 50, SHED.eave + 8], [SHED.x0 - 40, SHED.eave + 18]];
-    washShape(ctx, roofPts, { color: mix(INK2.zheshi, INK2.dan, 0.55), alpha: 0.5, top: SHED.eave - 150, fadeY: SHED.eave + 40, blur: 1.5, edge: 0, ...o });
+    washShape(ctx, roofPts, { color: mix(INK3.zheshi, INK3.dan, 0.55), alpha: 0.5, top: SHED.eave - 150, fadeY: SHED.eave + 40, blur: 1.5, edge: 0, ...o });
     const R = R0("thatch");
     for (let k = 0; k < 70; k++) {
       const u = R();
       const tx = lerp(roof[1][0], roof[2][0], u), ty = lerp(roof[1][1], roof[2][1], u);
       const bx = lerp(SHED.x0 - 50, SHED.x1 + 60, u) + (R() - 0.5) * 30, by = SHED.eave + 6 + R() * 16;
       const s = 0.1 + R() * 0.25;
-      bristleStroke(ctx, [[lerp(tx, bx, s), lerp(ty, by, s)], [lerp(tx, bx, 0.6) + (R() - 0.5) * 10, lerp(ty, by, 0.6)], [bx, by]], { width: 5 + R() * 6, color: R() < 0.3 ? INK2.nong : INK2.zhong, alpha: 0.5 + R() * 0.35, bristles: 6, dry: 0.5, seed: k + 400, taper: [0.5, 1, 0.3], ...o });
+      bristleStroke(ctx, [[lerp(tx, bx, s), lerp(ty, by, s)], [lerp(tx, bx, 0.6) + (R() - 0.5) * 10, lerp(ty, by, 0.6)], [bx, by]], { width: 5 + R() * 6, color: R() < 0.3 ? INK3.nong : INK3.zhong, alpha: 0.5 + R() * 0.35, bristles: 6, dry: 0.5, seed: k + 400, taper: [0.5, 1, 0.3], ...o });
     }
-    bristleStroke(ctx, [roof[1], [lerp(roof[1][0], roof[2][0], 0.5), lerp(roof[1][1], roof[2][1], 0.5) - 6], roof[2]], { width: 10, color: INK2.jiao, alpha: 0.85, bristles: 9, dry: 0.35, seed: 71, taper: [0.6, 1, 0.5], ...o });
-    bristleStroke(ctx, [[SHED.x0 - 30, SHED.eave + 10], [SHED.x1 + 40, SHED.eave + 2]], { width: 7, color: INK2.nong, alpha: 0.85, bristles: 7, dry: 0.25, seed: 73, ...o });
+    bristleStroke(ctx, [roof[1], [lerp(roof[1][0], roof[2][0], 0.5), lerp(roof[1][1], roof[2][1], 0.5) - 6], roof[2]], { width: 10, color: INK3.jiao, alpha: 0.85, bristles: 9, dry: 0.35, seed: 71, taper: [0.6, 1, 0.5], ...o });
+    bristleStroke(ctx, [[SHED.x0 - 30, SHED.eave + 10], [SHED.x1 + 40, SHED.eave + 2]], { width: 7, color: INK3.nong, alpha: 0.85, bristles: 7, dry: 0.25, seed: 73, ...o });
     const { x0, x1, top } = TABLE;
     const slab = [[x0 - 8, top], [x1 + 8, top - 2], [x1 + 6, top + 14], [x0 - 6, top + 15]];
-    washShape(ctx, slab, { color: mix(INK2.zheshi, INK2.zhong, 0.5), alpha: 0.75, blur: 0.8, edge: 0, ...o });
-    bristleStroke(ctx, [[x0 - 8, top], [x1 + 8, top - 2]], { width: 4.5, color: INK2.jiao, alpha: 0.9, bristles: 7, dry: 0.25, seed: 81, ...o });
-    bristleStroke(ctx, [[x0 - 6, top + 15], [x1 + 6, top + 14]], { width: 3, color: INK2.nong, alpha: 0.8, bristles: 5, dry: 0.3, seed: 82, ...o });
-    for (const x of [x0 + 14, x1 - 14]) bristleStroke(ctx, [[x, top + 14], [x + (x < 700 ? -5 : 5), MAN_BASE + 2]], { width: 9, color: INK2.nong, alpha: 0.85, bristles: 6, dry: 0.3, seed: x + 7, taper: [1, 0.9, 0.8], ...o });
-    washShape(ctx, [[x0 + 22, top + 15], [x1 - 22, top + 15], [x1 - 26, top + 52], [x0 + 26, top + 52]], { color: INK2.dan, alpha: 0.3, blur: 1.2, edge: 0, ...o });
+    washShape(ctx, slab, { color: mix(INK3.zheshi, INK3.zhong, 0.5), alpha: 0.75, blur: 0.8, edge: 0, ...o });
+    bristleStroke(ctx, [[x0 - 8, top], [x1 + 8, top - 2]], { width: 4.5, color: INK3.jiao, alpha: 0.9, bristles: 7, dry: 0.25, seed: 81, ...o });
+    bristleStroke(ctx, [[x0 - 6, top + 15], [x1 + 6, top + 14]], { width: 3, color: INK3.nong, alpha: 0.8, bristles: 5, dry: 0.3, seed: 82, ...o });
+    for (const x of [x0 + 14, x1 - 14]) bristleStroke(ctx, [[x, top + 14], [x + (x < 700 ? -5 : 5), MAN_BASE + 2]], { width: 9, color: INK3.nong, alpha: 0.85, bristles: 6, dry: 0.3, seed: x + 7, taper: [1, 0.9, 0.8], ...o });
+    washShape(ctx, [[x0 + 22, top + 15], [x1 - 22, top + 15], [x1 - 26, top + 52], [x0 + 26, top + 52]], { color: INK3.dan, alpha: 0.3, blur: 1.2, edge: 0, ...o });
     const cy = top - 1;
-    inkDot(ctx, CUP_X, cy, 17, { ry: 3.5, color: INK2.dan, alpha: 0.6, seed: 91, bleed: 0.2, rough: 0.05 });
+    inkDot(ctx, CUP_X, cy, 17, { ry: 3.5, color: INK3.dan, alpha: 0.6, seed: 91, bleed: 0.2, rough: 0.05 });
     const cup = [[CUP_X - 14, cy - 26], [CUP_X + 14, cy - 26], [CUP_X + 9, cy - 3], [CUP_X - 9, cy - 3]];
-    washShape(ctx, cup, { color: INK2.paper, alpha: 1, blur: 0, edge: 0, ...o });
-    bristleStroke(ctx, [cup[0], cup[3], cup[2], cup[1]], { width: 2.6, color: INK2.nong, alpha: 0.9, bristles: 3, dry: 0.1, seed: 92, ...o });
+    washShape(ctx, cup, { color: INK3.paper, alpha: 1, blur: 0, edge: 0, ...o });
+    bristleStroke(ctx, [cup[0], cup[3], cup[2], cup[1]], { width: 2.6, color: INK3.nong, alpha: 0.9, bristles: 3, dry: 0.1, seed: 92, ...o });
     ctx.save();
-    ctx.strokeStyle = INK2.nong;
+    ctx.strokeStyle = INK3.nong;
     ctx.lineWidth = 2.2;
     ctx.beginPath();
     ctx.ellipse(CUP_X, cy - 26, 14, 3.5, 0, 0, Math.PI * 2);
     ctx.stroke();
     ctx.restore();
     const c2 = CUP_X + 46;
-    washShape(ctx, [[c2 - 9, cy - 22], [c2 + 9, cy - 22], [c2 + 13, cy - 2], [c2 - 13, cy - 2]], { color: INK2.qing, alpha: 0.8, blur: 0, edge: 0, ...o });
-    bristleStroke(ctx, [[c2 - 13, cy - 2], [c2 - 9, cy - 22], [c2 + 9, cy - 22], [c2 + 13, cy - 2]], { width: 2.4, color: INK2.nong, alpha: 0.85, bristles: 3, seed: 93, ...o });
+    washShape(ctx, [[c2 - 9, cy - 22], [c2 + 9, cy - 22], [c2 + 13, cy - 2], [c2 - 13, cy - 2]], { color: INK3.qing, alpha: 0.8, blur: 0, edge: 0, ...o });
+    bristleStroke(ctx, [[c2 - 13, cy - 2], [c2 - 9, cy - 22], [c2 + 9, cy - 22], [c2 + 13, cy - 2]], { width: 2.4, color: INK3.nong, alpha: 0.85, bristles: 3, seed: 93, ...o });
   }
   var SHOULDER = [-14, -246];
   var UPPER = 72;
@@ -2762,36 +4088,36 @@
       ctx.scale(K, K);
       ctx.translate(110, 370);
       const o = { px: PX };
-      washShape(ctx, [[18, -236], [40, -230], [44, -150], [24, -146]], { color: mix(ROBE, INK2.dan, 0.5), alpha: 0.9, blur: 0.6, edge: 0, ...o });
+      washShape(ctx, [[18, -236], [40, -230], [44, -150], [24, -146]], { color: mix(ROBE, INK3.dan, 0.5), alpha: 0.9, blur: 0.6, edge: 0, ...o });
       const robe = [[-30, -258], [6, -264], [34, -252], [56, -214], [62, -150], [60, -60], [66, 0], [-52, 0], [-50, -80], [-48, -170], [-40, -236]];
       washShape(ctx, robe, { color: ROBE, alpha: 0.95, top: -264, fadeY: 30, blur: 0.8, edge: 0, ...o });
       ctx.save();
       ctx.globalAlpha = 0.5;
-      washShape(ctx, robe.slice(2, 7).concat([[30, -40], [20, -200]]), { color: INK2.dan, alpha: 0.55, blur: 2.5, edge: 0, ...o });
+      washShape(ctx, robe.slice(2, 7).concat([[30, -40], [20, -200]]), { color: INK3.dan, alpha: 0.55, blur: 2.5, edge: 0, ...o });
       ctx.restore();
-      bristleStroke(ctx, [[6, -264], [34, -252], [56, -214], [62, -150], [60, -60], [66, 0]], { width: 5.5, color: INK2.nong, alpha: 0.85, bristles: 7, dry: 0.3, seed: 201, taper: [0.8, 1, 0.5], ...o });
-      bristleStroke(ctx, [[-40, -236], [-48, -170], [-50, -80], [-52, 0]], { width: 5, color: INK2.nong, alpha: 0.85, bristles: 7, dry: 0.35, seed: 202, taper: [0.9, 1, 0.4], ...o });
-      bristleStroke(ctx, [[10, -140], [14, -80], [8, -20]], { width: 3, color: INK2.zhong, alpha: 0.6, bristles: 4, dry: 0.5, seed: 203, ...o });
-      bristleStroke(ctx, [[-20, -130], [-24, -70]], { width: 2.6, color: INK2.zhong, alpha: 0.5, bristles: 4, dry: 0.5, seed: 204, ...o });
-      bristleStroke(ctx, [[-30, -256], [-6, -214], [8, -206]], { width: 4, color: INK2.nong, alpha: 0.85, bristles: 5, dry: 0.2, seed: 205, ...o });
-      bristleStroke(ctx, [[-50, -158], [6, -152], [60, -158]], { width: 14, color: INK2.jiao, alpha: 0.9, bristles: 9, dry: 0.25, seed: 206, taper: [1, 1, 0.9], ...o });
-      bristleStroke(ctx, [[-30, -150], [-36, -110], [-32, -92]], { width: 6, color: INK2.nong, alpha: 0.85, bristles: 5, dry: 0.3, seed: 207, taper: [1, 0.8, 0.4], ...o });
+      bristleStroke(ctx, [[6, -264], [34, -252], [56, -214], [62, -150], [60, -60], [66, 0]], { width: 5.5, color: INK3.nong, alpha: 0.85, bristles: 7, dry: 0.3, seed: 201, taper: [0.8, 1, 0.5], ...o });
+      bristleStroke(ctx, [[-40, -236], [-48, -170], [-50, -80], [-52, 0]], { width: 5, color: INK3.nong, alpha: 0.85, bristles: 7, dry: 0.35, seed: 202, taper: [0.9, 1, 0.4], ...o });
+      bristleStroke(ctx, [[10, -140], [14, -80], [8, -20]], { width: 3, color: INK3.zhong, alpha: 0.6, bristles: 4, dry: 0.5, seed: 203, ...o });
+      bristleStroke(ctx, [[-20, -130], [-24, -70]], { width: 2.6, color: INK3.zhong, alpha: 0.5, bristles: 4, dry: 0.5, seed: 204, ...o });
+      bristleStroke(ctx, [[-30, -256], [-6, -214], [8, -206]], { width: 4, color: INK3.nong, alpha: 0.85, bristles: 5, dry: 0.2, seed: 205, ...o });
+      bristleStroke(ctx, [[-50, -158], [6, -152], [60, -158]], { width: 14, color: INK3.jiao, alpha: 0.9, bristles: 9, dry: 0.25, seed: 206, taper: [1, 1, 0.9], ...o });
+      bristleStroke(ctx, [[-30, -150], [-36, -110], [-32, -92]], { width: 6, color: INK3.nong, alpha: 0.85, bristles: 5, dry: 0.3, seed: 207, taper: [1, 0.8, 0.4], ...o });
       const hx = -22, hy = -298;
       ctx.save();
-      ctx.fillStyle = mix(INK2.paper, INK2.zheshi, 0.45);
+      ctx.fillStyle = mix(INK3.paper, INK3.zheshi, 0.45);
       ctx.fill(blobPath(hx, hy, 29, 33, { seed: 3, rough: 0.05 }));
-      ctx.fillStyle = rgba(INK2.dan, 0.7);
+      ctx.fillStyle = rgba(INK3.dan, 0.7);
       ctx.fill(blobPath(hx + 16, hy - 4, 15, 27, { seed: 4, rough: 0.12 }));
       ctx.restore();
-      bristleStroke(ctx, [[hx - 10, hy - 32], [hx + 14, hy - 33], [hx + 28, hy - 14], [hx + 27, hy + 12], [hx + 14, hy + 30]], { width: 3.4, color: INK2.nong, alpha: 0.9, bristles: 4, dry: 0.15, seed: 211, ...o });
-      bristleStroke(ctx, [[hx - 10, hy - 32], [hx - 26, hy - 20], [hx - 30, hy - 6]], { width: 3, color: INK2.nong, alpha: 0.9, bristles: 4, dry: 0.15, seed: 212, ...o });
-      bristleStroke(ctx, [[hx - 29, hy - 6], [hx - 37, hy + 5], [hx - 27, hy + 8]], { width: 3, color: INK2.nong, alpha: 0.9, bristles: 3, seed: 213, ...o });
-      inkDot(ctx, hx + 6, hy - 40, 11, { ry: 9, color: INK2.jiao, alpha: 0.9, seed: 214, bleed: 0.25 });
-      bristleStroke(ctx, [[hx - 12, hy - 36], [hx + 24, hy - 46]], { width: 2.4, color: mix(INK2.zheshi, INK2.nong, 0.5), alpha: 0.9, bristles: 2, ...o });
-      bristleStroke(ctx, [[hx + 6, hy - 6], [hx + 12, hy - 2], [hx + 10, hy + 8], [hx + 5, hy + 9]], { width: 2.2, color: INK2.nong, alpha: 0.8, bristles: 3, ...o });
-      bristleStroke(ctx, [[hx - 22, hy - 6], [hx - 16, hy - 10], [hx - 10, hy - 6]], { width: 2.6, color: INK2.jiao, alpha: 0.95, bristles: 3, ...o });
+      bristleStroke(ctx, [[hx - 10, hy - 32], [hx + 14, hy - 33], [hx + 28, hy - 14], [hx + 27, hy + 12], [hx + 14, hy + 30]], { width: 3.4, color: INK3.nong, alpha: 0.9, bristles: 4, dry: 0.15, seed: 211, ...o });
+      bristleStroke(ctx, [[hx - 10, hy - 32], [hx - 26, hy - 20], [hx - 30, hy - 6]], { width: 3, color: INK3.nong, alpha: 0.9, bristles: 4, dry: 0.15, seed: 212, ...o });
+      bristleStroke(ctx, [[hx - 29, hy - 6], [hx - 37, hy + 5], [hx - 27, hy + 8]], { width: 3, color: INK3.nong, alpha: 0.9, bristles: 3, seed: 213, ...o });
+      inkDot(ctx, hx + 6, hy - 40, 11, { ry: 9, color: INK3.jiao, alpha: 0.9, seed: 214, bleed: 0.25 });
+      bristleStroke(ctx, [[hx - 12, hy - 36], [hx + 24, hy - 46]], { width: 2.4, color: mix(INK3.zheshi, INK3.nong, 0.5), alpha: 0.9, bristles: 2, ...o });
+      bristleStroke(ctx, [[hx + 6, hy - 6], [hx + 12, hy - 2], [hx + 10, hy + 8], [hx + 5, hy + 9]], { width: 2.2, color: INK3.nong, alpha: 0.8, bristles: 3, ...o });
+      bristleStroke(ctx, [[hx - 22, hy - 6], [hx - 16, hy - 10], [hx - 10, hy - 6]], { width: 2.6, color: INK3.jiao, alpha: 0.95, bristles: 3, ...o });
       ctx.save();
-      ctx.fillStyle = INK2.paper;
+      ctx.fillStyle = INK3.paper;
       const brow = new Path2D();
       brow.moveTo(hx - 6, hy - 18);
       brow.quadraticCurveTo(hx - 30, hy - 22, hx - 44, hy + 2);
@@ -2799,18 +4125,18 @@
       brow.closePath();
       ctx.fill(brow);
       ctx.restore();
-      bristleStroke(ctx, [[hx - 6, hy - 18], [hx - 30, hy - 21], [hx - 44, hy + 2]], { width: 2, color: INK2.dan, alpha: 0.9, bristles: 3, ...o });
+      bristleStroke(ctx, [[hx - 6, hy - 18], [hx - 30, hy - 21], [hx - 44, hy + 2]], { width: 2, color: INK3.dan, alpha: 0.9, bristles: 3, ...o });
       const beard = new Path2D();
       beard.moveTo(hx - 32, hy + 10);
       beard.quadraticCurveTo(hx - 46, hy + 50, hx - 40, hy + 96);
       beard.quadraticCurveTo(hx - 30, hy + 60, hx - 6, hy + 24);
       beard.closePath();
       ctx.save();
-      ctx.fillStyle = INK2.paper;
+      ctx.fillStyle = INK3.paper;
       ctx.fill(beard);
       ctx.restore();
-      for (let k = 0; k < 4; k++) bristleStroke(ctx, [[hx - 30 + k * 5, hy + 12 + k * 3], [hx - 40 + k * 3, hy + 52], [hx - 40 + k * 1.5, hy + 92 - k * 6]], { width: 1.6, color: INK2.dan, alpha: 0.85, bristles: 2, dry: 0.2, seed: 220 + k, ...o });
-      bristleStroke(ctx, [[hx - 30, hy + 12], [hx - 22, hy + 16], [hx - 14, hy + 14]], { width: 2, color: INK2.zhong, alpha: 0.8, bristles: 2, ...o });
+      for (let k = 0; k < 4; k++) bristleStroke(ctx, [[hx - 30 + k * 5, hy + 12 + k * 3], [hx - 40 + k * 3, hy + 52], [hx - 40 + k * 1.5, hy + 92 - k * 6]], { width: 1.6, color: INK3.dan, alpha: 0.85, bristles: 2, dry: 0.2, seed: 220 + k, ...o });
+      bristleStroke(ctx, [[hx - 30, hy + 12], [hx - 22, hy + 16], [hx - 14, hy + 14]], { width: 2, color: INK3.zhong, alpha: 0.8, bristles: 2, ...o });
     });
   }
   function elbowFor(hand) {
@@ -2842,24 +4168,24 @@
       c.translate(96, 16);
       const o = { px: PX };
       c.save();
-      c.fillStyle = mix(INK2.zhong, INK2.zheshi, 0.3);
+      c.fillStyle = mix(INK3.zhong, INK3.zheshi, 0.3);
       c.fill(blobPath(0, 64, 37, 31, { seed: 8, rough: 0.04 }));
       c.globalAlpha = 0.6;
-      c.fillStyle = INK2.nong;
+      c.fillStyle = INK3.nong;
       c.fill(blobPath(10, 72, 26, 22, { seed: 9, rough: 0.1 }));
       c.restore();
-      bristleStroke(c, [[-24, 52], [-14, 42], [0, 38]], { width: 4, color: INK2.paper, alpha: 0.7, bristles: 3, dry: 0.4, seed: 2, ...o });
+      bristleStroke(c, [[-24, 52], [-14, 42], [0, 38]], { width: 4, color: INK3.paper, alpha: 0.7, bristles: 3, dry: 0.4, seed: 2, ...o });
       const sp = new Path2D();
       sp.moveTo(-30, 66);
       sp.quadraticCurveTo(-52, 58, SPOUT[0], SPOUT[1] + 2);
       sp.lineTo(SPOUT[0] + 4, SPOUT[1] - 4);
       sp.quadraticCurveTo(-48, 44, -32, 50);
       sp.closePath();
-      c.fillStyle = INK2.nong;
+      c.fillStyle = INK3.nong;
       c.fill(sp);
-      bristleStroke(c, [[-18, 36], [0, 31], [18, 36]], { width: 4, color: INK2.jiao, alpha: 0.9, bristles: 4, ...o });
-      inkDot(c, 0, 27, 5, { color: INK2.jiao, seed: 3, bleed: 0.1 });
-      bristleStroke(c, [[-28, 44], [-24, 12], [-8, 0], [8, 0], [24, 12], [28, 44]], { width: 5, color: INK2.jiao, alpha: 0.9, bristles: 5, dry: 0.25, seed: 4, ...o });
+      bristleStroke(c, [[-18, 36], [0, 31], [18, 36]], { width: 4, color: INK3.jiao, alpha: 0.9, bristles: 4, ...o });
+      inkDot(c, 0, 27, 5, { color: INK3.jiao, seed: 3, bleed: 0.1 });
+      bristleStroke(c, [[-28, 44], [-24, 12], [-8, 0], [8, 0], [24, 12], [28, 44]], { width: 5, color: INK3.jiao, alpha: 0.9, bristles: 5, dry: 0.25, seed: 4, ...o });
     });
     ctx.drawImage(k, -96, -16, 140, 130);
   }
@@ -2892,22 +4218,22 @@
     ctx.save();
     ctx.fillStyle = ROBE;
     ctx.fill(sl);
-    ctx.fillStyle = rgba(INK2.dan, 0.35);
+    ctx.fillStyle = rgba(INK3.dan, 0.35);
     ctx.fill(blobPath(elbow[0], elbow[1] + 8, 16, 12, { seed: 8, rough: 0.2 }));
     ctx.restore();
-    bristleStroke(ctx, topEdge, { width: 3.6, color: INK2.nong, alpha: 0.9, bristles: 4, dry: 0.25, seed: 502, spacing: 3 });
-    bristleStroke(ctx, botEdge, { width: 3.6, color: INK2.nong, alpha: 0.9, bristles: 4, dry: 0.3, seed: 503, spacing: 3 });
-    bristleStroke(ctx, [topEdge[2], cuffLow], { width: 3, color: INK2.nong, alpha: 0.85, bristles: 3, dry: 0.2, seed: 504, spacing: 3 });
+    bristleStroke(ctx, topEdge, { width: 3.6, color: INK3.nong, alpha: 0.9, bristles: 4, dry: 0.25, seed: 502, spacing: 3 });
+    bristleStroke(ctx, botEdge, { width: 3.6, color: INK3.nong, alpha: 0.9, bristles: 4, dry: 0.3, seed: 503, spacing: 3 });
+    bristleStroke(ctx, [topEdge[2], cuffLow], { width: 3, color: INK3.nong, alpha: 0.85, bristles: 3, dry: 0.2, seed: 504, spacing: 3 });
     ctx.save();
     ctx.translate(hand[0], hand[1]);
     ctx.rotate(tilt);
     kettle(ctx);
     ctx.restore();
     ctx.save();
-    ctx.fillStyle = mix(INK2.paper, INK2.zheshi, 0.45);
+    ctx.fillStyle = mix(INK3.paper, INK3.zheshi, 0.45);
     ctx.fill(blobPath(hand[0] + 1, hand[1] - 1, 9, 8, { seed: 6, rough: 0.1 }));
     ctx.restore();
-    bristleStroke(ctx, [[hand[0] - 7, hand[1] - 8], [hand[0] - 10, hand[1] + 2], [hand[0] - 3, hand[1] + 7], [hand[0] + 8, hand[1] + 5]], { width: 2.2, color: INK2.nong, alpha: 0.9, bristles: 2, spacing: 2 });
+    bristleStroke(ctx, [[hand[0] - 7, hand[1] - 8], [hand[0] - 10, hand[1] + 2], [hand[0] - 3, hand[1] + 7], [hand[0] + 8, hand[1] + 5]], { width: 2.2, color: INK3.nong, alpha: 0.9, bristles: 2, spacing: 2 });
     ctx.restore();
     const c = Math.cos(tilt - nod), s = Math.sin(tilt - nod);
     const hx = hand[0] * Math.cos(-nod) - (hand[1] + breath * 0.3) * Math.sin(-nod), hy = hand[0] * Math.sin(-nod) + (hand[1] + breath * 0.3) * Math.cos(-nod);
@@ -2993,7 +4319,7 @@
       const flap = Math.sin(b * Math.PI * 2 + k * 1.7);
       if (x < X_MIN - 30 || x > X_MAX + 30) continue;
       ctx.save();
-      ctx.strokeStyle = INK2.nong;
+      ctx.strokeStyle = INK3.nong;
       ctx.lineWidth = 2.2;
       ctx.lineCap = "round";
       ctx.globalAlpha = 0.8;
@@ -3011,7 +4337,7 @@
     for (let k = 0; k < 3; k++) {
       const ph = (b * 0.55 + k / 3) % 1;
       const a = Math.sin(Math.PI * ph) * 0.55;
-      ctx.strokeStyle = rgba(INK2.dan, a);
+      ctx.strokeStyle = rgba(INK3.dan, a);
       ctx.lineWidth = 3 - ph * 1.5;
       ctx.beginPath();
       for (let s = 0; s <= 12; s++) {
@@ -3026,9 +4352,9 @@
   }
   function drawFlag(ctx, b, x) {
     const top = 248, cross = 268;
-    bristleStroke(ctx, [[x, ROAD_Y - 6], [x + 3, top]], { width: 9, color: INK2.nong, alpha: 0.85, bristles: 6, dry: 0.3, seed: 601, taper: [1, 0.9, 0.7], spacing: 4 });
+    bristleStroke(ctx, [[x, ROAD_Y - 6], [x + 3, top]], { width: 9, color: INK3.nong, alpha: 0.85, bristles: 6, dry: 0.3, seed: 601, taper: [1, 0.9, 0.7], spacing: 4 });
     ctx.save();
-    ctx.strokeStyle = INK2.nong;
+    ctx.strokeStyle = INK3.nong;
     ctx.lineWidth = 4;
     ctx.lineCap = "round";
     ctx.beginPath();
@@ -3059,12 +4385,12 @@
     ctx.fillStyle = "#efe8d6";
     ctx.fill(p);
     ctx.clip(p);
-    ctx.fillStyle = rgba(INK2.seal, 0.85);
+    ctx.fillStyle = rgba(INK3.seal, 0.85);
     ctx.fillRect(x, cross - 10, W2 + 20, 18);
-    ctx.fillStyle = rgba(INK2.dan, 0.18);
+    ctx.fillStyle = rgba(INK3.dan, 0.18);
     ctx.fillRect(x + W2 * 0.55, cross, W2, H2 + 20);
     const cx = x + 6 + W2 / 2 + Math.sin(b * 2.6 + 1.5) * 3, cy = cross + 112;
-    ctx.fillStyle = rgba(INK2.nong, 0.85);
+    ctx.fillStyle = rgba(INK3.nong, 0.85);
     ctx.fill(blobPath(cx + 2, cy, 22, 17, { seed: 12, rough: 0.05 }));
     ctx.beginPath();
     ctx.moveTo(cx - 16, cy + 2);
@@ -3075,20 +4401,20 @@
     ctx.fill();
     ctx.fillRect(cx - 9, cy - 21, 22, 5);
     circle2(ctx, cx + 2, cy - 24, 4);
-    ctx.strokeStyle = rgba(INK2.nong, 0.85);
+    ctx.strokeStyle = rgba(INK3.nong, 0.85);
     ctx.lineWidth = 4;
     ctx.beginPath();
     ctx.arc(cx + 24, cy - 1, 9, -1.3, 1.3);
     ctx.stroke();
     ctx.lineWidth = 2.4;
-    ctx.strokeStyle = rgba(INK2.zhong, 0.7);
+    ctx.strokeStyle = rgba(INK3.zhong, 0.7);
     ctx.beginPath();
     ctx.moveTo(cx + 2, cy - 32);
     ctx.bezierCurveTo(cx - 8, cy - 44, cx + 12, cy - 52, cx + 2, cy - 66);
     ctx.stroke();
     ctx.restore();
     ctx.save();
-    ctx.strokeStyle = rgba(INK2.nong, 0.8);
+    ctx.strokeStyle = rgba(INK3.nong, 0.8);
     ctx.lineWidth = 2.2;
     ctx.stroke(p);
     ctx.restore();
@@ -3099,8 +4425,8 @@
       for (let x = x0 + 100; x < x1; x += 380 + R() * 420) {
         const sx = x - cg * P_FG2;
         if (sx > 40 && sx < 1100) continue;
-        grassTuft(ctx, x, 1010, 90 + R() * 60, { seed: Math.round(x), color: INK2.zhong, alpha: 0.55, blades: 7, spread: 1.4, px: PX });
-        grassTuft(ctx, x + 40, 1012, 60 + R() * 40, { seed: Math.round(x) + 1, color: INK2.dan, alpha: 0.5, blades: 5, spread: 1.2, px: PX });
+        grassTuft(ctx, x, 1010, 90 + R() * 60, { seed: Math.round(x), color: INK3.zhong, alpha: 0.55, blades: 7, spread: 1.4, px: PX });
+        grassTuft(ctx, x + 40, 1012, 60 + R() * 40, { seed: Math.round(x) + 1, color: INK3.dan, alpha: 0.5, blades: 5, spread: 1.2, px: PX });
       }
     }, { y0: 840, y1: 1030 });
   }
@@ -3112,40 +4438,40 @@
       c.shadowColor = "rgba(60,45,25,0.22)";
       c.shadowBlur = 12;
       c.shadowOffsetY = 4;
-      c.fillStyle = INK2.paper;
+      c.fillStyle = INK3.paper;
       c.fill(blobPath(0, 0, w / 2 + 2, h / 2 + 2, { seed: 5, rough: 0.012, n: 60 }));
       c.restore();
       const rect = (x0, y0, x1, y1, o) => bristleStroke(c, [[x0, y0], [x1, y0 + 1], [x1 - 1, y1], [x0 + 1, y1 - 1], [x0, y0 + 2]], o);
-      rect(-w / 2 + 4, -h / 2 + 4, w / 2 - 4, h / 2 - 4, { width: 4.5, color: INK2.jiao, alpha: 0.9, bristles: 7, dry: 0.35, seed: 11, spacing: 1.6, taper: [1, 0.9, 0.7] });
+      rect(-w / 2 + 4, -h / 2 + 4, w / 2 - 4, h / 2 - 4, { width: 4.5, color: INK3.jiao, alpha: 0.9, bristles: 7, dry: 0.35, seed: 11, spacing: 1.6, taper: [1, 0.9, 0.7] });
       c.save();
-      c.fillStyle = rgba(INK2.dan, 0.28);
+      c.fillStyle = rgba(INK3.dan, 0.28);
       c.fill(blobPath(0, -h / 2 + 46, w / 2 - 20, 30, { seed: 7, rough: 0.05 }));
       c.restore();
-      rect(-w / 2 + 16, -h / 2 + 14, w / 2 - 16, -h / 2 + 78, { width: 2.6, color: INK2.nong, alpha: 0.85, bristles: 4, dry: 0.3, seed: 12, spacing: 1.6 });
+      rect(-w / 2 + 16, -h / 2 + 14, w / 2 - 16, -h / 2 + 78, { width: 2.6, color: INK3.nong, alpha: 0.85, bristles: 4, dry: 0.3, seed: 12, spacing: 1.6 });
       sealStamp(c, w / 2 - 30, -h / 2 + 28, 18, { seed: 5 });
       c.save();
-      c.fillStyle = INK2.paper;
+      c.fillStyle = INK3.paper;
       c.fill(blobPath(0, -h / 2 + 51, 50, 15, { seed: 8, rough: 0.03 }));
       c.restore();
-      bristleStroke(c, [[-50, -h / 2 + 36], [50, -h / 2 + 36], [52, -h / 2 + 66], [-50, -h / 2 + 66], [-50, -h / 2 + 37]], { width: 2.4, color: INK2.nong, alpha: 0.85, bristles: 3, seed: 13, spacing: 1.6 });
-      bristleStroke(c, [[-60, h / 2 - 4], [-48, h / 2 - 30], [48, h / 2 - 30], [60, h / 2 - 4]], { width: 3, color: INK2.nong, alpha: 0.85, bristles: 4, dry: 0.3, seed: 14, spacing: 1.6 });
-      for (const sx of [-1, 1]) inkDot(c, sx * 30, h / 2 - 15, 4.5, { color: INK2.jiao, seed: 15 + sx, bleed: 0.2 });
+      bristleStroke(c, [[-50, -h / 2 + 36], [50, -h / 2 + 36], [52, -h / 2 + 66], [-50, -h / 2 + 66], [-50, -h / 2 + 37]], { width: 2.4, color: INK3.nong, alpha: 0.85, bristles: 3, seed: 13, spacing: 1.6 });
+      bristleStroke(c, [[-60, h / 2 - 4], [-48, h / 2 - 30], [48, h / 2 - 30], [60, h / 2 - 4]], { width: 3, color: INK3.nong, alpha: 0.85, bristles: 4, dry: 0.3, seed: 14, spacing: 1.6 });
+      for (const sx of [-1, 1]) inkDot(c, sx * 30, h / 2 - 15, 4.5, { color: INK3.jiao, seed: 15 + sx, bleed: 0.2 });
     });
     ctx.drawImage(body, cx - w / 2 - 20, cy - h / 2 - 20);
     for (const sx of [-1, 1]) {
       const rx = cx + sx * 34 * s, ry = cy - h / 2 + 51 * s;
       ctx.save();
-      ctx.fillStyle = rgba(INK2.nong, 0.85);
+      ctx.fillStyle = rgba(INK3.nong, 0.85);
       ctx.beginPath();
       ctx.arc(rx, ry, (sx < 0 ? 15 : 11) * s, 0, Math.PI * 2);
       ctx.fill();
-      ctx.fillStyle = INK2.paper;
+      ctx.fillStyle = INK3.paper;
       ctx.beginPath();
       ctx.arc(rx, ry, 8 * s, 0, Math.PI * 2);
       ctx.fill();
       ctx.translate(rx, ry);
       ctx.rotate(spin * (sx < 0 ? 1 : 1.35));
-      ctx.strokeStyle = INK2.jiao;
+      ctx.strokeStyle = INK3.jiao;
       ctx.lineWidth = 2.4 * s;
       ctx.lineCap = "round";
       for (let i = 0; i < 6; i++) {
@@ -3160,7 +4486,7 @@
   }
   var s03 = {
     id: "s03",
-    station: ST2,
+    station: ST3,
     figureStyle: "ink",
     // 人物（墨色）在中墨山坡、竹丛前：加一圈宣纸色留白边，保证轮廓反差
     figureRim: { color: "#f7f3e8", width: 5, alpha: 0.95 },
@@ -3170,12 +4496,12 @@
       const cam = env.cam, cg = env.camAt(GAG);
       const pw = Math.ceil((X_MAX - X_MIN) * K), ph = Math.ceil(1e3 * K);
       ctx.drawImage(xuanPaper(pw, ph, { seed: 3 }), X_MIN, 0, X_MAX - X_MIN, 1e3);
-      drawStrip(ctx, skyLayer(), cam);
+      drawStrip(ctx, skyLayer2(), cam);
       drawBirds(ctx, b, cam);
       drawStrip(ctx, far1Layer(), cam);
       drawStrip(ctx, far2Layer(), cam);
       drawStrip(ctx, mistLayer(), cam - b * 10 / P_MIST);
-      drawStrip(ctx, midLayer(cg), cam);
+      drawStrip(ctx, midLayer2(cg), cam);
       drawStrip(ctx, nearLayer(cg), cam);
       drawStrip(ctx, roadLayer2(), cam);
       const off = cg - cam;
@@ -3207,8 +4533,8 @@
       handscrollFrame(ctx, R);
     },
     cardStyle: {
-      ink: INK2.jiao,
-      accent: INK2.seal,
+      ink: INK3.jiao,
+      accent: INK3.seal,
       bar: false,
       bgDraw(ctx, x, y, w, h) {
         const { canvas, pad } = paperCard(w, h, { seed: 31, sealSize: 44, key: "s03-card" });
@@ -3216,8 +4542,8 @@
       }
     },
     playerStyle: {
-      ink: INK2.jiao,
-      noteColor: INK2.seal,
+      ink: INK3.jiao,
+      noteColor: INK3.seal,
       backdrop: false,
       plateDraw(ctx, x, y, w, h) {
         const { canvas, pad } = paperCard(w, h, { seed: 41, seal: false, key: "s03-plate" });
@@ -3228,6 +4554,110 @@
       }
     }
   };
+
+  // src/scenes/placeholder.js
+  function placeholderScene(st) {
+    const [bg, mid, ink, acc2] = st.palette;
+    const dark = ["#1c2140", "#2a2622", "#1b2230", "#5b5852"].includes(bg);
+    const far = mix(bg, mid, 0.35), near = mix(mid, ink, 0.25), road = mix(mid, ink, 0.45);
+    function layer(ctx, cam, parallax, spacing, seedKey, drawOne) {
+      const off = cam * parallax;
+      const i0 = Math.floor((X_MIN + off) / spacing) - 1, i1 = Math.ceil((X_MAX + off) / spacing) + 1;
+      for (let i = i0; i <= i1; i++) drawOne(i * spacing - off, rng(st.id, seedKey, i));
+    }
+    return {
+      id: st.id,
+      station: st,
+      drawBack(ctx, b, env) {
+        const cam = env.cam;
+        const g = ctx.createLinearGradient(0, 0, 0, ROAD_Y);
+        g.addColorStop(0, mix(bg, mid, dark ? 0.15 : 0.05));
+        g.addColorStop(1, mix(bg, mid, dark ? 0.45 : 0.3));
+        ctx.fillStyle = g;
+        ctx.fillRect(X_MIN - 2, 0, X_MAX - X_MIN + 4, ROAD_Y + 2);
+        layer(ctx, cam, 0.2, 230, "far", (x, R) => {
+          const h = R.range(120, 260);
+          ctx.fillStyle = far;
+          roundRect(ctx, x, ROAD_Y - 120 - h, R.range(120, 200), h + 130, 18);
+          ctx.fill();
+        });
+        layer(ctx, cam, 0.55, 310, "mid", (x, R) => {
+          const h = R.range(150, 300);
+          ctx.fillStyle = mix(far, near, 0.55);
+          poly(ctx, [[x, ROAD_Y], [x + 40, ROAD_Y - h], [x + 110, ROAD_Y - h + 30], [x + 150, ROAD_Y]]);
+          ctx.fill();
+        });
+        ctx.save();
+        font(ctx, 46, { family: SANS, weight: 700 });
+        ctx.textAlign = "center";
+        ctx.fillStyle = rgba(readableOn(bg, ink), 0.55);
+        ctx.fillText(`\u5360\u4F4D \xB7 \u7B2C ${st.n} \u7AD9 \xB7 ${st.style}`, 690, 150);
+        font(ctx, 40, { family: SERIF, weight: 400 });
+        ctx.fillText(`\u573A\u666F\uFF1A${st.scene}`, 690, 205);
+        ctx.restore();
+        ctx.fillStyle = road;
+        ctx.fillRect(X_MIN - 2, ROAD_Y, X_MAX - X_MIN + 4, 1e3 - ROAD_Y + 2);
+        ctx.fillStyle = mix(road, ink, 0.35);
+        ctx.fillRect(X_MIN - 2, ROAD_Y, X_MAX - X_MIN + 4, 6);
+        layer(ctx, cam, 1, 120, "dash", (x) => {
+          ctx.fillStyle = rgba(bg, 0.55);
+          ctx.fillRect(x, ROAD_Y + 60, 60, 8);
+        });
+        layer(ctx, cam, 1, 520, "post", (x, R) => {
+          ctx.fillStyle = near;
+          ctx.fillRect(x, ROAD_Y - 260, 16, 262);
+          circle(ctx, x + 8, ROAD_Y - 268, 22);
+          ctx.fillStyle = acc2;
+          ctx.fill();
+        });
+      },
+      drawFront(ctx, b, env) {
+        const k = smoothstep(GAG - 0.15, GAG + 0.1, b) * (1 - smoothstep(GAG + 4 - 0.2, GAG + 4, b));
+        if (k <= 0.01) return;
+        const pul = 1 + [0, 1, 2, 3].reduce((a, k2) => a + 0.08 * pulse(GAG + k2, GAG + k2 + 1, b), 0);
+        ctx.save();
+        ctx.globalAlpha = k;
+        ctx.translate(CHAR_X, ROAD_Y - 190);
+        ctx.scale(pul, pul);
+        ctx.strokeStyle = acc2;
+        ctx.lineWidth = 8;
+        for (let i = 0; i < 12; i++) {
+          const a = i / 12 * Math.PI * 2;
+          ctx.beginPath();
+          ctx.moveTo(Math.cos(a) * 210, Math.sin(a) * 210);
+          ctx.lineTo(Math.cos(a) * 250, Math.sin(a) * 250);
+          ctx.stroke();
+        }
+        ctx.restore();
+        ctx.save();
+        ctx.globalAlpha = k;
+        font(ctx, 38, { family: SANS, weight: 700 });
+        const lines = wrap(ctx, `\u7B2C 3 \u5C0F\u8282\u7684\u6897\uFF1A${st.gag}`, 760);
+        const x = 520, y = 470;
+        roundRect(ctx, x - 24, y - 54, 808, lines.length * 52 + 40, 12);
+        ctx.fillStyle = rgba(mix(bg, "#ffffff", 0.5), 0.92);
+        ctx.fill();
+        ctx.strokeStyle = acc2;
+        ctx.lineWidth = 4;
+        ctx.stroke();
+        ctx.fillStyle = ink;
+        lines.forEach((l, i) => ctx.fillText(l, x, y + i * 52));
+        ctx.restore();
+      }
+    };
+  }
+  function wrap(ctx, str, maxW) {
+    const out = [];
+    let line = "";
+    for (const ch of str) {
+      if (ctx.measureText(line + ch).width > maxW) {
+        out.push(line);
+        line = ch;
+      } else line += ch;
+    }
+    if (line) out.push(line);
+    return out;
+  }
 
   // src/scenes/s04.js
   var s04 = placeholderScene(stationByN(4));
@@ -3319,8 +4749,8 @@
   }
 
   // src/scenes/s05.js
-  var ST3 = stationByN(5);
-  var PAPER2 = "#f3ecdc";
+  var ST4 = stationByN(5);
+  var PAPER3 = "#f3ecdc";
   var PAPER_D = "#ebe2cf";
   var LEAD2 = "#8a847a";
   var LEAD_D = "#5f5a52";
@@ -3429,7 +4859,7 @@
       y0: 300,
       y1: 640,
       fills: (ctx) => {
-        for (const b of g) fillPoly(ctx, b.pts, PAPER2);
+        for (const b of g) fillPoly(ctx, b.pts, PAPER3);
       },
       lines: (B2) => {
         B2.set("2H", LEAD_L, 0.9);
@@ -3467,7 +4897,7 @@
       y0: 300,
       y1: 820,
       fills: (ctx, x0, x1) => {
-        ctx.fillStyle = PAPER2;
+        ctx.fillStyle = PAPER3;
         ctx.fillRect(x0, 640, x1 - x0, 180);
         for (const w of g.walls) {
           fillPoly(ctx, w.pts, PAPER_D);
@@ -3599,7 +5029,7 @@
       y0: ROAD_Y - 150,
       y1: 1e3,
       fills: (ctx, x0, x1) => {
-        ctx.fillStyle = PAPER2;
+        ctx.fillStyle = PAPER3;
         ctx.fillRect(x0, ROAD_Y, x1 - x0, 1e3 - ROAD_Y);
         const b = bearPts(g.bear.x);
         for (const k of ["armL", "legL", "body", "legR", "head", "earL", "earR", "armR"]) fillPoly(ctx, b[k], PAPER_D);
@@ -3904,7 +5334,7 @@
   }
   var s05 = {
     id: "s05",
-    station: ST3,
+    station: ST4,
     freezeBeat: GAG + 3,
     // Outro 展墙里定格成已经上色的样子
     drawFigure(ctx, fig, b, env) {
@@ -3920,7 +5350,7 @@
     drawBack(ctx, b, env) {
       const cam = env.cam;
       const pw = Math.ceil((X_MAX - X_MIN) * K), ph = Math.ceil(1e3 * K);
-      ctx.drawImage(paperTexture(pw, ph, { base: PAPER2, seed: 55, amount: 0.7, fibers: 160 }), X_MIN, 0, X_MAX - X_MIN, 1e3);
+      ctx.drawImage(paperTexture(pw, ph, { base: PAPER3, seed: 55, amount: 0.7, fibers: 160 }), X_MIN, 0, X_MAX - X_MIN, 1e3);
       ctx.save();
       ctx.strokeStyle = rgba(LEAD_L, 0.55);
       ctx.lineWidth = 1.4;
@@ -4029,7 +5459,7 @@
     });
     return ctx.createPattern(tile, "repeat");
   }
-  function stipple(ctx, path, { color = "#2b2a3a", tone = () => 0.5, density = 0.012, r = 1.4, seed = 5, bounds = [-2e3, -200, 6e3, 1400] } = {}) {
+  function stipple(ctx, path, { color = "#2b2a3a", tone: tone2 = () => 0.5, density = 0.012, r = 1.4, seed = 5, bounds = [-2e3, -200, 6e3, 1400] } = {}) {
     const [bx, by, bw, bh] = bounds;
     const R = rng("stipple", seed);
     const n = Math.round(bw * bh * density);
@@ -4038,7 +5468,7 @@
     ctx.fillStyle = color;
     for (let i = 0; i < n; i++) {
       const x = bx + R() * bw, y = by + R() * bh;
-      if (R() > 1 - tone(x, y)) continue;
+      if (R() > 1 - tone2(x, y)) continue;
       ctx.beginPath();
       ctx.arc(x, y, r * (0.6 + 0.6 * R()), 0, Math.PI * 2);
       ctx.fill();
@@ -4047,9 +5477,9 @@
   }
 
   // src/scenes/s09.js
-  var ST4 = stationByN(9);
+  var ST5 = stationByN(9);
   var CREAM2 = "#efe0bf";
-  var PAPER3 = "#f4e8cc";
+  var PAPER4 = "#f4e8cc";
   var RED = "#d0533c";
   var RED_D = "#a63a2a";
   var NAVY = "#2b2a3a";
@@ -4099,7 +5529,7 @@
         p.lineTo(x + W2 - 4, 720);
         p.quadraticCurveTo(x + W2 + 2, 400, x + W2 + 6, 120);
         p.closePath();
-        ctx.fillStyle = red ? RED : PAPER3;
+        ctx.fillStyle = red ? RED : PAPER4;
         ctx.fill(p);
       }
       const g = ctx.createLinearGradient(0, 100, 0, 720);
@@ -4142,7 +5572,7 @@
         ctx.lineWidth = 2;
         ctx.stroke();
       }
-      const flags = [TEAL, MUSTARD, RED, PAPER3];
+      const flags = [TEAL, MUSTARD, RED, PAPER4];
       for (const [yy, span, sag] of [[250, 520, 60], [320, 640, 80]]) {
         for (let x = x0 - span / 2 + yy * 3 % span; x < x1; x += span) {
           ctx.strokeStyle = NAVY;
@@ -4223,7 +5653,7 @@
         litho(ctx, side, TEAL);
         ctx.save();
         ctx.clip(side);
-        ctx.fillStyle = PAPER3;
+        ctx.fillStyle = PAPER4;
         for (let k = -3; k < 4; k++) ctx.fillRect(x + k * 24 - 6, 640, 12, 80);
         ctx.restore();
         ctx.strokeStyle = NAVY;
@@ -4268,7 +5698,7 @@
       const p = new Path2D();
       p.rect(x0, ROAD_Y, x1 - x0, 200);
       stipple(ctx, p, { color: "#8a6a3a", density: 0.01, r: 1.5, tone: () => 0.45, bounds: [x0, ROAD_Y, x1 - x0, 200] });
-      ctx.strokeStyle = PAPER3;
+      ctx.strokeStyle = PAPER4;
       ctx.lineWidth = 6;
       ctx.beginPath();
       ctx.moveTo(x0, 905);
@@ -4284,7 +5714,7 @@
     const p = new Path2D();
     p.ellipse(x, y, r * 0.86, r, sway, 0, Math.PI * 2);
     litho(ctx, p, col, { line: 2.6 });
-    ctx.fillStyle = rgba(PAPER3, 0.75);
+    ctx.fillStyle = rgba(PAPER4, 0.75);
     ellipse(ctx, x - r * 0.32, y - r * 0.38, r * 0.16, r * 0.28, -0.5);
     ctx.fill();
     const k = new Path2D();
@@ -4323,7 +5753,7 @@
     legs.closePath();
     ctx.save();
     ctx.translate(REG[0], REG[1]);
-    ctx.fillStyle = PAPER3;
+    ctx.fillStyle = PAPER4;
     ctx.fill(legs);
     ctx.clip(legs);
     for (let yy = -260; yy < 0; yy += 44) for (let xx = -80; xx < 80; xx += 44) {
@@ -4364,7 +5794,7 @@
     litho(ctx, arm, MUSTARD);
     const glove = new Path2D();
     glove.ellipse(0, 162, 22, 18, 0, 0, Math.PI * 2);
-    litho(ctx, glove, PAPER3);
+    litho(ctx, glove, PAPER4);
     ctx.restore();
     ctx.save();
     ctx.translate(54, -380);
@@ -4374,13 +5804,13 @@
     litho(ctx, arm2, MUSTARD);
     const glove2 = new Path2D();
     glove2.ellipse(0, -162, 20, 18, 0, 0, Math.PI * 2);
-    litho(ctx, glove2, PAPER3);
+    litho(ctx, glove2, PAPER4);
     ctx.restore();
     for (let k = 0; k < 9; k++) {
       const a = Math.PI + k / 8 * Math.PI;
       const p = new Path2D();
       p.ellipse(Math.cos(a) * 52, -402 + Math.sin(a) * 6 + 6, 22, 14, a, 0, Math.PI * 2);
-      litho(ctx, p, PAPER3, { line: 2.2 });
+      litho(ctx, p, PAPER4, { line: 2.2 });
     }
     for (const sx of [-1, 1]) {
       const h = new Path2D();
@@ -4389,7 +5819,7 @@
     }
     const face = new Path2D();
     face.ellipse(0, -458, 40, 46, 0, 0, Math.PI * 2);
-    litho(ctx, face, PAPER3);
+    litho(ctx, face, PAPER4);
     ctx.strokeStyle = NAVY;
     ctx.lineWidth = 3;
     for (const sx of [-1, 1]) {
@@ -4435,7 +5865,7 @@
   var T_LET = GAG + 5.2;
   var s09 = {
     id: "s09",
-    station: ST4,
+    station: ST5,
     // 深蓝人物站在深蓝观众席前：加一圈米白描边（海报套印的白边），保证反差
     figureRim: { color: CREAM2, width: 6, alpha: 1 },
     figureAdjust(b) {
@@ -4538,7 +5968,7 @@
       }
     },
     cardStyle: {
-      ink: PAPER3,
+      ink: PAPER4,
       accent: MUSTARD,
       bar: false,
       bgDraw(ctx, x, y, w, h) {
@@ -4571,9 +6001,9 @@
     },
     playerStyle: {
       plate: RED,
-      ink: PAPER3,
+      ink: PAPER4,
       noteColor: MUSTARD,
-      palette: { disc: PAPER3, shine1: "#ffffff", shine2: MUSTARD, accent: TEAL, hub: MUSTARD, hole: NAVY, ink: NAVY },
+      palette: { disc: PAPER4, shine1: "#ffffff", shine2: MUSTARD, accent: TEAL, hub: MUSTARD, hole: NAVY, ink: NAVY },
       plateDraw(ctx, x, y, w, h) {
         const p = new Path2D();
         p.rect(x, y, w, h);
