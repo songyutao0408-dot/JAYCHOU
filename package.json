@@ -1,0 +1,30 @@
+{
+  "name": "sixteen-stops",
+  "version": "0.1.0",
+  "private": true,
+  "description": "《十六站》代码动画短片",
+  "type": "module",
+  "license": "UNLICENSED",
+  "devDependencies": {
+    "esbuild": "^0.28.2",
+    "p5": "^2.3.4",
+    "p5.brush": "^2.2.3",
+    "puppeteer-core": "^25.15.0"
+  },
+  "scripts": {
+    "build": "node tools/build.mjs",
+    "build:fonts": "node tools/build-fonts.mjs",
+    "build:heads": "node tools/build-heads.mjs",
+    "test": "node tools/test-beat.mjs && node tools/lint-time.mjs",
+    "shot": "node tools/shot.mjs",
+    "contact": "node tools/contact.mjs",
+    "rig-sheet": "node tools/rig-sheet.mjs",
+    "heads-check": "node tools/heads-check.mjs",
+    "render": "node tools/render.mjs",
+    "render:demo": "node tools/render.mjs --height 480 --fps 30",
+    "mux": "node tools/mux-audio.mjs"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}
