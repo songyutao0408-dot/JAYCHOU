@@ -25,19 +25,24 @@ export function drawTitleCard(ctx, st, b, style = {}) {
   const h = 196;
   const x = 56 - (1 - k) * 60, y = 48;
   ctx.globalAlpha = k;
-  ctx.shadowColor = 'rgba(0,0,0,0.25)';
-  ctx.shadowBlur = 18;
-  ctx.shadowOffsetY = 6;
-  roundRect(ctx, x, y, w, h, S.radius);
-  ctx.fillStyle = rgba(S.bg, S.opacity);
-  ctx.fill();
-  ctx.shadowColor = 'transparent';
-  ctx.lineWidth = 3;
-  ctx.strokeStyle = S.border;
-  ctx.stroke();
+  if (S.bgDraw) {
+    // 各站自定义的卡片外观（泥板、木刻印章、海报缎带……）
+    S.bgDraw(ctx, x, y, w, h, b);
+  } else {
+    ctx.shadowColor = 'rgba(0,0,0,0.25)';
+    ctx.shadowBlur = 18;
+    ctx.shadowOffsetY = 6;
+    roundRect(ctx, x, y, w, h, S.radius);
+    ctx.fillStyle = rgba(S.bg, S.opacity);
+    ctx.fill();
+    ctx.shadowColor = 'transparent';
+    ctx.lineWidth = 3;
+    ctx.strokeStyle = S.border;
+    ctx.stroke();
+  }
   // 强调色竖条
   ctx.fillStyle = S.accent;
-  ctx.fillRect(x + 20, y + 26, 7, h - 52);
+  if (S.bar !== false) ctx.fillRect(x + 20, y + 26, 7, h - 52);
   ctx.fillStyle = S.ink;
   ctx.textBaseline = 'alphabetic';
   font(ctx, zhPx, { family: S.family, weight: 700 });

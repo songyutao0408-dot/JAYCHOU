@@ -4,6 +4,12 @@
 import { styledFrame } from './styles.js';
 
 export const FIGURE_H = 500; // 人物身高（场景单位，≈ 画面高度一半）
+
+/** 人物身上的几个点（单位，相对脚下基线中点；按正侧面素材在站立帧 / 走路帧上量出）。梗里挂东西用。 */
+export const ANCHORS = {
+  stand: { shoulder: [30, -423], handR: [58, -226], handL: [-23, -235], headTop: [0, -507], ear: [25, -465] },
+  walk: { shoulder: [-19, -421], hand: [32, -250], headTop: [-5, -494], ear: [-1, -454] },
+};
 export const DEFAULT_SET = 'side';
 
 const sets = {};

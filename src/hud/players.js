@@ -138,17 +138,20 @@ export function drawPlayerHUD(ctx, st, b, gb, W, H, style = {}) {
   const tw = ctx.measureText(st.song).width;
   const left = st.player === 'phone' ? cx - 90 : st.player === 'cd' ? cx - 110 : cx - 125;
   const ty = cy + 18;
-  roundRect(ctx, left - tw - 52, ty - 58, tw + 64, 80, 8);
   const plate = style.plate || st.palette[0];
   const ink = style.ink || readableOn(plate, st.palette[2]);
-  ctx.fillStyle = rgba(plate, 0.9);
-  ctx.fill();
-  ctx.lineWidth = 2.5; ctx.strokeStyle = ink; ctx.stroke();
+  if (style.plateDraw) style.plateDraw(ctx, left - tw - 52, ty - 58, tw + 64, 80);
+  else {
+    roundRect(ctx, left - tw - 52, ty - 58, tw + 64, 80, 8);
+    ctx.fillStyle = rgba(plate, 0.9);
+    ctx.fill();
+    ctx.lineWidth = 2.5; ctx.strokeStyle = ink; ctx.stroke();
+  }
   ctx.fillStyle = ink;
   ctx.textAlign = 'right';
   ctx.fillText(st.song, left - 12, ty);
   // 小音符记号（几何形，非文字）
-  ctx.fillStyle = st.palette[3];
+  ctx.fillStyle = style.noteColor || st.palette[3];
   circle(ctx, left - tw - 34, ty - 12, 5); ctx.fill();
   ctx.fillRect(left - tw - 30, ty - 38, 3, 26);
   ctx.restore();

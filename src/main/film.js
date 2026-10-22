@@ -35,6 +35,10 @@ export function envFor(sec, gb, extra = {}) {
     sec, scene, st, gb, b,
     gbq: sec.start + b,
     cam: camDist(gb) - camDist(sec.start), // 镜头平移不量化
+    /** 段内第 b 拍时镜头的位置（场景用来把布景放在梗发生时的画面位置上） */
+    camAt: (bb) => camDist(sec.start + bb) - camDist(sec.start),
+    /** 人物这一帧画在哪、什么姿势：{ x, y, scale, pose, ... }（前景层把东西挂到人物身上时用） */
+    figure() { return figurePlacement(this); },
     ...extra,
   };
 }
@@ -51,29 +55,40 @@ export function drawSceneLayers(ctx, env, { back = true, front = true } = {}) {
 
 /** 在像素空间画人物（站位固定在 CHAR_PX, ROAD_PX）。 */
 export function drawFigureFor(ctx, env, { forceStand = false } = {}) {
-  const { scene, sec, b } = env;
-  const adj = (scene.figureAdjust && scene.figureAdjust(b, env)) || {};
-  if (adj.hidden) return;
-  const st = figureState(env.gbq, env);
-  const fig = {
-    pose: forceStand ? 'stand' : adj.pose || st.pose,
-    phase: st.phase,
-    lean: st.lean + (adj.rotate || 0),
-    style: adj.style || scene.figureStyle || (sec.station ? STATION_STYLE[sec.station] : 'comic'),
-  };
+  const { scene, b } = env;
+  const fig = figurePlacement(env, { forceStand });
+  if (fig.hidden) return;
   ctx.save();
   applyUnits(ctx);
-  ctx.translate(CHAR_X + (adj.dx || 0), ROAD_Y + (adj.dy || 0));
-  if (adj.scale) ctx.scale(adj.scale, adj.scale);
-  if (adj.alpha !== undefined) ctx.globalAlpha = adj.alpha;
+  ctx.translate(fig.x, fig.y);
+  if (fig.sx !== 1 || fig.scale !== 1) ctx.scale(fig.scale * fig.sx, fig.scale);
+  if (fig.alpha !== undefined) ctx.globalAlpha = fig.alpha;
   if (scene.drawFigure) scene.drawFigure(ctx, fig, b, env);
   else drawWalker(ctx, fig);
   ctx.restore();
 }
 
+/** 人物这一帧画在哪、什么姿势（场景的前景层用它把东西挂到人物身上）。 */
+export function figurePlacement(env, { forceStand = false } = {}) {
+  const { scene, sec, b } = env;
+  const adj = (scene.figureAdjust && scene.figureAdjust(b, env)) || {};
+  const st = figureState(env.gbq, env);
+  forceStand = forceStand || !!env.forceStand;
+  return {
+    hidden: !!adj.hidden,
+    x: CHAR_X + (adj.dx || 0), y: ROAD_Y + (adj.dy || 0),
+    scale: adj.scale || 1, sx: adj.sx || 1, alpha: adj.alpha,
+    pose: forceStand ? 'stand' : adj.pose || st.pose,
+    phase: st.phase,
+    lean: st.lean + (adj.rotate || 0),
+    style: adj.style || scene.figureStyle || (sec.station ? STATION_STYLE[sec.station] : 'comic'),
+  };
+}
+
+
 /** 一个段落的完整画面（背景 + 人物 + 前景）。 */
 export function drawSection(ctx, sec, gb, { figure = true, stand = false } = {}) {
-  const env = envFor(sec, gb);
+  const env = envFor(sec, gb, { forceStand: stand });
   drawSceneLayers(ctx, env, { front: false });
   if (figure) drawFigureFor(ctx, env, { forceStand: stand });
   drawSceneLayers(ctx, env, { back: false });

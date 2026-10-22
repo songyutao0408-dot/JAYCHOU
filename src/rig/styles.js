@@ -170,7 +170,7 @@ function mapTone(I, stops) {
   }
   return I;
 }
-function hatchStyle(src, { paper, ink, angle1 = 0.8, angle2 = -0.8, gap = 5, solid = 0.1, l1 = 0.62, l2 = 0.38, edge = 0.45, lw = 2, jitter = 0.6 }) {
+function hatchStyle(src, { paper, ink, angle1 = 0.8, angle2 = -0.8, gap = 5, solid = 0.1, l1 = 0.62, l2 = 0.38, edge = 0.45, lw = 2, jitter = 0.6, halo = null, haloW = 4 }) {
   // 刻线 / 排线：外轮廓 + 内部边缘 + 按暗度叠两组平行线，最暗处实涂
   const S = smoothColor(src, 1.5);
   const O = clone(S);
@@ -191,6 +191,8 @@ function hatchStyle(src, { paper, ink, angle1 = 0.8, angle2 = -0.8, gap = 5, sol
     O.a[i] = S.a[i] > 0.5 ? 1 : S.a[i];
   }
   outline(O, src.a, lw, K);
+  // 木刻里主体外缘常留一圈浅色「让刀」，把人物和满是刻线的背景分开
+  if (halo) outline(O, O.a.slice(), haloW, rgbf(halo));
   return O;
 }
 
@@ -292,7 +294,7 @@ const STYLES = {
     }
     return O;
   },
-  woodcut: (I) => hatchStyle(comicBase(I, { levels: 3, keep: 0, lw: 0 }), { paper: '#8d887e', ink: '#0e0d0c', angle1: 0.15, angle2: 0.15, gap: 6, solid: 0.2, l1: 0.7, l2: 0.01, edge: 0.6, lw: 2.6, jitter: 1.2 }),
+  woodcut: (I) => hatchStyle(comicBase(I, { levels: 3, keep: 0, lw: 0 }), { paper: '#8d887e', ink: '#0e0d0c', angle1: 0.15, angle2: 0.15, gap: 6, solid: 0.2, l1: 0.7, l2: 0.01, edge: 0.6, lw: 2.6, jitter: 1.2, halo: '#b3ada1', haloW: 5 }),
   pen: (I) => hatchStyle(comicBase(I, { levels: 4, keep: 0.2, lw: 0 }), { paper: '#f3f1ea', ink: '#151515', gap: 4, solid: 0.06, l1: 0.6, l2: 0.32, edge: 0.4, lw: 1.6 }),
   etching: (I) => hatchStyle(comicBase(I, { levels: 4, keep: 0.2, lw: 0 }), { paper: '#d8cdb4', ink: '#2a2219', angle1: 0.5, angle2: -1.1, gap: 3.4, solid: 0.05, l1: 0.66, l2: 0.36, edge: 0.4, lw: 1.4, jitter: 0.3 }),
   film: (I) => {

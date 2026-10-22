@@ -81,6 +81,7 @@
     [2022, "\u6700\u4F1F\u5927\u7684\u4F5C\u54C1", "Greatest Works of Art", "\u8FD8\u5728\u6D41\u6D6A", "\u516C\u8DEF\u65C5\u884C", "\u590D\u53E4\u660E\u4FE1\u7247", "\u4E00\u4E2A\u90AE\u6233\u300C\u556A\u300D\u5730\u76D6\u5728\u4ED6\u8EAB\u4E0A\uFF0C\u65E5\u671F 2022", ["#f0e2c4", "#5aa0b4", "#3a2c24", "#d6643a"]],
     [2026, "\u592A\u9633\u4E4B\u5B50", "Children of the Sun", "\u90A3\u5929\u4E0B\u96E8\u4E86", "\u96E8\u591C\u516C\u4EA4\u7AD9\u53F0\uFF0C\u4E00\u7537\u4E00\u5973\u5404\u6253\u4E00\u628A\u4F1E", "\u7535\u5F71\u611F\u539A\u6D82\u63D2\u753B\uFF0C\u8DEF\u706F\u6696\u5149\u5BF9\u51B7\u96E8", "\u516C\u4EA4\u8F66\u9A76\u8FC7\u6E85\u8D77\u6C34\u82B1\uFF0C\u4E24\u628A\u4F1E\u5728\u5F3A\u62CD\u4E0A\u540C\u65F6\u4E00\u6B6A\uFF08\u4ED6\u7684\u4F1E\u753B\u5728\u7AD9\u7ACB\u5E27\u7684\u624B\u4E0A\uFF09", ["#1b2230", "#3d5670", "#0a0e15", "#f0b25a"]]
   ];
+  var EN_CHECKED = /* @__PURE__ */ new Set([1, 2, 3, 5, 6, 7, 8, 9, 10, 12, 13, 15, 16]);
   var STATIONS = raw.map(([year, albumZh, albumEn, song, scene, style, gag, palette], i) => {
     const n = i + 1;
     return {
@@ -89,7 +90,7 @@
       year,
       albumZh,
       albumEn,
-      enChecked: false,
+      enChecked: EN_CHECKED.has(n),
       song,
       scene,
       style,
@@ -200,6 +201,26 @@
   function poly(ctx, pts, close = true) {
     ctx.beginPath();
     pts.forEach(([x, y], i) => i ? ctx.lineTo(x, y) : ctx.moveTo(x, y));
+    if (close) ctx.closePath();
+  }
+  function smoothPath(ctx, pts, close = false) {
+    ctx.beginPath();
+    if (pts.length < 2) return;
+    const n = pts.length;
+    const P = (i) => close ? pts[(i + n) % n] : pts[Math.max(0, Math.min(n - 1, i))];
+    ctx.moveTo(pts[0][0], pts[0][1]);
+    const segs = close ? n : n - 1;
+    for (let i = 0; i < segs; i++) {
+      const p0 = P(i - 1), p1 = P(i), p2 = P(i + 1), p3 = P(i + 2);
+      ctx.bezierCurveTo(
+        p1[0] + (p2[0] - p0[0]) / 6,
+        p1[1] + (p2[1] - p0[1]) / 6,
+        p2[0] - (p3[0] - p1[0]) / 6,
+        p2[1] - (p3[1] - p1[1]) / 6,
+        p2[0],
+        p2[1]
+      );
+    }
     if (close) ctx.closePath();
   }
 
@@ -669,7 +690,7 @@
     }
     return I;
   }
-  function hatchStyle(src, { paper, ink, angle1 = 0.8, angle2 = -0.8, gap = 5, solid = 0.1, l1 = 0.62, l2 = 0.38, edge = 0.45, lw = 2, jitter = 0.6 }) {
+  function hatchStyle(src, { paper, ink, angle1 = 0.8, angle2 = -0.8, gap = 5, solid = 0.1, l1 = 0.62, l2 = 0.38, edge = 0.45, lw = 2, jitter = 0.6, halo = null, haloW = 4 }) {
     const S = smoothColor(src, 1.5);
     const O = clone(S);
     const L = lumaArray(S, 0.6);
@@ -691,6 +712,7 @@
       O.a[i] = S.a[i] > 0.5 ? 1 : S.a[i];
     }
     outline(O, src.a, lw, K2);
+    if (halo) outline(O, O.a.slice(), haloW, rgbf(halo));
     return O;
   }
   var STYLES = {
@@ -803,7 +825,7 @@
       }
       return O;
     },
-    woodcut: (I) => hatchStyle(comicBase(I, { levels: 3, keep: 0, lw: 0 }), { paper: "#8d887e", ink: "#0e0d0c", angle1: 0.15, angle2: 0.15, gap: 6, solid: 0.2, l1: 0.7, l2: 0.01, edge: 0.6, lw: 2.6, jitter: 1.2 }),
+    woodcut: (I) => hatchStyle(comicBase(I, { levels: 3, keep: 0, lw: 0 }), { paper: "#8d887e", ink: "#0e0d0c", angle1: 0.15, angle2: 0.15, gap: 6, solid: 0.2, l1: 0.7, l2: 0.01, edge: 0.6, lw: 2.6, jitter: 1.2, halo: "#b3ada1", haloW: 5 }),
     pen: (I) => hatchStyle(comicBase(I, { levels: 4, keep: 0.2, lw: 0 }), { paper: "#f3f1ea", ink: "#151515", gap: 4, solid: 0.06, l1: 0.6, l2: 0.32, edge: 0.4, lw: 1.6 }),
     etching: (I) => hatchStyle(comicBase(I, { levels: 4, keep: 0.2, lw: 0 }), { paper: "#d8cdb4", ink: "#2a2219", angle1: 0.5, angle2: -1.1, gap: 3.4, solid: 0.05, l1: 0.66, l2: 0.36, edge: 0.4, lw: 1.4, jitter: 0.3 }),
     film: (I) => {
@@ -948,6 +970,10 @@
 
   // src/rig/walker.js
   var FIGURE_H = 500;
+  var ANCHORS = {
+    stand: { shoulder: [30, -423], handR: [58, -226], handL: [-23, -235], headTop: [0, -507], ear: [25, -465] },
+    walk: { shoulder: [-19, -421], hand: [32, -250], headTop: [-5, -494], ear: [-1, -454] }
+  };
   var DEFAULT_SET = "side";
   var sets = {};
   var active = null;
@@ -1196,9 +1222,1667 @@
     ctx.restore();
   }
 
+  // src/kit/strip.js
+  var CAM_MIN = -520;
+  var CAM_MAX = 1650;
+  function strip(key, p, draw, { y0 = 0, y1 = 1e3, res = 1 } = {}) {
+    const x0 = Math.floor(X_MIN + CAM_MIN * p) - 20, x1 = Math.ceil(X_MAX + CAM_MAX * p) + 20;
+    const s = K * res;
+    const canvas = baked(`strip|${key}|${p}|${y0}|${y1}|${res}`, (x1 - x0) * s, (y1 - y0) * s, (ctx) => {
+      ctx.scale(s, s);
+      ctx.translate(-x0, -y0);
+      draw(ctx, x0, x1);
+    });
+    return { canvas, x0, x1, y0, y1, p };
+  }
+  function drawStrip(ctx, S, cam) {
+    ctx.drawImage(S.canvas, S.x0 - cam * S.p, S.y0, S.x1 - S.x0, S.y1 - S.y0);
+  }
+  var stripRange = (p) => [Math.floor(X_MIN + CAM_MIN * p) - 20, Math.ceil(X_MAX + CAM_MAX * p) + 20];
+
+  // src/main/frame.js
+  function drawDefaultFrame(ctx, rect, s, o = {}) {
+    const { gold = "#c9a24a", dark = "#5e4520", light = "#f3dc8e" } = o;
+    const t = 64 * s;
+    const { x, y, w, h } = rect;
+    ctx.save();
+    ctx.fillStyle = "rgba(0,0,0,0.18)";
+    ctx.beginPath();
+    ctx.ellipse(x + w / 2, y + h + t * 0.9, w * 0.55, t * 0.5, 0, 0, Math.PI * 2);
+    ctx.fill();
+    const outer = [x - t, y - t, w + 2 * t, h + 2 * t];
+    const sides = [
+      { pts: [[x - t, y - t], [x + w + t, y - t], [x + w, y], [x, y]], c: light },
+      { pts: [[x + w + t, y - t], [x + w + t, y + h + t], [x + w, y + h], [x + w, y]], c: gold },
+      { pts: [[x + w + t, y + h + t], [x - t, y + h + t], [x, y + h], [x + w, y + h]], c: dark },
+      { pts: [[x - t, y + h + t], [x - t, y - t], [x, y], [x, y + h]], c: mix(gold, light, 0.4) }
+    ];
+    for (const sd of sides) {
+      ctx.beginPath();
+      sd.pts.forEach(([px, py], i) => i ? ctx.lineTo(px, py) : ctx.moveTo(px, py));
+      ctx.closePath();
+      ctx.fillStyle = sd.c;
+      ctx.fill();
+    }
+    ctx.strokeStyle = "rgba(70,45,10,0.55)";
+    ctx.lineWidth = Math.max(1, 3 * s);
+    ctx.strokeRect(x - t * 0.62, y - t * 0.62, w + t * 1.24, h + t * 1.24);
+    ctx.strokeStyle = "rgba(255,240,190,0.6)";
+    ctx.strokeRect(x - t * 0.3, y - t * 0.3, w + t * 0.6, h + t * 0.6);
+    ctx.lineWidth = Math.max(1, 5 * s);
+    ctx.strokeStyle = dark;
+    ctx.strokeRect(x - 2 * s, y - 2 * s, w + 4 * s, h + 4 * s);
+    ctx.strokeStyle = "rgba(40,25,5,0.8)";
+    ctx.lineWidth = Math.max(1, 2 * s);
+    ctx.strokeRect(...outer);
+    ctx.fillStyle = light;
+    for (const [cx, cy] of [[x - t / 2, y - t / 2], [x + w + t / 2, y - t / 2], [x - t / 2, y + h + t / 2], [x + w + t / 2, y + h + t / 2]]) {
+      ctx.beginPath();
+      ctx.arc(cx, cy, t * 0.22, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.strokeStyle = dark;
+      ctx.lineWidth = Math.max(1, 2 * s);
+      ctx.stroke();
+    }
+    ctx.restore();
+  }
+
+  // src/scenes/s02.js
+  var ST = stationByN(2);
+  var SAND = "#e7d3a8";
+  var OCHRE = "#c49a5c";
+  var BROWN = "#4a3320";
+  var LAPIS = "#2f6fb0";
+  var LAPIS_D = "#1d4580";
+  var LAPIS_DD = "#13305c";
+  var GOLD = "#e2b850";
+  var CREAM = "#f4e6c4";
+  var CLAY = "#d6b07a";
+  var WALL_TOP = 330;
+  var BAND1 = [346, 372];
+  var LIONS = [384, 520];
+  var BAND2 = [530, 554];
+  var RELIEF = [566, 772];
+  var PLINTH = 772;
+  var P_WALL = 0.85;
+  var P_FAR = 0.22;
+  var P_FG = 1.3;
+  function farLayer() {
+    return strip("s02-far", P_FAR, (ctx, x0, x1) => {
+      const R = rng("s02-far");
+      const c1 = mix(SAND, OCHRE, 0.5), c2 = mix(OCHRE, BROWN, 0.25);
+      ctx.fillStyle = mix(SAND, OCHRE, 0.35);
+      ctx.fillRect(x0, 300, x1 - x0, 60);
+      for (let x = x0; x < x1; x += 34) ctx.fillRect(x, 288, 20, 14);
+      for (let zx = x0 + 120; zx < x1; zx += 760 + R() * 300) {
+        const w = 260 + R() * 80, steps = 5;
+        for (let i = 0; i < steps; i++) {
+          const ww = w * (1 - i * 0.17), hh = 34;
+          const yb = 330 - i * hh;
+          ctx.fillStyle = i % 2 ? c1 : mix(c1, c2, 0.4);
+          ctx.fillRect(zx - ww / 2, yb - hh, ww, hh);
+          ctx.fillStyle = rgba(BROWN, 0.18);
+          ctx.fillRect(zx + ww / 2 - ww * 0.22, yb - hh, ww * 0.22, hh);
+        }
+        ctx.fillStyle = mix(c1, "#ffffff", 0.15);
+        poly(ctx, [[zx - 16, 330], [zx + 16, 330], [zx + 8, 330 - steps * 34], [zx - 8, 330 - steps * 34]]);
+        ctx.fill();
+      }
+      for (let px = x0 + 40; px < x1; px += 140 + R() * 220) {
+        const h = 90 + R() * 70, lean = (R() - 0.5) * 18;
+        ctx.strokeStyle = c2;
+        ctx.lineWidth = 6;
+        ctx.lineCap = "round";
+        ctx.beginPath();
+        ctx.moveTo(px, 340);
+        ctx.quadraticCurveTo(px + lean * 0.3, 340 - h / 2, px + lean, 340 - h);
+        ctx.stroke();
+        ctx.fillStyle = c2;
+        for (let k = 0; k < 7; k++) {
+          const a = -Math.PI / 2 + (k - 3) * 0.48;
+          const L = 40 + R() * 16;
+          const tx = px + lean, ty = 340 - h;
+          smoothPath(ctx, [[tx, ty], [tx + Math.cos(a - 0.25) * L * 0.6, ty + Math.sin(a - 0.25) * L * 0.6 - 4], [tx + Math.cos(a) * L, ty + Math.sin(a) * L + 10], [tx + Math.cos(a + 0.15) * L * 0.6, ty + Math.sin(a + 0.15) * L * 0.6 + 4]], true);
+          ctx.fill();
+        }
+      }
+    }, { y0: 150, y1: 380 });
+  }
+  function rosette(ctx, x, y, r, petal, center) {
+    ctx.fillStyle = petal;
+    for (let k = 0; k < 8; k++) {
+      const a = k / 8 * Math.PI * 2;
+      ellipse(ctx, x + Math.cos(a) * r * 0.55, y + Math.sin(a) * r * 0.55, r * 0.45, r * 0.22, a);
+      ctx.fill();
+    }
+    circle(ctx, x, y, r * 0.3);
+    ctx.fillStyle = center;
+    ctx.fill();
+  }
+  function lion(ctx, x, y, s, R) {
+    ctx.save();
+    ctx.translate(x, y);
+    ctx.scale(s, s);
+    const body = [[-80, -40], [-40, -58], [20, -56], [52, -66], [74, -60], [92, -44], [96, -28], [80, -22], [62, -26], [58, -8], [62, 30], [50, 34], [44, 2], [10, 4], [-20, 2], [-30, 34], [-44, 34], [-42, 0], [-70, -4], [-92, -20], [-112, -46], [-104, -50], [-84, -32]];
+    const draw = (dx, dy, col) => {
+      ctx.save();
+      ctx.translate(dx, dy);
+      smoothPath(ctx, body, true);
+      ctx.fillStyle = col;
+      ctx.fill();
+      ctx.restore();
+    };
+    draw(3, 4, rgba("#0b1f3f", 0.55));
+    draw(0, 0, GOLD);
+    ctx.fillStyle = "#c9742c";
+    smoothPath(ctx, [[30, -58], [52, -70], [74, -64], [80, -40], [70, -20], [52, -16], [36, -30]], true);
+    ctx.fill();
+    ctx.strokeStyle = rgba("#7a3f12", 0.8);
+    ctx.lineWidth = 2;
+    for (let k = 0; k < 5; k++) {
+      ctx.beginPath();
+      ctx.moveTo(40 + k * 6, -56 + k * 2);
+      ctx.quadraticCurveTo(46 + k * 6, -40, 40 + k * 7, -24);
+      ctx.stroke();
+    }
+    ctx.fillStyle = rgba(CREAM, 0.7);
+    smoothPath(ctx, [[-40, -8], [10, -6], [40, -10], [10, 2], [-30, 0]], true);
+    ctx.fill();
+    ctx.strokeStyle = "#3d2410";
+    ctx.lineWidth = 2.6;
+    smoothPath(ctx, body, true);
+    ctx.stroke();
+    ctx.fillStyle = "#3d2410";
+    circle(ctx, 82, -46, 3);
+    ctx.fill();
+    ctx.beginPath();
+    ctx.moveTo(96, -30);
+    ctx.lineTo(84, -32);
+    ctx.stroke();
+    ctx.restore();
+  }
+  function wallLayer() {
+    return strip("s02-wall", P_WALL, (ctx, x0, x1) => {
+      const R = rng("s02-wall");
+      ctx.fillStyle = LAPIS_D;
+      ctx.fillRect(x0, WALL_TOP, x1 - x0, PLINTH - WALL_TOP + 30);
+      const bw = 46, bh = 22;
+      for (let row = 0, y = WALL_TOP; y < PLINTH; row++, y += bh) {
+        const off = row % 2 ? bw / 2 : 0;
+        for (let x = x0 - bw + off; x < x1; x += bw) {
+          const t = hash2(Math.round(x), row, 4);
+          const base = t < 0.33 ? LAPIS : t < 0.75 ? mix(LAPIS, LAPIS_D, 0.45) : mix(LAPIS, "#5b8fd0", 0.35);
+          ctx.fillStyle = base;
+          ctx.fillRect(x + 1.5, y + 1.5, bw - 3, bh - 3);
+          ctx.fillStyle = rgba("#cfe2ff", 0.18 + 0.12 * hash2(Math.round(x), row, 5));
+          ctx.fillRect(x + 3, y + 3, bw - 10, 2.5);
+          if (hash2(Math.round(x), row, 6) > 0.8) {
+            ctx.fillStyle = rgba("#0c2347", 0.25);
+            ctx.fillRect(x + 6 + hash2(row, Math.round(x), 7) * 20, y + 8, 10, 6);
+          }
+        }
+      }
+      for (let x = x0; x < x1; x += 72) {
+        ctx.fillStyle = LAPIS_D;
+        poly(ctx, [
+          [x + 6, WALL_TOP],
+          [x + 6, WALL_TOP - 16],
+          [x + 14, WALL_TOP - 16],
+          [x + 14, WALL_TOP - 32],
+          [x + 22, WALL_TOP - 32],
+          [x + 22, WALL_TOP - 46],
+          [x + 46, WALL_TOP - 46],
+          [x + 46, WALL_TOP - 32],
+          [x + 54, WALL_TOP - 32],
+          [x + 54, WALL_TOP - 16],
+          [x + 62, WALL_TOP - 16],
+          [x + 62, WALL_TOP]
+        ]);
+        ctx.fill();
+        ctx.fillStyle = rgba("#cfe2ff", 0.22);
+        ctx.fillRect(x + 22, WALL_TOP - 46, 24, 3);
+        ctx.fillRect(x + 6, WALL_TOP - 16, 8, 3);
+      }
+      for (const [a, b] of [BAND1, BAND2]) {
+        ctx.fillStyle = LAPIS_DD;
+        ctx.fillRect(x0, a, x1 - x0, b - a);
+        ctx.fillStyle = GOLD;
+        ctx.fillRect(x0, a, x1 - x0, 3);
+        ctx.fillRect(x0, b - 3, x1 - x0, 3);
+        for (let x = x0 + 20; x < x1; x += 40) rosette(ctx, x, (a + b) / 2, 10, CREAM, GOLD);
+      }
+      for (let x = x0 + 150; x < x1; x += 330) lion(ctx, x, LIONS[1] - 34, 0.9 + R() * 0.04, R);
+      ctx.fillStyle = mix(BROWN, OCHRE, 0.3);
+      ctx.fillRect(x0, PLINTH, x1 - x0, 30);
+      ctx.fillStyle = rgba("#000000", 0.18);
+      ctx.fillRect(x0, PLINTH, x1 - x0, 5);
+    }, { y0: 270, y1: 810 });
+  }
+  var FIG_GAP = 210;
+  var OFFERINGS = ["jar", "lyre", "basket", "branch"];
+  function reliefFigure(ctx, x, pose, item, frontal = false) {
+    const base = RELIEF[1] - 6, H2 = 186;
+    const top = base - H2;
+    ctx.save();
+    ctx.translate(x, 0);
+    const shade = (path, dx = 2.5, dy = 3) => {
+      ctx.save();
+      ctx.translate(dx, dy);
+      ctx.fillStyle = rgba("#6b4a2b", 0.45);
+      ctx.fill(path);
+      ctx.restore();
+      ctx.fillStyle = mix(SAND, "#f6e9cc", 0.25);
+      ctx.fill(path);
+      ctx.strokeStyle = rgba("#7a5a34", 0.9);
+      ctx.lineWidth = 1.6;
+      ctx.stroke(path);
+    };
+    const stride = pose ? 26 : 12;
+    const legs = new Path2D();
+    legs.moveTo(-6, base - 46);
+    legs.lineTo(-6 - stride, base - 4);
+    legs.lineTo(-6 - stride + 16, base - 4);
+    legs.lineTo(2, base - 46);
+    legs.moveTo(6, base - 46);
+    legs.lineTo(10 + stride, base - 4);
+    legs.lineTo(26 + stride, base - 4);
+    legs.lineTo(16, base - 46);
+    shade(legs);
+    const robe = new Path2D();
+    robe.moveTo(-22, top + 66);
+    robe.lineTo(24, top + 64);
+    robe.lineTo(30 + stride * 0.3, base - 40);
+    robe.lineTo(-26 - stride * 0.3, base - 40);
+    robe.closePath();
+    shade(robe);
+    ctx.strokeStyle = rgba("#7a5a34", 0.8);
+    ctx.lineWidth = 1.2;
+    for (let k = -24; k <= 28; k += 5) {
+      ctx.beginPath();
+      ctx.moveTo(k, base - 42);
+      ctx.lineTo(k + 1, base - 34);
+      ctx.stroke();
+    }
+    const armB = new Path2D();
+    armB.rect(-18, top + 70, 10, 52);
+    shade(armB);
+    const head = new Path2D();
+    if (!frontal) {
+      head.moveTo(-14, top + 22);
+      head.lineTo(-14, top + 50);
+      head.lineTo(-2, top + 60);
+      head.lineTo(14, top + 52);
+      head.lineTo(18, top + 40);
+      head.lineTo(22, top + 36);
+      head.lineTo(16, top + 30);
+      head.lineTo(14, top + 18);
+      head.closePath();
+    } else {
+      head.ellipse(0, top + 40, 17, 22, 0, 0, Math.PI * 2);
+    }
+    shade(head);
+    const hat = new Path2D();
+    hat.rect(-16, top + 2, 30, 20);
+    shade(hat);
+    ctx.strokeStyle = rgba("#7a5a34", 0.8);
+    for (let k = 0; k < 3; k++) {
+      ctx.beginPath();
+      ctx.moveTo(-16, top + 7 + k * 5);
+      ctx.lineTo(14, top + 7 + k * 5);
+      ctx.stroke();
+    }
+    const beard = new Path2D();
+    if (!frontal) {
+      beard.moveTo(-4, top + 50);
+      beard.lineTo(14, top + 50);
+      beard.lineTo(10, top + 74);
+      beard.lineTo(-6, top + 72);
+      beard.closePath();
+    } else {
+      beard.moveTo(-14, top + 50);
+      beard.lineTo(14, top + 50);
+      beard.lineTo(8, top + 76);
+      beard.lineTo(-8, top + 76);
+      beard.closePath();
+    }
+    shade(beard);
+    ctx.strokeStyle = rgba("#7a5a34", 0.7);
+    for (let k = 0; k < 3; k++) {
+      ctx.beginPath();
+      ctx.moveTo(frontal ? -10 : -2, top + 56 + k * 6);
+      ctx.lineTo(frontal ? 10 : 12, top + 56 + k * 6);
+      ctx.stroke();
+    }
+    ctx.fillStyle = "#5a3b1c";
+    if (!frontal) {
+      ellipse(ctx, 8, top + 34, 4.5, 2.2);
+      ctx.fill();
+    } else {
+      for (const ex of [-7, 7]) {
+        ellipse(ctx, ex, top + 36, 5, 3);
+        ctx.fillStyle = "#fbf1da";
+        ctx.fill();
+        ctx.strokeStyle = "#5a3b1c";
+        ctx.lineWidth = 1.2;
+        ctx.stroke();
+        circle(ctx, ex - 2.5, top + 36, 1.8);
+        ctx.fillStyle = "#5a3b1c";
+        ctx.fill();
+      }
+    }
+    const armF = new Path2D();
+    armF.moveTo(10, top + 72);
+    armF.lineTo(36, top + 92);
+    armF.lineTo(32, top + 100);
+    armF.lineTo(6, top + 84);
+    armF.closePath();
+    shade(armF);
+    const off = new Path2D();
+    if (item === "jar") {
+      off.ellipse(42, top + 86, 12, 15, 0, 0, Math.PI * 2);
+      off.rect(36, top + 66, 12, 8);
+    } else if (item === "lyre") {
+      off.moveTo(34, top + 104);
+      off.lineTo(30, top + 60);
+      off.lineTo(36, top + 60);
+      off.lineTo(40, top + 98);
+      off.lineTo(56, top + 98);
+      off.lineTo(60, top + 58);
+      off.lineTo(66, top + 58);
+      off.lineTo(62, top + 104);
+      off.closePath();
+    } else if (item === "basket") {
+      off.moveTo(30, top + 82);
+      off.lineTo(60, top + 82);
+      off.lineTo(54, top + 100);
+      off.lineTo(36, top + 100);
+      off.closePath();
+    } else {
+      off.moveTo(36, top + 96);
+      off.lineTo(46, top + 40);
+      off.lineTo(52, top + 42);
+      off.lineTo(42, top + 96);
+      off.closePath();
+      off.ellipse(52, top + 46, 10, 6, -0.6, 0, Math.PI * 2);
+      off.ellipse(46, top + 60, 10, 6, 0.6, 0, Math.PI * 2);
+    }
+    shade(off);
+    ctx.restore();
+  }
+  function reliefLayer(pose) {
+    return strip(`s02-relief-${pose}`, P_WALL, (ctx, x0, x1) => {
+      const g = ctx.createLinearGradient(0, RELIEF[0], 0, RELIEF[1]);
+      g.addColorStop(0, mix(SAND, OCHRE, 0.25));
+      g.addColorStop(1, mix(SAND, OCHRE, 0.5));
+      ctx.fillStyle = g;
+      ctx.fillRect(x0, RELIEF[0], x1 - x0, RELIEF[1] - RELIEF[0]);
+      ctx.strokeStyle = rgba("#8a6a3f", 0.18);
+      ctx.lineWidth = 1;
+      for (let y = RELIEF[0] + 4; y < RELIEF[1]; y += 5) {
+        ctx.beginPath();
+        for (let x = x0; x < x1; x += 40) {
+          const yy = y + (noise2(x * 0.01, y * 0.1, 3) - 0.5) * 3;
+          x === x0 ? ctx.moveTo(x, yy) : ctx.lineTo(x, yy);
+        }
+        ctx.stroke();
+      }
+      ctx.fillStyle = rgba("#6b4a2b", 0.35);
+      ctx.fillRect(x0, RELIEF[0], x1 - x0, 4);
+      ctx.fillStyle = rgba("#fff3d6", 0.35);
+      ctx.fillRect(x0, RELIEF[1] - 4, x1 - x0, 4);
+      let i = 0;
+      for (let x = x0 + 60; x < x1; x += FIG_GAP, i++) reliefFigure(ctx, x, (pose + i) % 2, OFFERINGS[i % OFFERINGS.length]);
+    }, { y0: RELIEF[0] - 4, y1: RELIEF[1] + 4 });
+  }
+  function roadLayer() {
+    return strip("s02-road", 1, (ctx, x0, x1) => {
+      const R = rng("s02-road");
+      ctx.fillStyle = mix(SAND, "#ffffff", 0.12);
+      ctx.fillRect(x0, ROAD_Y, x1 - x0, 1e3 - ROAD_Y);
+      ctx.fillStyle = mix(OCHRE, BROWN, 0.35);
+      ctx.fillRect(x0, ROAD_Y, x1 - x0, 12);
+      const rows = [[812, 846], [846, 896], [896, 964], [964, 1e3]];
+      rows.forEach(([a, b], r) => {
+        let x = x0 - R() * 120;
+        while (x < x1) {
+          const w = 110 + (b - a) * 2.2 + R() * 90;
+          const t = R();
+          ctx.fillStyle = mix(mix(SAND, "#f6ead1", 0.4), OCHRE, 0.12 + t * 0.2);
+          ctx.fillRect(x + 2, a + 2, w - 4, b - a - 4);
+          ctx.fillStyle = rgba("#fff8e8", 0.35);
+          ctx.fillRect(x + 4, a + 3, w - 10, 2);
+          if (R() > 0.6) {
+            ctx.fillStyle = rgba(BROWN, 0.08);
+            ellipse(ctx, x + R() * w, a + (b - a) * R(), 14 + R() * 20, 4 + R() * 5);
+            ctx.fill();
+          }
+          ctx.fillStyle = rgba(BROWN, 0.45);
+          ctx.fillRect(x, a, 2.5, b - a);
+          x += w;
+        }
+        ctx.fillStyle = rgba(BROWN, 0.35);
+        ctx.fillRect(x0, b - 1.5, x1 - x0, 2.5);
+      });
+    }, { y0: ROAD_Y - 2, y1: 1e3 });
+  }
+  var glanceIndex = (env) => {
+    const cam = env.camAt(SB(5));
+    const want = 560 + cam * P_WALL;
+    const [x0] = stripRange(P_WALL);
+    const i = Math.round((want - (x0 + 60)) / FIG_GAP);
+    return { i, x: x0 + 60 + i * FIG_GAP };
+  };
+  var s02 = {
+    id: "s02",
+    station: ST,
+    figureAdjust(b) {
+      if (b >= SB(6.7) && b < SB(7)) return { pose: "stand", sx: lerp(1, 0.12, ease.inOut((b - SB(6.7)) / 0.3)) };
+      if (b >= SB(7) && b < SB(7.15)) return { sx: lerp(1.12, 1, (b - SB(7)) / 0.15) };
+      return null;
+    },
+    drawBack(ctx, b, env) {
+      const cam = env.cam;
+      const g = ctx.createLinearGradient(0, 0, 0, 380);
+      g.addColorStop(0, "#c99a62");
+      g.addColorStop(0.55, "#e9c58c");
+      g.addColorStop(1, "#f6e2b6");
+      ctx.fillStyle = g;
+      ctx.fillRect(X_MIN - 2, 0, X_MAX - X_MIN + 4, 380);
+      const sx = 980 - cam * 0.03;
+      const sg = ctx.createRadialGradient(sx, 210, 10, sx, 210, 230);
+      sg.addColorStop(0, rgba("#fff4d6", 0.95));
+      sg.addColorStop(0.25, rgba("#fbe6b5", 0.6));
+      sg.addColorStop(1, rgba("#fbe6b5", 0));
+      ctx.fillStyle = sg;
+      ctx.fillRect(sx - 240, 0, 480, 400);
+      circle(ctx, sx, 210, 62);
+      ctx.fillStyle = "#fbeccb";
+      ctx.fill();
+      for (let k2 = 0; k2 < 5; k2++) {
+        const cx = ((k2 * 620 - cam * 0.08) % 2600 + 2600) % 2600 + X_MIN - 300, cy = 90 + k2 * 37, L = 220 + k2 * 40;
+        for (let j = 0; j < 4; j++) {
+          const ex = cx + j * L * 0.28, ew = L * (0.35 + 0.1 * (j % 2)), eh = 7 + j % 3 * 3;
+          const cg = ctx.createRadialGradient(ex, cy, 1, ex, cy, ew);
+          cg.addColorStop(0, rgba("#fff3dc", 0.5));
+          cg.addColorStop(1, rgba("#fff3dc", 0));
+          ctx.fillStyle = cg;
+          ctx.save();
+          ctx.translate(ex, cy);
+          ctx.scale(1, eh / ew);
+          ctx.translate(-ex, -cy);
+          circle(ctx, ex, cy, ew);
+          ctx.fill();
+          ctx.restore();
+        }
+      }
+      drawStrip(ctx, farLayer(), cam);
+      drawStrip(ctx, wallLayer(), cam);
+      const pose = Math.floor(env.gb + 1e-6) % 2;
+      drawStrip(ctx, reliefLayer(pose), cam);
+      const k = smoothstep(SB(5.6), SB(5.8), b) * (1 - smoothstep(SB(6.6), SB(6.8), b));
+      if (k > 0.5) {
+        const { i, x } = glanceIndex(env);
+        const sxp = x - cam * P_WALL;
+        ctx.save();
+        ctx.beginPath();
+        ctx.rect(sxp - 30, RELIEF[0] + 4, 64, 92);
+        ctx.clip();
+        ctx.fillStyle = mix(SAND, OCHRE, 0.3);
+        ctx.fillRect(sxp - 30, RELIEF[0] + 4, 64, 92);
+        reliefFigure(ctx, sxp, (pose + i) % 2, OFFERINGS[(i % 4 + 4) % 4], true);
+        ctx.restore();
+      }
+      drawStrip(ctx, roadLayer(), cam);
+      ctx.fillStyle = rgba("#fff3d0", 0.5);
+      for (let k2 = 0; k2 < 26; k2++) {
+        const px = ((hash2(k2, 1, 2) * 2200 - cam * 0.9 + b * 18 * (0.5 + hash2(k2, 2, 2))) % 2200 + 2200) % 2200 + X_MIN;
+        const py = 380 + hash2(k2, 3, 2) * 380 + Math.sin(b * 1.3 + k2) * 10;
+        circle(ctx, px, py, 1.2 + hash2(k2, 4, 2) * 1.6);
+        ctx.fill();
+      }
+    },
+    drawFront(ctx, b, env) {
+      const cam = env.cam, c4 = env.camAt(SB(5));
+      const items = [[-260, "jar"], [1240, "frond"], [2100, "jar"]];
+      for (const [sx0, kind] of items) {
+        const x = sx0 + c4 * P_FG - cam * P_FG;
+        if (x < X_MIN - 200 || x > X_MAX + 200) continue;
+        if (kind === "jar") {
+          ctx.fillStyle = rgba("#000", 0.25);
+          ellipse(ctx, x + 10, 992, 90, 14);
+          ctx.fill();
+          smoothPath(ctx, [[x - 40, 860], [x - 70, 910], [x - 66, 970], [x - 30, 996], [x + 30, 996], [x + 66, 970], [x + 70, 910], [x + 40, 860]], true);
+          const g = ctx.createLinearGradient(x - 70, 0, x + 70, 0);
+          g.addColorStop(0, "#8a4f24");
+          g.addColorStop(0.4, "#c77a3a");
+          g.addColorStop(1, "#5e3418");
+          ctx.fillStyle = g;
+          ctx.fill();
+          ctx.fillStyle = "#6e3c19";
+          ctx.fillRect(x - 34, 846, 68, 16);
+          ctx.strokeStyle = rgba(CREAM, 0.6);
+          ctx.lineWidth = 3;
+          ctx.beginPath();
+          ctx.moveTo(x - 64, 930);
+          ctx.lineTo(x + 64, 930);
+          ctx.stroke();
+        } else {
+          ctx.fillStyle = "#5c6b2e";
+          for (let k = 0; k < 6; k++) {
+            const a = -2.3 + k * 0.32;
+            smoothPath(ctx, [[x, 1010], [x + Math.cos(a) * 160, 1010 + Math.sin(a) * 240], [x + Math.cos(a + 0.06) * 300, 1010 + Math.sin(a + 0.06) * 330], [x + Math.cos(a + 0.12) * 160, 1010 + Math.sin(a + 0.12) * 240]], true);
+            ctx.fill();
+          }
+        }
+      }
+    },
+    drawFrame(ctx, R, env) {
+      drawDefaultFrame(ctx, R, R.s, { gold: "#c9a06a", dark: "#5e4022", light: "#efd8a8" });
+    },
+    cardStyle: {
+      ink: BROWN,
+      accent: LAPIS,
+      bar: false,
+      bgDraw(ctx, x, y, w, h) {
+        ctx.save();
+        ctx.shadowColor = "rgba(40,20,0,0.35)";
+        ctx.shadowBlur = 16;
+        ctx.shadowOffsetY = 6;
+        roundRect(ctx, x, y, w, h, 26);
+        const g = ctx.createLinearGradient(x, y, x, y + h);
+        g.addColorStop(0, "#e2c08b");
+        g.addColorStop(1, CLAY);
+        ctx.fillStyle = g;
+        ctx.fill();
+        ctx.shadowColor = "transparent";
+        ctx.strokeStyle = rgba(BROWN, 0.5);
+        ctx.lineWidth = 3;
+        ctx.stroke();
+        ctx.fillStyle = rgba(BROWN, 0.55);
+        const wedge = (wx, wy, r) => {
+          ctx.beginPath();
+          ctx.moveTo(wx, wy);
+          ctx.lineTo(wx + 9, wy - 3 + r);
+          ctx.lineTo(wx + 9, wy + 3 + r);
+          ctx.closePath();
+          ctx.fill();
+        };
+        for (let wx = x + 22; wx < x + w - 22; wx += 15) {
+          wedge(wx, y + 14, wx * 7 % 3 - 1);
+          wedge(wx, y + h - 14, wx * 5 % 3 - 1);
+        }
+        ctx.fillStyle = LAPIS;
+        ctx.fillRect(x + 22, y + 30, 6, h - 60);
+        ctx.restore();
+      }
+    },
+    playerStyle: {
+      plate: CLAY,
+      ink: BROWN,
+      noteColor: LAPIS,
+      palette: { body: "#d8b47e", label: CREAM, window: LAPIS_D, accent: LAPIS, tape: "#6b4a2b", ink: BROWN }
+    }
+  };
+
+  // src/kit/etch.js
+  function hatch(ctx, path, o = {}) {
+    const { angle = 0, gap = 8, color = "#111", width = () => 1.5, wobble = 1.2, step = 6, seed = 1, bounds } = o;
+    const [bx, by, bw, bh] = bounds || [-2e3, -200, 6e3, 1400];
+    const c = Math.cos(angle), s = Math.sin(angle);
+    const diag = Math.hypot(bw, bh);
+    const cx = bx + bw / 2, cy = by + bh / 2;
+    ctx.save();
+    ctx.clip(path);
+    ctx.strokeStyle = color;
+    ctx.lineCap = "round";
+    for (let d = -diag / 2; d <= diag / 2; d += gap) {
+      let prev = null;
+      for (let t = -diag / 2; t <= diag / 2; t += step) {
+        const wob = (noise2(t * 0.01, d * 0.05, seed) - 0.5) * 2 * wobble;
+        const x = cx + c * t - s * (d + wob), y = cy + s * t + c * (d + wob);
+        if (prev) {
+          const w = width(x, y);
+          if (w > 0.05) {
+            ctx.lineWidth = w;
+            ctx.beginPath();
+            ctx.moveTo(prev[0], prev[1]);
+            ctx.lineTo(x, y);
+            ctx.stroke();
+          }
+        }
+        prev = [x, y];
+      }
+    }
+    ctx.restore();
+  }
+  function woodcut(ctx, path, o = {}) {
+    const { ink = "#121110", paper = "#8f8a80", tone = () => 0.3, gap = 7, angle = 0, wobble = 2, seed = 3, bounds } = o;
+    ctx.fillStyle = ink;
+    ctx.fill(path);
+    hatch(ctx, path, {
+      angle,
+      gap,
+      wobble,
+      seed,
+      bounds,
+      color: paper,
+      step: 5,
+      width: (x, y) => {
+        const t = Math.min(1, Math.max(0, tone(x, y)));
+        return t * gap * 0.82 * (0.85 + 0.3 * noise2(x * 0.02, y * 0.02, seed + 9));
+      }
+    });
+  }
+  function carveEdge(ctx, path, { color = "#8f8a80", width = 2, offset = 3 } = {}) {
+    ctx.save();
+    ctx.clip(path);
+    ctx.strokeStyle = color;
+    ctx.lineWidth = width;
+    ctx.setLineDash([14, 5, 6, 4]);
+    ctx.translate(offset * 0.5, offset * 0.5);
+    ctx.stroke(path);
+    ctx.restore();
+  }
+  function grainPattern(ctx, { color = "20,18,30", density = 0.12, size = 256, seed = 7, alpha = 0.35 } = {}) {
+    const tile = memo(`grain|${color}|${density}|${size}|${seed}|${alpha}`, () => {
+      const c = makeCanvas(size, size);
+      const x = c.getContext("2d");
+      const im = x.createImageData(size, size);
+      const R = rng("grain", seed);
+      const [r, g, b] = color.split(",").map(Number);
+      for (let i = 0; i < size * size; i++) {
+        if (R() < density) {
+          im.data[i * 4] = r;
+          im.data[i * 4 + 1] = g;
+          im.data[i * 4 + 2] = b;
+          im.data[i * 4 + 3] = 255 * alpha * (0.4 + 0.6 * R());
+        }
+      }
+      x.putImageData(im, 0, 0);
+      return c;
+    });
+    return ctx.createPattern(tile, "repeat");
+  }
+  function stipple(ctx, path, { color = "#2b2a3a", tone = () => 0.5, density = 0.012, r = 1.4, seed = 5, bounds = [-2e3, -200, 6e3, 1400] } = {}) {
+    const [bx, by, bw, bh] = bounds;
+    const R = rng("stipple", seed);
+    const n = Math.round(bw * bh * density);
+    ctx.save();
+    ctx.clip(path);
+    ctx.fillStyle = color;
+    for (let i = 0; i < n; i++) {
+      const x = bx + R() * bw, y = by + R() * bh;
+      if (R() > 1 - tone(x, y)) continue;
+      ctx.beginPath();
+      ctx.arc(x, y, r * (0.6 + 0.6 * R()), 0, Math.PI * 2);
+      ctx.fill();
+    }
+    ctx.restore();
+  }
+
+  // src/scenes/s05.js
+  var ST2 = stationByN(5);
+  var INK2 = "#121110";
+  var PAPER2 = "#8f8a80";
+  var PAPER_L = "#b3ada1";
+  var WHITE = "#ffffff";
+  var P_FAR2 = 0.3;
+  var P_MID = 0.65;
+  var P_FG2 = 1.3;
+  var HORIZON = 560;
+  function skyLayer() {
+    return strip("s05-sky", 0.04, (ctx, x0, x1) => {
+      const path = new Path2D();
+      path.rect(x0, 0, x1 - x0, HORIZON + 20);
+      woodcut(ctx, path, {
+        ink: INK2,
+        paper: PAPER2,
+        gap: 9,
+        angle: 0.02,
+        wobble: 3,
+        seed: 11,
+        bounds: [x0, 0, x1 - x0, HORIZON + 20],
+        tone: (x, y) => 0.08 + 0.72 * Math.pow(y / HORIZON, 1.8) + (noise2(x * 4e-3, y * 0.01, 2) - 0.5) * 0.25
+      });
+      const sx = 980, sy = 230;
+      for (let r = 120; r > 8; r -= 11) {
+        ctx.strokeStyle = PAPER2;
+        ctx.lineWidth = r > 70 ? 2 : 4.5;
+        ctx.beginPath();
+        ctx.arc(sx, sy, r, 0, Math.PI * 2);
+        ctx.stroke();
+      }
+      circle(ctx, sx, sy, 30);
+      ctx.fillStyle = PAPER_L;
+      ctx.fill();
+    }, { y0: 0, y1: HORIZON + 20 });
+  }
+  function ruins() {
+    return strip("s05-ruins", P_FAR2, (ctx, x0, x1) => {
+      const R = rng("s05-ruins");
+      let x = x0;
+      while (x < x1) {
+        const w = 90 + R() * 170, h = 110 + R() * 220;
+        const top = HORIZON - h;
+        const pts = [[x, HORIZON + 30], [x, top + R() * 30]];
+        const n = 3 + Math.floor(R() * 4);
+        for (let k = 1; k < n; k++) pts.push([x + w * k / n, top + R() * 70 - (k === 1 ? 20 : 0)]);
+        pts.push([x + w, top + R() * 40], [x + w, HORIZON + 30]);
+        const p = new Path2D();
+        pts.forEach(([px, py], i) => i ? p.lineTo(px, py) : p.moveTo(px, py));
+        p.closePath();
+        woodcut(ctx, p, { ink: INK2, paper: PAPER2, gap: 6, angle: Math.PI / 2, wobble: 1, seed: Math.floor(x), bounds: [x - 10, top - 80, w + 20, h + 120], tone: (px) => 0.32 * (1 - (px - x) / w) });
+        carveEdge(ctx, p, { color: PAPER2, width: 2 });
+        ctx.fillStyle = INK2;
+        for (let wy = top + 30; wy < HORIZON - 20; wy += 34) for (let wx = x + 12; wx < x + w - 18; wx += 26) {
+          if (R() < 0.35) continue;
+          ctx.fillRect(wx, wy, 12, 18);
+          ctx.fillStyle = PAPER2;
+          ctx.fillRect(wx, wy + 16, 12, 2);
+          ctx.fillStyle = INK2;
+        }
+        if (R() > 0.5) {
+          ctx.strokeStyle = INK2;
+          ctx.lineWidth = 5;
+          ctx.beginPath();
+          ctx.moveTo(x + w * 0.6, top + 20);
+          ctx.lineTo(x + w * 0.6 + 40, top - 26);
+          ctx.stroke();
+        }
+        if (R() > 0.7) {
+          const cx = x + w * (0.2 + R() * 0.6), ch = 140 + R() * 80;
+          const cp = new Path2D();
+          cp.rect(cx, top - ch, 26, ch + 20);
+          woodcut(ctx, cp, { ink: INK2, paper: PAPER2, gap: 5, angle: Math.PI / 2, seed: 4, bounds: [cx - 5, top - ch - 5, 40, ch + 30], tone: (px) => 0.4 * (1 - (px - cx) / 26) });
+        }
+        x += w + R() * 30;
+      }
+    }, { y0: 150, y1: HORIZON + 40 });
+  }
+  function puff(i) {
+    return baked(`s05-puff-${i}`, 300, 300, (ctx) => {
+      const R = rng("puff", i);
+      const p = new Path2D();
+      const cx = 150, cy = 150;
+      const blobs = Array.from({ length: 7 }, () => [cx + (R() - 0.5) * 120, cy + (R() - 0.5) * 90, 40 + R() * 45]);
+      for (const [x, y, r] of blobs) {
+        p.moveTo(x + r, y);
+        p.arc(x, y, r, 0, Math.PI * 2);
+      }
+      ctx.fillStyle = INK2;
+      ctx.fill(p);
+      ctx.save();
+      ctx.clip(p);
+      for (const [x, y, r] of blobs) {
+        for (let rr = r * 0.9; rr > 6; rr -= 9) {
+          ctx.strokeStyle = rr > r * 0.5 ? PAPER2 : PAPER_L;
+          ctx.lineWidth = 2.2 + (r - rr) * 0.04;
+          ctx.beginPath();
+          ctx.arc(x - r * 0.15, y - r * 0.15, rr, Math.PI * 0.9 + R(), Math.PI * 1.9 + R());
+          ctx.stroke();
+        }
+      }
+      ctx.restore();
+      ctx.strokeStyle = INK2;
+      ctx.lineWidth = 3;
+      ctx.stroke(p);
+    });
+  }
+  function drawSmoke(ctx, b, cam) {
+    const columns = [[-120, 0], [520, 1], [1180, 2], [1900, 0]];
+    for (const [lx, ci] of columns) {
+      const baseX = lx - cam * P_FAR2, baseY = HORIZON - 120;
+      for (let k = 0; k < 6; k++) {
+        const life = ((b * 0.16 + k / 6 + ci * 0.13) % 1 + 1) % 1;
+        const s = 0.45 + life * 1.1;
+        const x = baseX + life * 160 + Math.sin(life * 4 + k) * 20, y = baseY - life * 420;
+        const img = puff((k + ci) % 3);
+        ctx.globalAlpha = Math.min(1, life * 4) * (1 - smoothstep(0.75, 1, life));
+        ctx.drawImage(img, x - 150 * s / K, y - 150 * s / K, 300 * s / K, 300 * s / K);
+      }
+    }
+    ctx.globalAlpha = 1;
+  }
+  function midLayer() {
+    return strip("s05-mid", P_MID, (ctx, x0, x1) => {
+      const R = rng("s05-mid");
+      const field = new Path2D();
+      field.rect(x0, HORIZON - 4, x1 - x0, ROAD_Y - HORIZON + 30);
+      woodcut(ctx, field, { ink: INK2, paper: PAPER2, gap: 8, angle: 0, wobble: 3, seed: 21, bounds: [x0, HORIZON - 10, x1 - x0, 300], tone: (x, y) => 0.55 - (y - HORIZON) / 500 + (noise2(x * 0.01, y * 0.02, 4) - 0.5) * 0.3 });
+      for (let tx = x0 + 200; tx < x1; tx += 700 + R() * 500) {
+        const tree = new Path2D();
+        const branch = (x, y, a, len, w, d) => {
+          const ex = x + Math.cos(a) * len, ey = y + Math.sin(a) * len;
+          const nx = -Math.sin(a) * w / 2, ny = Math.cos(a) * w / 2;
+          tree.moveTo(x + nx, y + ny);
+          tree.lineTo(ex + nx * 0.6, ey + ny * 0.6);
+          tree.lineTo(ex - nx * 0.6, ey - ny * 0.6);
+          tree.lineTo(x - nx, y - ny);
+          tree.closePath();
+          if (d > 0) {
+            branch(ex, ey, a - 0.4 - R() * 0.3, len * 0.72, w * 0.62, d - 1);
+            branch(ex, ey, a + 0.35 + R() * 0.3, len * 0.66, w * 0.6, d - 1);
+          }
+        };
+        branch(tx, ROAD_Y - 30, -Math.PI / 2 + (R() - 0.5) * 0.2, 150, 22, 4);
+        ctx.fillStyle = INK2;
+        ctx.fill(tree);
+        hatch(ctx, tree, { angle: 1.2, gap: 7, color: PAPER2, width: () => 1.4, wobble: 1, bounds: [tx - 250, ROAD_Y - 520, 500, 520] });
+      }
+      for (let sx = x0 + 60; sx < x1; sx += 900 + R() * 400) {
+        for (let row = 0; row < 3; row++) for (let k = 0; k < 5 - row; k++) {
+          const bx = sx + k * 58 + row * 29, by = ROAD_Y - 26 - row * 30;
+          const bag = new Path2D();
+          bag.ellipse(bx, by, 30, 16, 0, 0, Math.PI * 2);
+          woodcut(ctx, bag, { ink: INK2, paper: PAPER2, gap: 5, angle: 0.2, seed: k + row, bounds: [bx - 32, by - 18, 64, 36], tone: (x, y) => 0.55 - (y - by + 16) / 40 });
+          ctx.strokeStyle = INK2;
+          ctx.lineWidth = 2.5;
+          ctx.stroke(bag);
+        }
+      }
+      ctx.strokeStyle = INK2;
+      ctx.lineCap = "round";
+      const posts = [];
+      for (let px = x0; px < x1; px += 170 + R() * 40) posts.push([px, (R() - 0.5) * 0.25]);
+      for (const [px, tilt] of posts) {
+        ctx.lineWidth = 9;
+        ctx.beginPath();
+        ctx.moveTo(px, ROAD_Y - 6);
+        ctx.lineTo(px + Math.sin(tilt) * 190, ROAD_Y - 196);
+        ctx.stroke();
+        ctx.strokeStyle = PAPER2;
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.moveTo(px - 2, ROAD_Y - 10);
+        ctx.lineTo(px - 2 + Math.sin(tilt) * 180, ROAD_Y - 190);
+        ctx.stroke();
+        ctx.strokeStyle = INK2;
+      }
+      for (let w = 0; w < 3; w++) {
+        ctx.lineWidth = 2.4;
+        for (let i = 0; i < posts.length - 1; i++) {
+          const [a, ta] = posts[i], [b2, tb] = posts[i + 1];
+          const ya = ROAD_Y - 60 - w * 55, yb = ROAD_Y - 60 - w * 55;
+          const xa = a + Math.sin(ta) * (60 + w * 55), xb = b2 + Math.sin(tb) * (60 + w * 55);
+          ctx.beginPath();
+          ctx.moveTo(xa, ya);
+          ctx.quadraticCurveTo((xa + xb) / 2, ya + 22, xb, yb);
+          ctx.stroke();
+          for (let t = 0.15; t < 1; t += 0.22) {
+            const bx = lerp(xa, xb, t), by = lerp(ya, yb, t) + 22 * 4 * t * (1 - t) * 0.5;
+            ctx.beginPath();
+            ctx.moveTo(bx - 6, by - 6);
+            ctx.lineTo(bx + 6, by + 6);
+            ctx.moveTo(bx + 6, by - 6);
+            ctx.lineTo(bx - 6, by + 6);
+            ctx.stroke();
+          }
+        }
+      }
+    }, { y0: 300, y1: ROAD_Y + 30 });
+  }
+  function roadLayer2() {
+    return strip("s05-road", 1, (ctx, x0, x1) => {
+      const R = rng("s05-road");
+      const p = new Path2D();
+      p.rect(x0, ROAD_Y, x1 - x0, 1e3 - ROAD_Y);
+      woodcut(ctx, p, { ink: INK2, paper: PAPER2, gap: 7, angle: 0.01, wobble: 2.5, seed: 31, bounds: [x0, ROAD_Y, x1 - x0, 210], tone: (x, y) => 0.62 - (y - ROAD_Y) / 420 + (noise2(x * 6e-3, y * 0.02, 6) - 0.5) * 0.35 });
+      ctx.fillStyle = INK2;
+      ctx.fillRect(x0, ROAD_Y - 2, x1 - x0, 6);
+      ctx.strokeStyle = INK2;
+      ctx.lineWidth = 7;
+      for (const y of [870, 930]) {
+        ctx.beginPath();
+        for (let x = x0; x < x1; x += 40) {
+          const yy = y + (noise2(x * 4e-3, y, 8) - 0.5) * 16;
+          x === x0 ? ctx.moveTo(x, yy) : ctx.lineTo(x, yy);
+        }
+        ctx.stroke();
+      }
+      for (let i = 0; i < (x1 - x0) / 40; i++) {
+        const x = x0 + R() * (x1 - x0), y = ROAD_Y + 20 + R() * 170, r = 4 + R() * 14;
+        if (R() < 0.12) {
+          ctx.fillStyle = PAPER_L;
+          ellipse(ctx, x, y, r * 4, r * 0.8);
+          ctx.fill();
+          ctx.strokeStyle = INK2;
+          ctx.lineWidth = 2;
+          ctx.stroke();
+          continue;
+        }
+        smoothPath(ctx, [[x - r, y], [x - r * 0.4, y - r * 0.9], [x + r * 0.7, y - r * 0.6], [x + r, y + r * 0.3], [x, y + r * 0.6]], true);
+        ctx.fillStyle = INK2;
+        ctx.fill();
+        ctx.strokeStyle = PAPER2;
+        ctx.lineWidth = 1.5;
+        ctx.beginPath();
+        ctx.moveTo(x - r * 0.6, y - r * 0.4);
+        ctx.lineTo(x + r * 0.2, y - r * 0.6);
+        ctx.stroke();
+      }
+    }, { y0: ROAD_Y - 4, y1: 1e3 });
+  }
+  function dove(ctx, x, y, s, flap, facing = 1, perch = false) {
+    ctx.save();
+    ctx.translate(x, y);
+    ctx.scale(s * facing, s);
+    const body = new Path2D();
+    body.moveTo(-34, 2);
+    body.quadraticCurveTo(-10, -16, 18, -10);
+    body.quadraticCurveTo(30, -22, 40, -16);
+    body.quadraticCurveTo(46, -12, 52, -10);
+    body.lineTo(44, -6);
+    body.quadraticCurveTo(38, 4, 24, 8);
+    body.quadraticCurveTo(0, 16, -24, 10);
+    body.lineTo(-48, 16);
+    body.lineTo(-44, 4);
+    body.closePath();
+    const wingA = perch ? 0.1 : -1.1 + flap * 2;
+    const wing = new Path2D();
+    wing.moveTo(-4, -6);
+    wing.quadraticCurveTo(-10 + Math.cos(wingA) * 20, -6 + Math.sin(wingA) * 50, -30 + Math.cos(wingA) * 36, -6 + Math.sin(wingA) * 62);
+    wing.quadraticCurveTo(-30, -2 + Math.sin(wingA) * 20, 14, -2);
+    wing.closePath();
+    ctx.fillStyle = WHITE;
+    ctx.fill(body);
+    ctx.fill(wing);
+    ctx.strokeStyle = INK2;
+    ctx.lineWidth = 2.4 / s;
+    ctx.lineJoin = "round";
+    ctx.stroke(body);
+    ctx.stroke(wing);
+    ctx.lineWidth = 1.4 / s;
+    for (let k = 0; k < 4; k++) {
+      const t = 0.3 + k * 0.17;
+      ctx.beginPath();
+      ctx.moveTo(-6 - k * 6, -5);
+      ctx.lineTo(-10 + Math.cos(wingA) * 20 * t - k * 6, -6 + Math.sin(wingA) * 48 * t);
+      ctx.stroke();
+    }
+    for (let k = 0; k < 3; k++) {
+      ctx.beginPath();
+      ctx.moveTo(-34 - k * 4, 6 + k);
+      ctx.lineTo(-46, 10 + k * 2);
+      ctx.stroke();
+    }
+    circle(ctx, 40, -14, 2.2 / s * 1.4);
+    ctx.fillStyle = INK2;
+    ctx.fill();
+    ctx.fillStyle = "#5a554d";
+    poly(ctx, [[50, -12], [58, -9], [50, -7]]);
+    ctx.fill();
+    if (perch) {
+      ctx.strokeStyle = INK2;
+      ctx.lineWidth = 2 / s;
+      ctx.beginPath();
+      ctx.moveTo(4, 12);
+      ctx.lineTo(2, 22);
+      ctx.moveTo(12, 10);
+      ctx.lineTo(12, 22);
+      ctx.stroke();
+    }
+    ctx.restore();
+  }
+  function doveAt(b, env) {
+    const fig = env.figure();
+    const S = 1.15;
+    const sh = (pose) => {
+      const a = ANCHORS[pose].shoulder;
+      return [fig.x + (a[0] + (pose === "walk" ? -30 : 34)) * fig.scale, fig.y + (a[1] + (pose === "walk" ? 10 : 6)) * fig.scale - 22 * S];
+    };
+    const LAND = SB(5), HOP = SB(7), OFF = SB(7.6), LEAVE = SB(8.8), START = SB(3.2);
+    if (b < START || b > LEAVE) return null;
+    if (b < LAND) {
+      const t2 = (b - START) / (LAND - START);
+      const [tx, ty] = sh("stand");
+      const e = ease.inOut(t2);
+      return { x: lerp(1500, tx, e), y: lerp(90, ty, Math.pow(t2, 1.6)) - Math.sin(Math.PI * t2) * 60, flap: t2 > 0.85 ? 0.15 : b * 3 % 1, facing: -1, perch: false, s: S };
+    }
+    if (b < HOP) return { ...xy(sh(fig.pose === "stand" ? "stand" : "walk")), flap: 0, facing: b < LAND + 0.25 ? -1 : 1, perch: true, s: S, bob: Math.max(0, Math.sin((b - LAND) * Math.PI * 2)) * 3 };
+    if (b < HOP + 0.18) {
+      const t2 = (b - HOP) / 0.18;
+      const [ax2, ay2] = sh("stand"), [bx2, by2] = sh("walk");
+      return { x: lerp(ax2, bx2, t2), y: lerp(ay2, by2, t2) - Math.sin(Math.PI * t2) * 26, flap: 0.5, facing: 1, perch: false, s: S };
+    }
+    if (b < OFF) return { ...xy(sh("walk")), flap: 0, facing: 1, perch: true, s: S };
+    const t = (b - OFF) / (LEAVE - OFF);
+    const [ax, ay] = sh("walk");
+    return { x: lerp(ax, 1450, ease.in(t)), y: lerp(ay, 110, ease.out(t)), flap: b * 3 % 1, facing: 1, perch: false, s: S * (1 - t * 0.3) };
+  }
+  var xy = ([x, y]) => ({ x, y });
+  var s05 = {
+    id: "s05",
+    station: ST2,
+    drawBack(ctx, b, env) {
+      const cam = env.cam;
+      drawStrip(ctx, skyLayer(), cam);
+      drawSmoke(ctx, b, cam);
+      drawStrip(ctx, ruins(), cam);
+      drawStrip(ctx, midLayer(), cam);
+      drawStrip(ctx, roadLayer2(), cam);
+    },
+    drawFront(ctx, b, env) {
+      const cam = env.cam, c5 = env.camAt(SB(5));
+      ctx.strokeStyle = INK2;
+      ctx.lineCap = "round";
+      for (const [sx0, kind] of [[-200, "coil"], [980, "helmet"], [1250, "coil"], [2200, "coil"]]) {
+        const x = sx0 + c5 * P_FG2 - cam * P_FG2;
+        if (x < X_MIN - 400 || x > X_MAX + 400) continue;
+        if (kind === "coil") {
+          ctx.lineWidth = 3;
+          for (let k = 0; k < 14; k++) {
+            ctx.beginPath();
+            ctx.ellipse(x + k * 26, 952, 26, 46, 0.35, 0, Math.PI * 2);
+            ctx.stroke();
+            ctx.beginPath();
+            ctx.moveTo(x + k * 26 - 4, 908);
+            ctx.lineTo(x + k * 26 + 6, 900);
+            ctx.stroke();
+          }
+        } else {
+          const p = new Path2D();
+          p.ellipse(x, 960, 70, 44, 0, Math.PI, 0);
+          p.lineTo(x + 86, 962);
+          p.lineTo(x - 86, 962);
+          p.closePath();
+          ctx.fillStyle = INK2;
+          ctx.fill(p);
+          ctx.save();
+          ctx.clip(p);
+          ctx.strokeStyle = PAPER2;
+          ctx.lineWidth = 2.4;
+          for (let r = 60; r > 10; r -= 9) {
+            ctx.beginPath();
+            ctx.arc(x - 18, 954, r, Math.PI * 1.1, Math.PI * 1.55);
+            ctx.stroke();
+          }
+          ctx.restore();
+          ctx.fillStyle = PAPER2;
+          ctx.fillRect(x - 86, 960, 172, 3);
+        }
+      }
+      const d = doveAt(b, env);
+      if (d) dove(ctx, d.x, d.y - (d.bob || 0), d.s, d.flap, d.facing, d.perch);
+    },
+    drawFrame(ctx, R) {
+      const t = 64 * R.s, { x, y, w, h } = R;
+      ctx.save();
+      const outer = new Path2D();
+      outer.rect(x - t, y - t, w + 2 * t, h + 2 * t);
+      outer.rect(x, y, w, h);
+      ctx.fillStyle = INK2;
+      ctx.fill(outer, "evenodd");
+      ctx.strokeStyle = PAPER2;
+      ctx.lineWidth = Math.max(1, 2.5 * R.s);
+      for (const k of [0.25, 0.5, 0.72]) ctx.strokeRect(x - t * k, y - t * k, w + 2 * t * k, h + 2 * t * k);
+      ctx.lineWidth = Math.max(1, 4 * R.s);
+      ctx.strokeRect(x - 3, y - 3, w + 6, h + 6);
+      ctx.restore();
+    },
+    cardStyle: {
+      ink: PAPER_L,
+      accent: PAPER2,
+      bar: false,
+      bgDraw(ctx, x, y, w, h) {
+        ctx.save();
+        ctx.fillStyle = INK2;
+        ctx.fillRect(x, y, w, h);
+        ctx.strokeStyle = PAPER2;
+        ctx.lineWidth = 2;
+        ctx.strokeRect(x + 10, y + 10, w - 20, h - 20);
+        ctx.setLineDash([18, 6, 8, 5]);
+        ctx.strokeRect(x + 16, y + 16, w - 32, h - 32);
+        ctx.setLineDash([]);
+        ctx.restore();
+      }
+    },
+    playerStyle: {
+      plate: INK2,
+      ink: PAPER_L,
+      noteColor: PAPER2,
+      palette: { body: "#6f6a61", label: PAPER_L, window: INK2, accent: INK2, tape: "#2a2725", ink: INK2, hub: PAPER2 }
+    }
+  };
+
+  // src/scenes/s09.js
+  var ST3 = stationByN(9);
+  var PAPER3 = "#f4e8cc";
+  var RED = "#d0533c";
+  var RED_D = "#a63a2a";
+  var NAVY = "#2b2a3a";
+  var TEAL = "#2f7d6d";
+  var MUSTARD = "#e2a93b";
+  var P_TENT = 0.35;
+  var P_STANDS = 0.55;
+  var P_RING = 0.85;
+  var P_POLE = 0.92;
+  var REG = [3, 2];
+  function litho(ctx, path, fill, { line = 3, stroke = NAVY } = {}) {
+    ctx.save();
+    ctx.translate(REG[0], REG[1]);
+    ctx.fillStyle = fill;
+    ctx.fill(path);
+    ctx.restore();
+    if (line) {
+      ctx.strokeStyle = stroke;
+      ctx.lineWidth = line;
+      ctx.lineJoin = "round";
+      ctx.stroke(path);
+    }
+  }
+  function star(cx, cy, r, n = 5) {
+    const p = new Path2D();
+    for (let i = 0; i < n * 2; i++) {
+      const a = -Math.PI / 2 + i * Math.PI / n, rr = i % 2 ? r * 0.45 : r;
+      i ? p.lineTo(cx + Math.cos(a) * rr, cy + Math.sin(a) * rr) : p.moveTo(cx + Math.cos(a) * rr, cy + Math.sin(a) * rr);
+    }
+    p.closePath();
+    return p;
+  }
+  function grain(ctx, x0, y0, w, h, alpha = 0.35) {
+    ctx.save();
+    ctx.fillStyle = grainPattern(ctx, { color: "43,42,58", density: 0.1, alpha, seed: 9 });
+    ctx.fillRect(x0, y0, w, h);
+    ctx.restore();
+  }
+  function tentLayer() {
+    return strip("s09-tent", P_TENT, (ctx, x0, x1) => {
+      const W2 = 74;
+      for (let x = Math.floor(x0 / W2) * W2; x < x1; x += W2) {
+        const red = Math.round(x / W2) % 2 === 0;
+        const p = new Path2D();
+        p.moveTo(x + 6, 120);
+        p.quadraticCurveTo(x + 2, 400, x - 4, 720);
+        p.lineTo(x + W2 - 4, 720);
+        p.quadraticCurveTo(x + W2 + 2, 400, x + W2 + 6, 120);
+        p.closePath();
+        ctx.fillStyle = red ? RED : PAPER3;
+        ctx.fill(p);
+      }
+      const g = ctx.createLinearGradient(0, 100, 0, 720);
+      g.addColorStop(0, rgba(NAVY, 0.55));
+      g.addColorStop(0.5, rgba(NAVY, 0.12));
+      g.addColorStop(1, rgba(NAVY, 0));
+      ctx.fillStyle = g;
+      ctx.fillRect(x0, 100, x1 - x0, 620);
+      stipple(ctx, (() => {
+        const p = new Path2D();
+        p.rect(x0, 100, x1 - x0, 300);
+        return p;
+      })(), { color: NAVY, density: 4e-3, r: 1.6, tone: (x, y) => 1 - (y - 100) / 320, bounds: [x0, 100, x1 - x0, 300] });
+      ctx.fillStyle = NAVY;
+      ctx.fillRect(x0, 0, x1 - x0, 150);
+      const val = new Path2D();
+      val.moveTo(x0, 140);
+      for (let x = x0; x < x1; x += 90) val.quadraticCurveTo(x + 45, 214, x + 90, 140);
+      val.lineTo(x1, 0);
+      val.lineTo(x0, 0);
+      val.closePath();
+      litho(ctx, val, RED_D);
+      ctx.strokeStyle = MUSTARD;
+      ctx.lineWidth = 6;
+      ctx.beginPath();
+      ctx.moveTo(x0, 140);
+      for (let x = x0; x < x1; x += 90) ctx.quadraticCurveTo(x + 45, 214, x + 90, 140);
+      ctx.stroke();
+      for (let x = x0 + 45; x < x1; x += 90) {
+        ctx.strokeStyle = MUSTARD;
+        ctx.lineWidth = 3;
+        ctx.beginPath();
+        ctx.moveTo(x, 178);
+        ctx.lineTo(x, 214);
+        ctx.stroke();
+        circle(ctx, x, 218, 7);
+        ctx.fillStyle = MUSTARD;
+        ctx.fill();
+        ctx.strokeStyle = NAVY;
+        ctx.lineWidth = 2;
+        ctx.stroke();
+      }
+      const flags = [TEAL, MUSTARD, RED, PAPER3];
+      for (const [yy, span, sag] of [[250, 520, 60], [320, 640, 80]]) {
+        for (let x = x0 - span / 2 + yy * 3 % span; x < x1; x += span) {
+          ctx.strokeStyle = NAVY;
+          ctx.lineWidth = 2.4;
+          ctx.beginPath();
+          ctx.moveTo(x, yy);
+          ctx.quadraticCurveTo(x + span / 2, yy + sag * 2, x + span, yy);
+          ctx.stroke();
+          for (let k = 1; k < 12; k++) {
+            const t = k / 12, fx = x + span * t, fy = yy + sag * 4 * t * (1 - t);
+            const p = new Path2D();
+            p.moveTo(fx - 16, fy);
+            p.lineTo(fx + 16, fy);
+            p.lineTo(fx, fy + 36);
+            p.closePath();
+            litho(ctx, p, flags[(k + Math.round(x)) % 4], { line: 2 });
+          }
+        }
+      }
+      grain(ctx, x0, 0, x1 - x0, 720, 0.3);
+    }, { y0: 0, y1: 720 });
+  }
+  function standsLayer() {
+    return strip("s09-stands", P_STANDS, (ctx, x0, x1) => {
+      const R = rng("s09-stands");
+      for (let row = 0; row < 4; row++) {
+        const y = 470 + row * 46;
+        const bench = new Path2D();
+        bench.rect(x0, y + 26, x1 - x0, 20);
+        litho(ctx, bench, row % 2 ? "#6c4a3a" : "#7d5644", { line: 2 });
+        for (let x = x0 + R() * 30; x < x1; x += 34 + R() * 16) {
+          if (R() < 0.12) continue;
+          const h = 30 + R() * 10;
+          const head = new Path2D();
+          head.ellipse(x, y + 18 - h * 0.5, 13, 15, 0, 0, Math.PI * 2);
+          head.rect(x - 17, y + 20 - h * 0.2, 34, 30);
+          ctx.fillStyle = mix(NAVY, "#5d5a7a", 0.2 + 0.4 * R());
+          ctx.fill(head);
+          if (R() < 0.18) {
+            ctx.fillStyle = NAVY;
+            ctx.fillRect(x - 15, y - h * 0.5 - 4, 30, 6);
+            ctx.fillRect(x - 9, y - h * 0.5 - 20, 18, 18);
+          }
+        }
+      }
+      const rail = new Path2D();
+      rail.rect(x0, 646, x1 - x0, 16);
+      litho(ctx, rail, RED, { line: 2.5 });
+      for (let x = x0; x < x1; x += 46) {
+        const p = new Path2D();
+        p.rect(x, 660, 10, 40);
+        litho(ctx, p, MUSTARD, { line: 2 });
+      }
+      grain(ctx, x0, 440, x1 - x0, 270, 0.25);
+    }, { y0: 400, y1: 710 });
+  }
+  function ringLayer() {
+    return strip("s09-ring", P_RING, (ctx, x0, x1) => {
+      const R = rng("s09-ring");
+      const wall = new Path2D();
+      wall.rect(x0, 700, x1 - x0, 98);
+      litho(ctx, wall, RED, { line: 3 });
+      const band = new Path2D();
+      band.rect(x0, 700, x1 - x0, 20);
+      litho(ctx, band, NAVY, { line: 0 });
+      ctx.fillStyle = MUSTARD;
+      ctx.fillRect(x0, 716, x1 - x0, 4);
+      for (let x = x0 + 40; x < x1; x += 110) litho(ctx, star(x, 760, 20), MUSTARD, { line: 2 });
+      for (let x = x0 + 300; x < x1; x += 760 + R() * 300) {
+        const top = new Path2D();
+        top.ellipse(x, 640, 70, 18, 0, 0, Math.PI * 2);
+        const side = new Path2D();
+        side.moveTo(x - 70, 640);
+        side.lineTo(x - 70, 700);
+        side.ellipse(x, 700, 70, 18, 0, Math.PI, 0, true);
+        side.lineTo(x + 70, 640);
+        side.closePath();
+        litho(ctx, side, TEAL);
+        ctx.save();
+        ctx.clip(side);
+        ctx.fillStyle = PAPER3;
+        for (let k = -3; k < 4; k++) ctx.fillRect(x + k * 24 - 6, 640, 12, 80);
+        ctx.restore();
+        ctx.strokeStyle = NAVY;
+        ctx.lineWidth = 3;
+        ctx.stroke(side);
+        litho(ctx, top, MUSTARD);
+        litho(ctx, star(x, 676, 16), RED, { line: 2 });
+      }
+      grain(ctx, x0, 600, x1 - x0, 210, 0.3);
+    }, { y0: 600, y1: 810 });
+  }
+  function poleLayer() {
+    return strip("s09-pole", P_POLE, (ctx, x0, x1) => {
+      for (let x = x0 + 900; x < x1; x += 1500) {
+        const p = new Path2D();
+        p.rect(x - 22, 0, 44, 700);
+        litho(ctx, p, NAVY, { line: 0 });
+        ctx.save();
+        ctx.clip(p);
+        ctx.strokeStyle = MUSTARD;
+        ctx.lineWidth = 12;
+        for (let y = -60; y < 760; y += 70) {
+          ctx.beginPath();
+          ctx.moveTo(x - 30, y);
+          ctx.lineTo(x + 30, y + 40);
+          ctx.stroke();
+        }
+        ctx.restore();
+        ctx.strokeStyle = NAVY;
+        ctx.lineWidth = 3;
+        ctx.strokeRect(x - 22, 0, 44, 700);
+      }
+    }, { y0: 0, y1: 710 });
+  }
+  function floorLayer() {
+    return strip("s09-floor", 1, (ctx, x0, x1) => {
+      const g = ctx.createLinearGradient(0, ROAD_Y, 0, 1e3);
+      g.addColorStop(0, "#e9cf98");
+      g.addColorStop(1, "#d6b67a");
+      ctx.fillStyle = g;
+      ctx.fillRect(x0, ROAD_Y - 2, x1 - x0, 1e3 - ROAD_Y + 2);
+      const p = new Path2D();
+      p.rect(x0, ROAD_Y, x1 - x0, 200);
+      stipple(ctx, p, { color: "#8a6a3a", density: 0.01, r: 1.5, tone: () => 0.45, bounds: [x0, ROAD_Y, x1 - x0, 200] });
+      ctx.strokeStyle = PAPER3;
+      ctx.lineWidth = 6;
+      ctx.beginPath();
+      ctx.moveTo(x0, 905);
+      for (let x = x0; x < x1; x += 60) ctx.lineTo(x, 905 + Math.sin(x * 4e-3) * 6);
+      ctx.stroke();
+      ctx.fillStyle = NAVY;
+      ctx.fillRect(x0, ROAD_Y - 2, x1 - x0, 5);
+      grain(ctx, x0, ROAD_Y, x1 - x0, 200, 0.28);
+    }, { y0: ROAD_Y - 4, y1: 1e3 });
+  }
+  var BALLOON_COLS = [TEAL, MUSTARD, RED, "#7a5aa6"];
+  function balloon(ctx, x, y, col, r = 34, sway = 0) {
+    const p = new Path2D();
+    p.ellipse(x, y, r * 0.86, r, sway, 0, Math.PI * 2);
+    litho(ctx, p, col, { line: 2.6 });
+    ctx.fillStyle = rgba(PAPER3, 0.75);
+    ellipse(ctx, x - r * 0.32, y - r * 0.38, r * 0.16, r * 0.28, -0.5);
+    ctx.fill();
+    const k = new Path2D();
+    k.moveTo(x - 5, y + r - 1);
+    k.lineTo(x + 5, y + r - 1);
+    k.lineTo(x, y + r + 8);
+    k.closePath();
+    litho(ctx, k, col, { line: 2 });
+  }
+  function string(ctx, ax, ay, bx, by, wob = 0) {
+    ctx.strokeStyle = NAVY;
+    ctx.lineWidth = 1.8;
+    ctx.beginPath();
+    ctx.moveTo(ax, ay);
+    ctx.quadraticCurveTo((ax + bx) / 2 + wob, (ay + by) / 2, bx, by);
+    ctx.stroke();
+  }
+  function clown(ctx, x, b, { reach = 0, laugh = 0, hold = 3 }) {
+    const y = ROAD_Y;
+    const bob = Math.abs(Math.sin(b * Math.PI)) * 6;
+    ctx.save();
+    ctx.translate(x, y - bob * 0.3);
+    for (const [dx, up] of [[-46, 0], [40, bob]]) {
+      const s = new Path2D();
+      s.ellipse(dx + 18, -14 - up, 58, 20, 0, 0, Math.PI * 2);
+      litho(ctx, s, RED);
+    }
+    const legs = new Path2D();
+    legs.moveTo(-58, -30);
+    legs.lineTo(-38, -250);
+    legs.lineTo(36, -250);
+    legs.lineTo(56, -30);
+    legs.lineTo(16, -30);
+    legs.lineTo(0, -200);
+    legs.lineTo(-18, -30);
+    legs.closePath();
+    ctx.save();
+    ctx.translate(REG[0], REG[1]);
+    ctx.fillStyle = PAPER3;
+    ctx.fill(legs);
+    ctx.clip(legs);
+    for (let yy = -260; yy < 0; yy += 44) for (let xx = -80; xx < 80; xx += 44) {
+      const d = new Path2D();
+      d.moveTo(xx, yy);
+      d.lineTo(xx + 22, yy + 22);
+      d.lineTo(xx, yy + 44);
+      d.lineTo(xx - 22, yy + 22);
+      d.closePath();
+      ctx.fillStyle = (xx + yy) / 44 % 2 ? RED : TEAL;
+      ctx.fill(d);
+    }
+    ctx.restore();
+    ctx.strokeStyle = NAVY;
+    ctx.lineWidth = 3;
+    ctx.stroke(legs);
+    const body = new Path2D();
+    body.moveTo(-62, -250);
+    body.quadraticCurveTo(-74, -340, -50, -400);
+    body.lineTo(50, -400);
+    body.quadraticCurveTo(76, -340, 62, -250);
+    body.closePath();
+    litho(ctx, body, TEAL);
+    for (const [px, py] of [[0, -360], [0, -320], [0, -280]]) {
+      circle(ctx, px, py, 7);
+      ctx.fillStyle = MUSTARD;
+      ctx.fill();
+      ctx.strokeStyle = NAVY;
+      ctx.lineWidth = 2;
+      ctx.stroke();
+    }
+    const ra = lerp(0.35, -0.95, ease.inOut(reach));
+    ctx.save();
+    ctx.translate(-52, -380);
+    ctx.rotate(ra);
+    const arm = new Path2D();
+    arm.rect(-14, 0, 28, 150);
+    litho(ctx, arm, MUSTARD);
+    const glove = new Path2D();
+    glove.ellipse(0, 162, 22, 18, 0, 0, Math.PI * 2);
+    litho(ctx, glove, PAPER3);
+    ctx.restore();
+    ctx.save();
+    ctx.translate(54, -380);
+    ctx.rotate(-0.35 + Math.sin(b * Math.PI) * 0.04);
+    const arm2 = new Path2D();
+    arm2.rect(-14, -150, 28, 150);
+    litho(ctx, arm2, MUSTARD);
+    const glove2 = new Path2D();
+    glove2.ellipse(0, -162, 20, 18, 0, 0, Math.PI * 2);
+    litho(ctx, glove2, PAPER3);
+    ctx.restore();
+    for (let k = 0; k < 9; k++) {
+      const a = Math.PI + k / 8 * Math.PI;
+      const p = new Path2D();
+      p.ellipse(Math.cos(a) * 52, -402 + Math.sin(a) * 6 + 6, 22, 14, a, 0, Math.PI * 2);
+      litho(ctx, p, PAPER3, { line: 2.2 });
+    }
+    for (const sx of [-1, 1]) {
+      const h = new Path2D();
+      h.ellipse(sx * 42, -452, 22, 18, sx * 0.4, 0, Math.PI * 2);
+      litho(ctx, h, "#e07a2c", { line: 2 });
+    }
+    const face = new Path2D();
+    face.ellipse(0, -458, 40, 46, 0, 0, Math.PI * 2);
+    litho(ctx, face, PAPER3);
+    ctx.strokeStyle = NAVY;
+    ctx.lineWidth = 3;
+    for (const sx of [-1, 1]) {
+      ctx.beginPath();
+      ctx.arc(sx * 15, -472, 10, Math.PI * 1.15, Math.PI * 1.85);
+      ctx.stroke();
+      circle(ctx, sx * 15, -466, 4);
+      ctx.fillStyle = NAVY;
+      ctx.fill();
+    }
+    const mouth = new Path2D();
+    const open = 6 + laugh * 18;
+    mouth.moveTo(-26, -440);
+    mouth.quadraticCurveTo(0, -428 + open, 26, -440);
+    mouth.quadraticCurveTo(0, -432, -26, -440);
+    mouth.closePath();
+    litho(ctx, mouth, RED, { line: 2.4 });
+    const nose = new Path2D();
+    nose.ellipse(0, -452, 11, 10, 0, 0, Math.PI * 2);
+    litho(ctx, nose, RED, { line: 2.2 });
+    const hat = new Path2D();
+    hat.moveTo(-34, -494);
+    hat.lineTo(14, -600);
+    hat.lineTo(34, -494);
+    hat.closePath();
+    litho(ctx, hat, MUSTARD);
+    ctx.save();
+    ctx.clip(hat);
+    ctx.fillStyle = RED;
+    for (let k = 0; k < 4; k++) ctx.fillRect(-40, -520 - k * 26, 90, 9);
+    ctx.restore();
+    litho(ctx, (() => {
+      const p = new Path2D();
+      p.arc(14, -604, 12, 0, Math.PI * 2);
+      return p;
+    })(), RED, { line: 2.2 });
+    ctx.restore();
+  }
+  var T_REACH = [SB(3.5), SB(5)];
+  var T_GIVE = SB(5);
+  var T_RISE = [SB(6.5), SB(6.8)];
+  var T_LAND = SB(7);
+  var T_LET = SB(8.2);
+  var s09 = {
+    id: "s09",
+    station: ST3,
+    figureAdjust(b) {
+      if (b >= T_RISE[0] && b < T_LAND) {
+        const up = b < T_RISE[1] ? ease.out((b - T_RISE[0]) / (T_RISE[1] - T_RISE[0])) : 1 - ease.in((b - T_RISE[1]) / (T_LAND - T_RISE[1]));
+        return { pose: "stand", dy: -150 * up, rotate: Math.sin((b - T_RISE[0]) * 9) * 0.04 * up };
+      }
+      if (b >= T_LAND && b < T_LAND + 0.12) return { sx: 1.06, dy: 0 };
+      return null;
+    },
+    drawBack(ctx, b, env) {
+      const cam = env.cam;
+      drawStrip(ctx, tentLayer(), cam);
+      ctx.save();
+      ctx.globalCompositeOperation = "lighter";
+      for (const [sx, ph] of [[60, 0], [760, 1.7], [1300, 3.1]]) {
+        const ang = Math.sin(b * 0.35 + ph) * 0.35;
+        const bx = sx - cam * 0.2, by = 130;
+        const ex = bx + Math.sin(ang) * 900, ey = by + Math.cos(ang) * 900;
+        const nx = Math.cos(ang) * 190, ny = -Math.sin(ang) * 190;
+        const g = ctx.createLinearGradient(bx, by, ex, ey);
+        g.addColorStop(0, rgba("#fff6d8", 0.28));
+        g.addColorStop(1, rgba("#fff6d8", 0));
+        ctx.fillStyle = g;
+        poly(ctx, [[bx - 14, by], [bx + 14, by], [ex + nx, ey + ny], [ex - nx, ey - ny]]);
+        ctx.fill();
+      }
+      ctx.restore();
+      drawStrip(ctx, standsLayer(), cam);
+      drawStrip(ctx, poleLayer(), cam);
+      drawStrip(ctx, ringLayer(), cam);
+      drawStrip(ctx, floorLayer(), cam);
+      const c5 = env.camAt(T_GIVE);
+      const cx = 690 + c5 - cam;
+      if (cx > X_MIN - 200 && cx < X_MAX + 200) {
+        const reach = smoothstep(T_REACH[0], T_REACH[1], b) * (1 - smoothstep(SB(6), SB(6.5), b));
+        const laugh = smoothstep(T_RISE[0], T_RISE[1], b) * (1 - smoothstep(SB(7.5), SB(8), b)) + Math.max(0, Math.sin(b * Math.PI * 2)) * 0.15;
+        ctx.fillStyle = rgba(NAVY, 0.25);
+        ellipse(ctx, cx + 4, ROAD_Y + 4, 120, 16);
+        ctx.fill();
+        const holdX = cx + 54 + 150 * Math.sin(0.35), holdY = ROAD_Y - 380 - 150 * Math.cos(0.35);
+        const n = b < T_GIVE ? 4 : 3;
+        for (let k = 0; k < n; k++) {
+          const bx = holdX + (k - 1.5) * 46 + Math.sin(b * 1.4 + k) * 8, by = holdY - 190 - k % 2 * 46;
+          string(ctx, holdX, holdY - 16, bx, by + 40, Math.sin(b + k) * 10);
+          balloon(ctx, bx, by, BALLOON_COLS[k + (4 - n)], 36, Math.sin(b + k) * 0.08);
+        }
+        clown(ctx, cx, b, { reach, laugh });
+      }
+    },
+    drawFront(ctx, b, env) {
+      if (b < T_REACH[0] || b > T_LET + 2) return;
+      const fig = env.figure();
+      const c5 = env.camAt(T_GIVE);
+      const cx = 690 + c5 - env.cam;
+      let hx, hy;
+      if (b < T_GIVE) {
+        const ra = lerp(0.35, -0.95, ease.inOut(smoothstep(T_REACH[0], T_REACH[1], b)));
+        hx = cx - 52 - Math.sin(ra) * 162;
+        hy = ROAD_Y - 380 + Math.cos(ra) * 162;
+      } else if (b < T_LET) {
+        const a = fig.pose === "stand" ? ANCHORS.stand.handR : ANCHORS.walk.hand;
+        hx = fig.x + a[0] * fig.scale;
+        hy = fig.y + a[1] * fig.scale;
+      } else {
+        const a = ANCHORS.walk.hand, t = b - T_LET;
+        hx = fig.x + a[0] - t * 60;
+        hy = fig.y + a[1] - t * t * 260 - t * 120;
+      }
+      const lift = b >= T_RISE[0] && b < T_LAND ? 1 : 0;
+      const bx = hx + 34 + Math.sin(b * 1.7) * 14, by = hy - 370 - lift * 30;
+      string(ctx, hx, hy, bx, by + 42, Math.sin(b * 2) * 18);
+      balloon(ctx, bx, by, MUSTARD, 44 + lift * 4, Math.sin(b * 1.7) * 0.1);
+      const dust = smoothstep(T_LAND, T_LAND + 0.05, b) * (1 - smoothstep(T_LAND + 0.1, T_LAND + 0.5, b));
+      if (dust > 0) {
+        ctx.fillStyle = rgba("#c9a46a", 0.8 * dust);
+        for (let k = 0; k < 9; k++) {
+          const t = (b - T_LAND) * 3;
+          circle(ctx, fig.x + (k - 4) * 22 * (1 + t), ROAD_Y - 6 - Math.sin(k) * 10 * t - 8 * t, 5 + k % 3);
+          ctx.fill();
+        }
+      }
+    },
+    drawFrame(ctx, R) {
+      const t = 64 * R.s, { x, y, w, h } = R;
+      const band = new Path2D();
+      band.rect(x - t, y - t, w + 2 * t, h + 2 * t);
+      band.rect(x, y, w, h);
+      ctx.fillStyle = NAVY;
+      ctx.fill(band, "evenodd");
+      ctx.strokeStyle = RED;
+      ctx.lineWidth = Math.max(1, 8 * R.s);
+      ctx.strokeRect(x - t * 0.35, y - t * 0.35, w + t * 0.7, h + t * 0.7);
+      ctx.strokeStyle = MUSTARD;
+      ctx.lineWidth = Math.max(1, 3 * R.s);
+      ctx.strokeRect(x - 4, y - 4, w + 8, h + 8);
+      for (const [sx, sy] of [[x - t / 2, y - t / 2], [x + w + t / 2, y - t / 2], [x - t / 2, y + h + t / 2], [x + w + t / 2, y + h + t / 2], [x + w / 2, y - t / 2], [x + w / 2, y + h + t / 2]]) {
+        ctx.fillStyle = MUSTARD;
+        ctx.fill(star(sx, sy, t * 0.34));
+      }
+    },
+    cardStyle: {
+      ink: PAPER3,
+      accent: MUSTARD,
+      bar: false,
+      bgDraw(ctx, x, y, w, h) {
+        ctx.save();
+        const tail = (dir) => {
+          const ex = dir < 0 ? x - 34 : x + w + 34, bx2 = dir < 0 ? x + 6 : x + w - 6;
+          const p = new Path2D();
+          p.moveTo(bx2, y + 30);
+          p.lineTo(ex, y + 30);
+          p.lineTo(ex + dir * -18, y + h / 2 + 15);
+          p.lineTo(ex, y + h + 4);
+          p.lineTo(bx2, y + h + 4);
+          p.closePath();
+          litho(ctx, p, RED_D, { line: 3 });
+        };
+        tail(-1);
+        tail(1);
+        const main = new Path2D();
+        main.rect(x, y, w, h);
+        litho(ctx, main, RED, { line: 3.5 });
+        ctx.strokeStyle = MUSTARD;
+        ctx.lineWidth = 2.5;
+        ctx.strokeRect(x + 10, y + 10, w - 20, h - 20);
+        for (const [sx, sy] of [[x + 22, y + 22], [x + w - 22, y + 22], [x + 22, y + h - 22], [x + w - 22, y + h - 22]]) {
+          ctx.fillStyle = MUSTARD;
+          ctx.fill(star(sx, sy, 9));
+        }
+        ctx.restore();
+      }
+    },
+    playerStyle: {
+      plate: RED,
+      ink: PAPER3,
+      noteColor: MUSTARD,
+      palette: { disc: PAPER3, shine1: "#ffffff", shine2: MUSTARD, accent: TEAL, hub: MUSTARD, hole: NAVY, ink: NAVY },
+      plateDraw(ctx, x, y, w, h) {
+        const p = new Path2D();
+        p.rect(x, y, w, h);
+        litho(ctx, p, RED, { line: 3 });
+      }
+    }
+  };
+
   // src/scenes/index.js
   var SCENES = { intro };
   for (const st of STATIONS) SCENES[st.id] = placeholderScene(st);
+  SCENES.s02 = s02;
+  SCENES.s05 = s05;
+  SCENES.s09 = s09;
 
   // src/main/walk.js
   var DOWNBEATS = sections.filter((s) => s.station).map((s) => s.start);
@@ -1276,53 +2960,6 @@
     };
   }
 
-  // src/main/frame.js
-  function drawDefaultFrame(ctx, rect, s, o = {}) {
-    const { gold = "#c9a24a", dark = "#5e4520", light = "#f3dc8e" } = o;
-    const t = 64 * s;
-    const { x, y, w, h } = rect;
-    ctx.save();
-    ctx.fillStyle = "rgba(0,0,0,0.18)";
-    ctx.beginPath();
-    ctx.ellipse(x + w / 2, y + h + t * 0.9, w * 0.55, t * 0.5, 0, 0, Math.PI * 2);
-    ctx.fill();
-    const outer = [x - t, y - t, w + 2 * t, h + 2 * t];
-    const sides = [
-      { pts: [[x - t, y - t], [x + w + t, y - t], [x + w, y], [x, y]], c: light },
-      { pts: [[x + w + t, y - t], [x + w + t, y + h + t], [x + w, y + h], [x + w, y]], c: gold },
-      { pts: [[x + w + t, y + h + t], [x - t, y + h + t], [x, y + h], [x + w, y + h]], c: dark },
-      { pts: [[x - t, y + h + t], [x - t, y - t], [x, y], [x, y + h]], c: mix(gold, light, 0.4) }
-    ];
-    for (const sd of sides) {
-      ctx.beginPath();
-      sd.pts.forEach(([px, py], i) => i ? ctx.lineTo(px, py) : ctx.moveTo(px, py));
-      ctx.closePath();
-      ctx.fillStyle = sd.c;
-      ctx.fill();
-    }
-    ctx.strokeStyle = "rgba(70,45,10,0.55)";
-    ctx.lineWidth = Math.max(1, 3 * s);
-    ctx.strokeRect(x - t * 0.62, y - t * 0.62, w + t * 1.24, h + t * 1.24);
-    ctx.strokeStyle = "rgba(255,240,190,0.6)";
-    ctx.strokeRect(x - t * 0.3, y - t * 0.3, w + t * 0.6, h + t * 0.6);
-    ctx.lineWidth = Math.max(1, 5 * s);
-    ctx.strokeStyle = dark;
-    ctx.strokeRect(x - 2 * s, y - 2 * s, w + 4 * s, h + 4 * s);
-    ctx.strokeStyle = "rgba(40,25,5,0.8)";
-    ctx.lineWidth = Math.max(1, 2 * s);
-    ctx.strokeRect(...outer);
-    ctx.fillStyle = light;
-    for (const [cx, cy] of [[x - t / 2, y - t / 2], [x + w + t / 2, y - t / 2], [x - t / 2, y + h + t / 2], [x + w + t / 2, y + h + t / 2]]) {
-      ctx.beginPath();
-      ctx.arc(cx, cy, t * 0.22, 0, Math.PI * 2);
-      ctx.fill();
-      ctx.strokeStyle = dark;
-      ctx.lineWidth = Math.max(1, 2 * s);
-      ctx.stroke();
-    }
-    ctx.restore();
-  }
-
   // src/hud/titlecard.js
   var cardIn = (b) => ease.out(clamp(b / 1.1)) * (1 - smoothstep(7.25, 7.85, b));
   function drawTitleCard(ctx, st, b, style = {}) {
@@ -1349,18 +2986,22 @@
     const h = 196;
     const x = 56 - (1 - k) * 60, y = 48;
     ctx.globalAlpha = k;
-    ctx.shadowColor = "rgba(0,0,0,0.25)";
-    ctx.shadowBlur = 18;
-    ctx.shadowOffsetY = 6;
-    roundRect(ctx, x, y, w, h, S.radius);
-    ctx.fillStyle = rgba(S.bg, S.opacity);
-    ctx.fill();
-    ctx.shadowColor = "transparent";
-    ctx.lineWidth = 3;
-    ctx.strokeStyle = S.border;
-    ctx.stroke();
+    if (S.bgDraw) {
+      S.bgDraw(ctx, x, y, w, h, b);
+    } else {
+      ctx.shadowColor = "rgba(0,0,0,0.25)";
+      ctx.shadowBlur = 18;
+      ctx.shadowOffsetY = 6;
+      roundRect(ctx, x, y, w, h, S.radius);
+      ctx.fillStyle = rgba(S.bg, S.opacity);
+      ctx.fill();
+      ctx.shadowColor = "transparent";
+      ctx.lineWidth = 3;
+      ctx.strokeStyle = S.border;
+      ctx.stroke();
+    }
     ctx.fillStyle = S.accent;
-    ctx.fillRect(x + 20, y + 26, 7, h - 52);
+    if (S.bar !== false) ctx.fillRect(x + 20, y + 26, 7, h - 52);
     ctx.fillStyle = S.ink;
     ctx.textBaseline = "alphabetic";
     font(ctx, zhPx, { family: S.family, weight: 700 });
@@ -1571,18 +3212,21 @@
     const tw = ctx.measureText(st.song).width;
     const left = st.player === "phone" ? cx - 90 : st.player === "cd" ? cx - 110 : cx - 125;
     const ty = cy + 18;
-    roundRect(ctx, left - tw - 52, ty - 58, tw + 64, 80, 8);
     const plate = style.plate || st.palette[0];
     const ink = style.ink || readableOn(plate, st.palette[2]);
-    ctx.fillStyle = rgba(plate, 0.9);
-    ctx.fill();
-    ctx.lineWidth = 2.5;
-    ctx.strokeStyle = ink;
-    ctx.stroke();
+    if (style.plateDraw) style.plateDraw(ctx, left - tw - 52, ty - 58, tw + 64, 80);
+    else {
+      roundRect(ctx, left - tw - 52, ty - 58, tw + 64, 80, 8);
+      ctx.fillStyle = rgba(plate, 0.9);
+      ctx.fill();
+      ctx.lineWidth = 2.5;
+      ctx.strokeStyle = ink;
+      ctx.stroke();
+    }
     ctx.fillStyle = ink;
     ctx.textAlign = "right";
     ctx.fillText(st.song, left - 12, ty);
-    ctx.fillStyle = st.palette[3];
+    ctx.fillStyle = style.noteColor || st.palette[3];
     circle(ctx, left - tw - 34, ty - 12, 5);
     ctx.fill();
     ctx.fillRect(left - tw - 30, ty - 38, 3, 26);
@@ -1713,6 +3357,12 @@
       gbq: sec.start + b,
       cam: camDist(gb) - camDist(sec.start),
       // 镜头平移不量化
+      /** 段内第 b 拍时镜头的位置（场景用来把布景放在梗发生时的画面位置上） */
+      camAt: (bb) => camDist(sec.start + bb) - camDist(sec.start),
+      /** 人物这一帧画在哪、什么姿势：{ x, y, scale, pose, ... }（前景层把东西挂到人物身上时用） */
+      figure() {
+        return figurePlacement(this);
+      },
       ...extra
     };
   }
@@ -1725,27 +3375,38 @@
     ctx.restore();
   }
   function drawFigureFor(ctx, env, { forceStand = false } = {}) {
+    const { scene, b } = env;
+    const fig = figurePlacement(env, { forceStand });
+    if (fig.hidden) return;
+    ctx.save();
+    applyUnits(ctx);
+    ctx.translate(fig.x, fig.y);
+    if (fig.sx !== 1 || fig.scale !== 1) ctx.scale(fig.scale * fig.sx, fig.scale);
+    if (fig.alpha !== void 0) ctx.globalAlpha = fig.alpha;
+    if (scene.drawFigure) scene.drawFigure(ctx, fig, b, env);
+    else drawWalker(ctx, fig);
+    ctx.restore();
+  }
+  function figurePlacement(env, { forceStand = false } = {}) {
     const { scene, sec, b } = env;
     const adj = scene.figureAdjust && scene.figureAdjust(b, env) || {};
-    if (adj.hidden) return;
     const st = figureState(env.gbq, env);
-    const fig = {
+    forceStand = forceStand || !!env.forceStand;
+    return {
+      hidden: !!adj.hidden,
+      x: CHAR_X + (adj.dx || 0),
+      y: ROAD_Y + (adj.dy || 0),
+      scale: adj.scale || 1,
+      sx: adj.sx || 1,
+      alpha: adj.alpha,
       pose: forceStand ? "stand" : adj.pose || st.pose,
       phase: st.phase,
       lean: st.lean + (adj.rotate || 0),
       style: adj.style || scene.figureStyle || (sec.station ? STATION_STYLE[sec.station] : "comic")
     };
-    ctx.save();
-    applyUnits(ctx);
-    ctx.translate(CHAR_X + (adj.dx || 0), ROAD_Y + (adj.dy || 0));
-    if (adj.scale) ctx.scale(adj.scale, adj.scale);
-    if (adj.alpha !== void 0) ctx.globalAlpha = adj.alpha;
-    if (scene.drawFigure) scene.drawFigure(ctx, fig, b, env);
-    else drawWalker(ctx, fig);
-    ctx.restore();
   }
   function drawSection(ctx, sec, gb, { figure = true, stand = false } = {}) {
-    const env = envFor(sec, gb);
+    const env = envFor(sec, gb, { forceStand: stand });
     drawSceneLayers(ctx, env, { front: false });
     if (figure) drawFigureFor(ctx, env, { forceStand: stand });
     drawSceneLayers(ctx, env, { back: false });

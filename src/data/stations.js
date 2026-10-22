@@ -19,6 +19,9 @@ const raw = [
   [2026, '太阳之子', 'Children of the Sun', '那天下雨了', '雨夜公交站台，一男一女各打一把伞', '电影感厚涂插画，路灯暖光对冷雨', '公交车驶过溅起水花，两把伞在强拍上同时一歪（他的伞画在站立帧的手上）', ['#1b2230', '#3d5670', '#0a0e15', '#f0b25a']],
 ];
 
+// 英文名核对（第二阶段，见 PROGRESS.md）：与常见英文名一致的站
+const EN_CHECKED = new Set([1, 2, 3, 5, 6, 7, 8, 9, 10, 12, 13, 15, 16]);
+
 export const STATIONS = raw.map(([year, albumZh, albumEn, song, scene, style, gag, palette], i) => {
   const n = i + 1;
   return {
@@ -27,7 +30,7 @@ export const STATIONS = raw.map(([year, albumZh, albumEn, song, scene, style, ga
     year,
     albumZh,
     albumEn,
-    enChecked: false,
+    enChecked: EN_CHECKED.has(n),
     song,
     scene,
     style,
