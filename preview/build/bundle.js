@@ -1904,8 +1904,1330 @@
     }
   };
 
+  // src/kit/ink.js
+  var INK2 = {
+    paper: "#f4efe2",
+    // 宣纸
+    jiao: "#1b1a17",
+    // 焦墨
+    nong: "#33312c",
+    // 浓墨
+    zhong: "#6f6c64",
+    // 中（重）墨
+    dan: "#a9a598",
+    // 淡墨
+    qing: "#d3cfc3",
+    // 清墨
+    huaqing: "#7d9aa3",
+    // 花青
+    zheshi: "#d2b48c",
+    // 淡赭石
+    seal: "#b8402e"
+    // 印章红（朱砂）
+  };
+  function xuanPaper(w, h, { base = INK2.paper, seed = 3, amount = 1 } = {}) {
+    w = Math.round(w);
+    h = Math.round(h);
+    return baked(`xuan|${w}|${h}|${base}|${seed}|${amount}`, w, h, (ctx) => {
+      const [r0, g0, b0] = hexToRgb(base);
+      const sw = Math.ceil(w / 10), sh = Math.ceil(h / 10);
+      const small = makeCanvas(sw, sh);
+      const sctx = small.getContext("2d");
+      const img = sctx.createImageData(sw, sh);
+      for (let y = 0; y < sh; y++) for (let x = 0; x < sw; x++) {
+        const n = fbm(x / 18, y / 18, seed, 4) - 0.5;
+        const m = fbm(x / 4.5, y / 4.5, seed + 9, 2) - 0.5;
+        const k = 1 + (n * 0.055 + m * 0.025) * amount;
+        const i = (y * sw + x) * 4;
+        img.data[i] = r0 * k;
+        img.data[i + 1] = g0 * k;
+        img.data[i + 2] = b0 * (k - 4e-3);
+        img.data[i + 3] = 255;
+      }
+      sctx.putImageData(img, 0, 0);
+      ctx.imageSmoothingQuality = "high";
+      ctx.drawImage(small, 0, 0, w, h);
+      const T = 192;
+      const tile = makeCanvas(T, T);
+      const tctx = tile.getContext("2d");
+      const ti = tctx.createImageData(T, T);
+      const R = rng("xuan-grain", seed);
+      for (let i = 0; i < T * T; i++) {
+        const v = R() < 0.55 ? 255 : 120;
+        ti.data[i * 4] = ti.data[i * 4 + 1] = ti.data[i * 4 + 2] = v;
+        ti.data[i * 4 + 3] = R() * 12 * amount;
+      }
+      tctx.putImageData(ti, 0, 0);
+      ctx.fillStyle = ctx.createPattern(tile, "repeat");
+      ctx.fillRect(0, 0, w, h);
+      const F = rng("xuan-fiber", seed);
+      ctx.lineCap = "round";
+      const nF = Math.round(w * h / 9e3 * amount);
+      for (let i = 0; i < nF; i++) {
+        const x = F() * w, y = F() * h, a = F() * Math.PI * 2, L = 14 + F() * 60;
+        const bend = (F() - 0.5) * L * 0.6;
+        ctx.strokeStyle = F() < 0.6 ? "rgba(120,100,70,0.06)" : "rgba(255,255,250,0.22)";
+        ctx.lineWidth = 0.5 + F() * 0.7;
+        ctx.beginPath();
+        ctx.moveTo(x, y);
+        ctx.quadraticCurveTo(x + Math.cos(a) * L * 0.5 - Math.sin(a) * bend, y + Math.sin(a) * L * 0.5 + Math.cos(a) * bend, x + Math.cos(a) * L, y + Math.sin(a) * L);
+        ctx.stroke();
+      }
+      const nS = Math.round(w * h / 6e4 * amount);
+      for (let i = 0; i < nS; i++) {
+        ctx.fillStyle = `rgba(90,75,50,${0.08 + F() * 0.12})`;
+        ctx.beginPath();
+        ctx.ellipse(F() * w, F() * h, 0.6 + F() * 1.4, 0.4 + F() * 0.8, F() * 3, 0, Math.PI * 2);
+        ctx.fill();
+      }
+    });
+  }
+  function resample(pts, d = 3) {
+    const out = [pts[0]];
+    let carry = 0;
+    for (let i = 1; i < pts.length; i++) {
+      const [ax, ay] = pts[i - 1], [bx, by] = pts[i];
+      const L = Math.hypot(bx - ax, by - ay);
+      let s = d - carry;
+      while (s <= L) {
+        const t = s / L;
+        out.push([ax + (bx - ax) * t, ay + (by - ay) * t]);
+        s += d;
+      }
+      carry = L - (s - d);
+    }
+    const last = pts[pts.length - 1];
+    const tail = out[out.length - 1];
+    if (Math.hypot(last[0] - tail[0], last[1] - tail[1]) > d * 0.3) out.push(last);
+    return out;
+  }
+  function normals(P) {
+    const N = [];
+    for (let i = 0; i < P.length; i++) {
+      const a = P[Math.max(0, i - 1)], b = P[Math.min(P.length - 1, i + 1)];
+      const dx = b[0] - a[0], dy = b[1] - a[1], L = Math.hypot(dx, dy) || 1;
+      N.push([-dy / L, dx / L]);
+    }
+    return N;
+  }
+  var profile = (t, [a, m, z]) => t < 0.18 ? lerp(a, m, smoothstep(0, 0.18, t)) : t > 0.65 ? lerp(m, z, smoothstep(0.65, 1, t)) : m;
+  function bristleStroke(ctx, pts, o = {}) {
+    const { width = 6, color = INK2.jiao, alpha = 0.9, bristles = 8, dry = 0.2, seed = 1, taper = [0.45, 1, 0.35], wet = 0, px = 1, spacing = 2.2 } = o;
+    if (pts.length < 2) return;
+    const P = resample(pts, spacing);
+    if (P.length < 2) return;
+    const N = normals(P);
+    const n = P.length;
+    ctx.save();
+    ctx.lineCap = "round";
+    ctx.lineJoin = "round";
+    ctx.strokeStyle = color;
+    if (wet > 0) {
+      ctx.filter = `blur(${Math.max(0.5, wet * px)}px)`;
+      ctx.globalAlpha = alpha * 0.32;
+      ctx.lineWidth = width * 1.15;
+      ctx.beginPath();
+      P.forEach(([x, y], i) => i ? ctx.lineTo(x, y) : ctx.moveTo(x, y));
+      ctx.stroke();
+      ctx.filter = "none";
+    }
+    const S = [0];
+    for (let i = 1; i < n; i++) S.push(S[i - 1] + Math.hypot(P[i][0] - P[i - 1][0], P[i][1] - P[i - 1][1]));
+    const total = S[n - 1] || 1;
+    const bw = Math.max(0.35, width / bristles * 1.7);
+    for (let j = 0; j < bristles; j++) {
+      const off = bristles === 1 ? 0 : j / (bristles - 1) - 0.5;
+      const edge = Math.abs(off) * 2;
+      ctx.globalAlpha = alpha * (0.55 + 0.45 * hash2(j, 1, seed));
+      ctx.lineWidth = bw * (0.7 + 0.6 * hash2(j, 2, seed));
+      const jx = (hash2(j, 3, seed) - 0.5) * width * 0.12;
+      ctx.beginPath();
+      let down = false;
+      for (let i = 0; i < n; i++) {
+        const t = S[i] / total;
+        const w = width * profile(t, taper);
+        const dd = dry * (0.25 + 0.75 * t) * (0.6 + 0.6 * edge);
+        const gap = dd > 0 && noise2(S[i] / 9 + j * 13.7, j * 3.3 + seed * 0.71, seed + j) < dd;
+        if (gap) {
+          down = false;
+          continue;
+        }
+        const x = P[i][0] + N[i][0] * (off * w + jx), y = P[i][1] + N[i][1] * (off * w + jx);
+        if (!down) {
+          ctx.moveTo(x, y);
+          down = true;
+        } else ctx.lineTo(x, y);
+      }
+      ctx.stroke();
+    }
+    ctx.restore();
+  }
+  function blobPath(cx, cy, rx, ry, { seed = 1, rough = 0.18, n = 28, rot = 0 } = {}) {
+    const p = new Path2D();
+    for (let i = 0; i <= n; i++) {
+      const a = i / n * Math.PI * 2;
+      const k = 1 + rough * (noise2(Math.cos(a) * 1.7 + seed, Math.sin(a) * 1.7 - seed, seed) - 0.5) * 2;
+      const x = Math.cos(a) * rx * k, y = Math.sin(a) * ry * k;
+      const X = cx + x * Math.cos(rot) - y * Math.sin(rot), Y = cy + x * Math.sin(rot) + y * Math.cos(rot);
+      i ? p.lineTo(X, Y) : p.moveTo(X, Y);
+    }
+    p.closePath();
+    return p;
+  }
+  function inkDot(ctx, x, y, r, { color = INK2.jiao, alpha = 0.9, seed = 1, bleed = 0.35, ry = null, rot = 0, px = 1, rough = 0.22 } = {}) {
+    if (r <= 0.05) return;
+    ctx.save();
+    ctx.fillStyle = color;
+    if (bleed > 0) {
+      ctx.globalAlpha = alpha * 0.28;
+      ctx.fill(blobPath(x, y, r * (1 + bleed), (ry ?? r) * (1 + bleed), { seed: seed + 5, rough: rough * 1.4, rot }));
+    }
+    ctx.globalAlpha = alpha;
+    ctx.fill(blobPath(x, y, r, ry ?? r, { seed, rough, rot }));
+    ctx.restore();
+  }
+  function mossDots(ctx, pts, { gap = 26, size = 4, color = INK2.jiao, alpha = 0.85, seed = 7, chance = 0.6 } = {}) {
+    const P = resample(pts, gap);
+    P.forEach(([x, y], i) => {
+      if (hash2(i, 1, seed) > chance) return;
+      const k = 1 + Math.floor(hash2(i, 2, seed) * 3);
+      for (let j = 0; j < k; j++) {
+        const dx = (hash2(i, 10 + j, seed) - 0.5) * gap * 0.7, dy = (hash2(i, 20 + j, seed) - 0.6) * size * 1.6;
+        const s = size * (0.6 + hash2(i, 30 + j, seed) * 0.7);
+        inkDot(ctx, x + dx, y + dy, s * 1.4, { ry: s * 0.75, rot: (hash2(i, 40 + j, seed) - 0.5) * 0.6, color, alpha, seed: seed + i * 7 + j, bleed: 0.25 });
+      }
+    });
+  }
+  function ridge(x0, x1, { base = 600, height = 260, seed = 1, step = 6, peaks = 2.2, rough = 0.18, steep = 1.6 } = {}) {
+    const R = rng("ridge", seed);
+    const P = [];
+    const n = Math.max(2, Math.round((x1 - x0) / 1e3 * peaks) + 2);
+    for (let i = 0; i < n; i++) {
+      P.push({ x: lerp(x0, x1, (i + R() * 0.8 - 0.4) / (n - 1)), h: height * (0.45 + 0.55 * R()), w: (x1 - x0) / n * (0.45 + R() * 0.5) });
+    }
+    const out = [];
+    for (let x = x0; x <= x1 + step; x += step) {
+      let h = 0;
+      for (const p of P) {
+        const d = (x - p.x) / p.w;
+        h = Math.max(h, p.h * Math.exp(-Math.pow(Math.abs(d), steep) * 1.4));
+      }
+      h *= 1 - rough + rough * 2 * fbm(x / 140, 0.3, seed, 4);
+      h += (fbm(x / 38, 2.1, seed + 3, 3) - 0.5) * height * 0.06;
+      out.push([Math.min(x, x1), base - Math.max(height * 0.06, h)]);
+    }
+    return out;
+  }
+  function washShape(ctx, pts, { color = INK2.dan, alpha = 0.8, top = null, fadeY = null, blur: blur2 = 3, edge = 0.25, edgeW = 3, px = 1, seed = 1 } = {}) {
+    let ymin = Infinity, ymax = -Infinity;
+    for (const [, y] of pts) {
+      ymin = Math.min(ymin, y);
+      ymax = Math.max(ymax, y);
+    }
+    const y0 = top ?? ymin, y1 = fadeY ?? ymax;
+    const [r, g, b] = hexToRgb(color);
+    const gr = ctx.createLinearGradient(0, y0, 0, y1);
+    gr.addColorStop(0, `rgba(${r},${g},${b},${alpha})`);
+    gr.addColorStop(0.55, `rgba(${r},${g},${b},${alpha * 0.55})`);
+    gr.addColorStop(1, `rgba(${r},${g},${b},0)`);
+    const path = new Path2D();
+    pts.forEach(([x, y], i) => i ? path.lineTo(x, y) : path.moveTo(x, y));
+    path.closePath();
+    ctx.save();
+    if (blur2 > 0) ctx.filter = `blur(${blur2 * px}px)`;
+    ctx.fillStyle = gr;
+    ctx.fill(path);
+    ctx.filter = "none";
+    if (edge > 0) {
+      ctx.globalAlpha = edge;
+      ctx.strokeStyle = gr;
+      ctx.lineWidth = edgeW;
+      ctx.lineJoin = "round";
+      if (blur2 > 0) ctx.filter = `blur(${blur2 * 0.35 * px}px)`;
+      ctx.stroke(path);
+      ctx.filter = "none";
+    }
+    ctx.restore();
+    return path;
+  }
+  function mountain(ctx, x0, x1, o = {}) {
+    const { base = 600, height = 260, color = INK2.dan, alpha = 0.7, fadeY = base, seed = 1, peaks = 2.2, layers = 3, cun = 0, moss = 0, px = 1, blur: blur2 = 3, steep = 1.6, rough = 0.18 } = o;
+    const top = ridge(x0, x1, { base, height, seed, peaks, steep, rough });
+    const ymin = Math.min(...top.map((p) => p[1]));
+    for (let k = 0; k < layers; k++) {
+      const sink = k * height * 0.07;
+      const pts = top.map(([x, y]) => [x, y + sink * (0.6 + 0.8 * fbm(x / 90, k + 0.5, seed + 11, 2))]);
+      pts.push([x1, fadeY + 40], [x0, fadeY + 40]);
+      washShape(ctx, pts, { color, alpha: alpha * (k ? 0.5 : 1), top: ymin + sink, fadeY, blur: blur2 * (k ? 1.6 : 1), edge: k ? 0 : 0.35, px, seed: seed + k });
+    }
+    if (cun > 0) cunStrokes(ctx, top, { base: fadeY, color: mix(color, INK2.jiao, 0.45), density: cun, seed: seed + 21, px });
+    if (moss > 0) mossDots(ctx, top.map(([x, y]) => [x, y + 3]), { gap: 30 / moss, size: 3.6, color: mix(color, INK2.jiao, 0.7), seed: seed + 31, chance: 0.45 });
+    return top;
+  }
+  function cunStrokes(ctx, top, { base = 800, color = INK2.zhong, density = 1, seed = 5, px = 1, alpha = 0.55, len = 0.45 } = {}) {
+    const R = rng("cun", seed);
+    const x0 = top[0][0], x1 = top[top.length - 1][0];
+    const yAt = (x) => {
+      const i = clamp(Math.round((x - x0) / (x1 - x0) * (top.length - 1)), 0, top.length - 1);
+      return top[i][1];
+    };
+    const count = Math.round((x1 - x0) / 100 * density);
+    for (let k = 0; k < count; k++) {
+      const x = lerp(x0, x1, R());
+      const y = yAt(x);
+      const slope = (yAt(x + 12) - yAt(x - 12)) / 24;
+      const H2 = (base - y) * len * (0.4 + R() * 0.8);
+      if (H2 < 8) continue;
+      const pts = [];
+      const sx = clamp(-slope * 0.6, -0.8, 0.8);
+      for (let s = 0; s <= 6; s++) {
+        const t = s / 6;
+        pts.push([x + sx * H2 * t + Math.sin(t * 3 + k) * 4, y + 4 + H2 * t]);
+      }
+      bristleStroke(ctx, pts, { width: 3 + R() * 4, color, alpha: alpha * (0.6 + R() * 0.4), bristles: 5, dry: 0.45, seed: seed + k, taper: [0.8, 1, 0.15], px });
+    }
+  }
+  function mistBand(ctx, x0, x1, y, h, { color = INK2.paper, alpha = 0.95 } = {}) {
+    const [r, g, b] = hexToRgb(color);
+    const gr = ctx.createLinearGradient(0, y - h / 2, 0, y + h / 2);
+    gr.addColorStop(0, `rgba(${r},${g},${b},0)`);
+    gr.addColorStop(0.45, `rgba(${r},${g},${b},${alpha})`);
+    gr.addColorStop(0.6, `rgba(${r},${g},${b},${alpha})`);
+    gr.addColorStop(1, `rgba(${r},${g},${b},0)`);
+    ctx.fillStyle = gr;
+    ctx.fillRect(x0, y - h / 2, x1 - x0, h);
+  }
+  function pine(ctx, x, y, h, { seed = 1, color = INK2.nong, alpha = 0.85, lean = 0.15, px = 1 } = {}) {
+    const R = rng("pine", seed);
+    const trunk = [];
+    for (let s = 0; s <= 8; s++) {
+      const t = s / 8;
+      trunk.push([x + Math.sin(t * 2.6 + seed) * h * 0.05 + lean * h * t, y - h * t]);
+    }
+    bristleStroke(ctx, trunk, { width: h * 0.06, color, alpha, bristles: 6, dry: 0.35, seed, taper: [1, 0.8, 0.35], px });
+    const tiers = 3 + Math.floor(R() * 2);
+    for (let k = 0; k < tiers; k++) {
+      const t = 0.45 + k / tiers * 0.55;
+      const [tx, ty] = trunk[Math.round(t * 8)];
+      const side = k % 2 ? 1 : -1;
+      const w = h * (0.32 - 0.18 * (k / tiers)) * (0.8 + R() * 0.4);
+      bristleStroke(ctx, [[tx, ty], [tx + side * w * 0.6, ty - h * 0.03], [tx + side * w, ty + h * 0.01]], { width: h * 0.022, color, alpha, bristles: 3, dry: 0.3, seed: seed + k * 3 + 1, px });
+      for (let j = 0; j < 5; j++) {
+        const u = j / 4;
+        const cx = tx + side * w * (0.15 + u * 0.95), cy = ty - h * 0.04 - Math.sin(u * Math.PI) * h * 0.04;
+        inkDot(ctx, cx, cy, w * 0.22, { ry: h * 0.045, color, alpha: alpha * 0.85, seed: seed * 31 + k * 7 + j, bleed: 0.3, rough: 0.35 });
+      }
+    }
+    const [hx, hy] = trunk[8];
+    inkDot(ctx, hx, hy - h * 0.02, h * 0.12, { ry: h * 0.05, color, alpha: alpha * 0.9, seed: seed + 99, bleed: 0.3, rough: 0.35 });
+  }
+  function bamboo(ctx, x, y, h, { seed = 1, color = INK2.nong, alpha = 0.8, stems = 3, px = 1 } = {}) {
+    const R = rng("bamboo", seed);
+    for (let s = 0; s < stems; s++) {
+      const bx = x + (s - (stems - 1) / 2) * h * 0.07 + (R() - 0.5) * h * 0.04;
+      const hh = h * (0.7 + R() * 0.3), lean = (R() - 0.5) * 0.25;
+      const tone = s % 2 ? mix(color, INK2.paper, 0.35) : color;
+      let yy = y, xx = bx;
+      const segs = 5 + Math.floor(R() * 2);
+      for (let k = 0; k < segs; k++) {
+        const L = hh / segs;
+        const nx = xx + lean * L, ny = yy - L;
+        bristleStroke(ctx, [[xx, yy - 2], [nx, ny + 3]], { width: h * 0.022, color: tone, alpha, bristles: 4, dry: 0.15, seed: seed + s * 13 + k, taper: [1.1, 0.9, 1.15], px });
+        bristleStroke(ctx, [[nx - h * 0.014, ny + 1], [nx + h * 0.014, ny - 1]], { width: 2.2, color: INK2.jiao, alpha: alpha * 0.9, bristles: 2, dry: 0, seed: seed + k, px });
+        xx = nx;
+        yy = ny;
+        if (k >= segs - 3 && R() < 0.85) {
+          const dir = R() < 0.5 ? -1 : 1;
+          const nL = 2 + Math.floor(R() * 3);
+          for (let j = 0; j < nL; j++) {
+            const a = (dir < 0 ? Math.PI : 0) + dir * (0.35 + j * 0.28 + (R() - 0.5) * 0.2) * -1 + (dir < 0 ? -0.15 : 0.15);
+            const len = h * (0.09 + R() * 0.06);
+            bambooLeaf(ctx, xx, yy, a + Math.PI * 0.08 * dir, len, { color: tone, alpha: alpha * 0.95, seed: seed * 7 + j });
+          }
+        }
+      }
+    }
+  }
+  function bambooLeaf(ctx, x, y, a, len, { color = INK2.nong, alpha = 0.85, seed = 1 } = {}) {
+    const w = len * 0.17;
+    const c = Math.cos(a), s = Math.sin(a);
+    const bend = (hash2(seed, 1, 3) - 0.5) * len * 0.25;
+    const P = (u, v) => [x + c * u - s * v, y + s * u + c * v];
+    const p = new Path2D();
+    const p0 = P(0, 0), p1 = P(len * 0.35, -w + bend * 0.3), p2 = P(len, bend), p3 = P(len * 0.4, w * 0.7 + bend * 0.3);
+    p.moveTo(...p0);
+    p.quadraticCurveTo(...p1, ...p2);
+    p.quadraticCurveTo(...p3, ...p0);
+    ctx.save();
+    ctx.globalAlpha = alpha;
+    ctx.fillStyle = color;
+    ctx.fill(p);
+    ctx.restore();
+  }
+  function grassTuft(ctx, x, y, h, { seed = 1, color = INK2.zhong, alpha = 0.7, blades = 6, spread = 0.9, px = 1 } = {}) {
+    for (let k = 0; k < blades; k++) {
+      const a = -Math.PI / 2 + (k / Math.max(1, blades - 1) - 0.5) * spread + (hash2(k, 1, seed) - 0.5) * 0.3;
+      const L = h * (0.55 + hash2(k, 2, seed) * 0.5);
+      const bend = (hash2(k, 3, seed) - 0.5) * 0.6;
+      const pts = [];
+      for (let s = 0; s <= 5; s++) {
+        const t = s / 5, aa = a + bend * t;
+        pts.push([x + Math.cos(aa) * L * t + (k - blades / 2) * 1.5, y + Math.sin(aa) * L * t]);
+      }
+      bristleStroke(ctx, pts, { width: 2.6 + hash2(k, 4, seed) * 2, color, alpha, bristles: 3, dry: 0.2, seed: seed + k, taper: [1, 0.7, 0.05], px });
+    }
+  }
+  function rock(ctx, x, y, w, h, { seed = 1, color = INK2.zhong, alpha = 0.8, px = 1 } = {}) {
+    const R = rng("rock", seed);
+    const pts = [];
+    const n = 9;
+    for (let i = 0; i <= n; i++) {
+      const t = i / n;
+      const yy = y - h * Math.sin(Math.PI * t) ** 0.6 * (0.75 + R() * 0.35);
+      pts.push([x - w / 2 + w * t, yy]);
+    }
+    const shape = [...pts, [x + w / 2, y], [x - w / 2, y]];
+    washShape(ctx, shape, { color: mix(color, INK2.paper, 0.45), alpha: alpha * 0.55, top: y - h, fadeY: y + 6, blur: 1.5, edge: 0, px });
+    bristleStroke(ctx, pts, { width: Math.max(3, h * 0.07), color, alpha, bristles: 6, dry: 0.35, seed, taper: [0.9, 1, 0.5], px });
+    for (let k = 0; k < 2; k++) {
+      const t = 0.3 + R() * 0.4;
+      const top = pts[Math.round(t * n)];
+      bristleStroke(ctx, [[top[0], top[1] + 4], [top[0] + (R() - 0.5) * w * 0.2, top[1] + h * 0.45], [top[0] + (R() - 0.5) * w * 0.25, y - 2]], { width: Math.max(2.5, h * 0.05), color, alpha: alpha * 0.6, bristles: 4, dry: 0.5, seed: seed + k + 7, taper: [0.9, 0.8, 0.1], px });
+    }
+    mossDots(ctx, pts.slice(2, 7), { gap: Math.max(10, w / 5), size: Math.max(2, h * 0.06), color: INK2.jiao, seed: seed + 3, chance: 0.5 });
+  }
+  function ribbonPath(pts, widthAt) {
+    const N = normals(pts);
+    const L = [], Rr = [];
+    pts.forEach(([x, y], i) => {
+      const w = widthAt(i, i / (pts.length - 1)) / 2;
+      L.push([x + N[i][0] * w, y + N[i][1] * w]);
+      Rr.push([x - N[i][0] * w, y - N[i][1] * w]);
+    });
+    const p = new Path2D();
+    L.forEach(([x, y], i) => i ? p.lineTo(x, y) : p.moveTo(x, y));
+    for (let i = Rr.length - 1; i >= 0; i--) p.lineTo(Rr[i][0], Rr[i][1]);
+    p.closePath();
+    return p;
+  }
+  function inkRibbon(ctx, pts, { width = 12, vary = 0.35, color = INK2.jiao, seed = 1, px = 1, bleed = 4, dry = 0.35, taper = 40 } = {}) {
+    const P = resample(pts, 3);
+    const S = [0];
+    for (let i = 1; i < P.length; i++) S.push(S[i - 1] + Math.hypot(P[i][0] - P[i - 1][0], P[i][1] - P[i - 1][1]));
+    const total = S[S.length - 1] || 1;
+    const ends = (i) => taper > 0 ? Math.sqrt(clamp(Math.min(S[i], total - S[i]) / taper)) : 1;
+    const wAt = (i) => width * (1 + vary * (fbm(S[i] / 90, 0.5, seed, 3) - 0.5) * 2.2) * Math.max(0.12, ends(i));
+    ctx.save();
+    ctx.fillStyle = color;
+    ctx.globalAlpha = 0.22;
+    ctx.filter = `blur(${bleed * px}px)`;
+    ctx.fill(ribbonPath(P, (i) => wAt(i) + bleed * 1.6));
+    ctx.filter = `blur(${0.6 * px}px)`;
+    ctx.globalAlpha = 0.9;
+    const core = ribbonPath(P, (i) => wAt(i));
+    ctx.fill(core);
+    ctx.filter = "none";
+    ctx.globalAlpha = 0.5;
+    ctx.strokeStyle = INK2.jiao;
+    ctx.lineWidth = 1.2;
+    ctx.stroke(core);
+    if (dry > 0) {
+      ctx.strokeStyle = INK2.paper;
+      ctx.lineCap = "round";
+      for (let j = 0; j < 5; j++) {
+        const off = (j / 4 - 0.5) * 0.7;
+        ctx.globalAlpha = 0.5 + 0.3 * hash2(j, 1, seed);
+        ctx.lineWidth = 0.7 + hash2(j, 2, seed) * 1.1;
+        ctx.beginPath();
+        let down = false;
+        const N = normals(P);
+        for (let i = 0; i < P.length; i++) {
+          const on = noise2(S[i] / 46 + j * 5.1, j * 1.7, seed + 40) < dry * 0.75;
+          if (!on) {
+            down = false;
+            continue;
+          }
+          const w = wAt(i);
+          const x = P[i][0] + N[i][0] * off * w, y = P[i][1] + N[i][1] * off * w;
+          if (!down) {
+            ctx.moveTo(x, y);
+            down = true;
+          } else ctx.lineTo(x, y);
+        }
+        ctx.stroke();
+      }
+    }
+    ctx.restore();
+  }
+  var quadAt = (p0, p1, p2, t) => {
+    const u = 1 - t;
+    return [u * u * p0[0] + 2 * u * t * p1[0] + t * t * p2[0], u * u * p0[1] + 2 * u * t * p1[1] + t * t * p2[1]];
+  };
+  function inkStream(ctx, p0, p1, p2, t0, t1, { w0 = 5, w1 = 7, color = INK2.jiao, alpha = 0.92, wobble = 2, phase = 0, seed = 1 } = {}) {
+    if (t1 - t0 < 2e-3) return;
+    const n = Math.max(4, Math.ceil((t1 - t0) * 48));
+    const P = [];
+    for (let i = 0; i <= n; i++) {
+      const t = lerp(t0, t1, i / n);
+      const [x, y] = quadAt(p0, p1, p2, t);
+      P.push([x + Math.sin(t * 17 + phase * 6.3) * wobble * t, y]);
+    }
+    ctx.save();
+    ctx.fillStyle = color;
+    ctx.globalAlpha = alpha;
+    ctx.fill(ribbonPath(P, (i, u) => lerp(w0, w1, lerp(t0, t1, u)) * (1 + 0.18 * Math.sin(u * 23 + phase * 9 + seed))));
+    const a = P[0], z = P[P.length - 1];
+    ctx.beginPath();
+    ctx.arc(a[0], a[1], lerp(w0, w1, t0) / 2, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.beginPath();
+    ctx.arc(z[0], z[1], lerp(w0, w1, t1) * 0.62, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.restore();
+  }
+  function sealStamp(ctx, x, y, size, { color = INK2.seal, seed = 1, rot = -0.04, alpha = 0.92 } = {}) {
+    const s = size / 2;
+    ctx.save();
+    ctx.translate(x, y);
+    ctx.rotate(rot);
+    ctx.globalAlpha *= alpha;
+    const p = new Path2D();
+    const c = [[-s, -s], [s, -s], [s, s], [-s, s]];
+    c.forEach(([cx, cy], i) => {
+      const jx = (hash2(i, 1, seed) - 0.5) * size * 0.04, jy = (hash2(i, 2, seed) - 0.5) * size * 0.04;
+      i ? p.lineTo(cx + jx, cy + jy) : p.moveTo(cx + jx, cy + jy);
+    });
+    p.closePath();
+    ctx.fillStyle = color;
+    ctx.fill(p);
+    ctx.strokeStyle = INK2.paper;
+    ctx.fillStyle = INK2.paper;
+    ctx.lineCap = "round";
+    ctx.lineJoin = "round";
+    ctx.lineWidth = Math.max(1, size * 0.07);
+    ctx.strokeRect(-s * 0.78, -s * 0.78, s * 1.56, s * 1.56);
+    ctx.beginPath();
+    ctx.moveTo(-s * 0.62, s * 0.18);
+    ctx.lineTo(-s * 0.25, -s * 0.42);
+    ctx.lineTo(0, -s * 0.05);
+    ctx.lineTo(s * 0.22, -s * 0.3);
+    ctx.lineTo(s * 0.62, s * 0.18);
+    ctx.stroke();
+    ctx.beginPath();
+    for (let k = 0; k < 2; k++) {
+      const yy = s * (0.4 + k * 0.2);
+      ctx.moveTo(-s * 0.6, yy);
+      for (let u = 0; u <= 4; u++) ctx.quadraticCurveTo(-s * 0.6 + (u + 0.5) * s * 0.3, yy - s * 0.1 * (u % 2 ? -1 : 1), -s * 0.6 + (u + 1) * s * 0.3, yy);
+    }
+    ctx.lineWidth = Math.max(0.8, size * 0.05);
+    ctx.stroke();
+    ctx.beginPath();
+    ctx.arc(s * 0.42, -s * 0.5, s * 0.13, 0, Math.PI * 2);
+    ctx.fill();
+    for (let k = 0; k < 14; k++) {
+      ctx.globalAlpha = 0.55;
+      ctx.beginPath();
+      ctx.arc((hash2(k, 5, seed) - 0.5) * size * 0.98, (hash2(k, 6, seed) - 0.5) * size * 0.98, size * (8e-3 + hash2(k, 7, seed) * 0.02), 0, Math.PI * 2);
+      ctx.fill();
+    }
+    ctx.restore();
+  }
+  function paperCard(w, h, { seed = 1, seal = true, sealSize = 46, border = INK2.nong, key = "" } = {}) {
+    const pad = 24;
+    w = Math.round(w);
+    h = Math.round(h);
+    const canvas = baked(`inkcard|${key}|${w}|${h}|${seed}|${seal}|${sealSize}`, w + pad * 2, h + pad * 2, (ctx) => {
+      ctx.translate(pad, pad);
+      const edge = new Path2D();
+      const pts = [];
+      const n = 80;
+      for (let i = 0; i < n; i++) {
+        const t = i / n;
+        let x, y;
+        if (t < 0.25) {
+          x = t / 0.25 * w;
+          y = 0;
+        } else if (t < 0.5) {
+          x = w;
+          y = (t - 0.25) / 0.25 * h;
+        } else if (t < 0.75) {
+          x = w - (t - 0.5) / 0.25 * w;
+          y = h;
+        } else {
+          x = 0;
+          y = h - (t - 0.75) / 0.25 * h;
+        }
+        const j = (noise2(i * 0.9, 0.5, seed) - 0.5) * 5;
+        pts.push([x + (y === 0 || y === h ? 0 : j), y + (x === 0 || x === w ? 0 : j)]);
+      }
+      pts.forEach(([x, y], i) => i ? edge.lineTo(x, y) : edge.moveTo(x, y));
+      edge.closePath();
+      ctx.save();
+      ctx.shadowColor = "rgba(60,45,25,0.22)";
+      ctx.shadowBlur = 14;
+      ctx.shadowOffsetY = 5;
+      ctx.fillStyle = INK2.paper;
+      ctx.fill(edge);
+      ctx.restore();
+      ctx.save();
+      ctx.clip(edge);
+      ctx.drawImage(xuanPaper(w, h, { seed: seed + 50, amount: 1.1 }), 0, 0);
+      ctx.fillStyle = rgba(INK2.dan, 0.08);
+      ctx.fill(blobPath(w * 0.8, h * 0.75, w * 0.35, h * 0.4, { seed, rough: 0.3 }));
+      ctx.restore();
+      const m = 12;
+      const sides = [[[m, m], [w - m, m + 1]], [[w - m, m - 2], [w - m + 1, h - m]], [[w - m + 2, h - m], [m, h - m - 1]], [[m, h - m + 2], [m - 1, m]]];
+      sides.forEach(([a, b], i) => bristleStroke(ctx, [a, [(a[0] + b[0]) / 2 + (hash2(i, 1, seed) - 0.5) * 3, (a[1] + b[1]) / 2 + (hash2(i, 2, seed) - 0.5) * 3], b], { width: 4.2, color: border, alpha: 0.85, bristles: 6, dry: 0.42, seed: seed + i * 5, taper: [1, 0.85, 0.5], spacing: 1.6 }));
+      if (seal) sealStamp(ctx, w - m - sealSize * 0.55 - 6, m + sealSize * 0.55 + 6, sealSize, { seed: seed + 9 });
+    });
+    return { canvas, pad };
+  }
+  function handscrollFrame(ctx, R, { silk = "#dfe2d6", silkDark = "#c9cdbf", wood = "#4a3426", knob = "#efeadb", seal = true } = {}) {
+    const t = 64 * R.s, { x, y, w, h } = R;
+    const s = R.s;
+    ctx.save();
+    ctx.fillStyle = "rgba(40,35,25,0.14)";
+    ctx.beginPath();
+    ctx.ellipse(x + w / 2, y + h + t * 0.95, w * 0.55, t * 0.45, 0, 0, Math.PI * 2);
+    ctx.fill();
+    const band = new Path2D();
+    band.rect(x - t, y - t * 0.8, w + 2 * t, h + t * 1.6);
+    band.rect(x, y, w, h);
+    ctx.fillStyle = silk;
+    ctx.fill(band, "evenodd");
+    ctx.save();
+    ctx.clip(band, "evenodd");
+    ctx.strokeStyle = rgba(silkDark, 0.9);
+    ctx.lineWidth = Math.max(0.6, 1.4 * s);
+    const step = 46 * s;
+    if (step > 4) {
+      for (let yy = y - t * 0.8 + step * 0.5, r = 0; yy < y + h + t * 0.8; yy += step * 0.75, r++) {
+        for (let xx = x - t + r % 2 * step * 0.5; xx < x + w + t; xx += step) {
+          ctx.beginPath();
+          ctx.arc(xx, yy, step * 0.16, Math.PI, Math.PI * 2);
+          ctx.arc(xx + step * 0.2, yy, step * 0.1, Math.PI, Math.PI * 2);
+          ctx.stroke();
+        }
+      }
+    }
+    ctx.restore();
+    ctx.strokeStyle = INK2.nong;
+    ctx.lineWidth = Math.max(1, 3 * s);
+    ctx.strokeRect(x - 1.5 * s, y - 1.5 * s, w + 3 * s, h + 3 * s);
+    ctx.strokeStyle = INK2.zheshi;
+    ctx.lineWidth = Math.max(1, 5 * s);
+    ctx.strokeRect(x - 9 * s, y - 9 * s, w + 18 * s, h + 18 * s);
+    ctx.strokeStyle = rgba(INK2.nong, 0.7);
+    ctx.lineWidth = Math.max(0.8, 1.6 * s);
+    ctx.strokeRect(x - t, y - t * 0.8, w + 2 * t, h + t * 1.6);
+    for (const side of [-1, 1]) {
+      const cx = side < 0 ? x - t - 14 * s : x + w + t + 14 * s;
+      const rw = 30 * s, top = y - t * 0.8 - 18 * s, bot = y + h + t * 0.8 + 18 * s;
+      const g = ctx.createLinearGradient(cx - rw / 2, 0, cx + rw / 2, 0);
+      g.addColorStop(0, mix(wood, "#000000", 0.3));
+      g.addColorStop(0.35, mix(wood, "#ffffff", 0.25));
+      g.addColorStop(1, mix(wood, "#000000", 0.45));
+      ctx.fillStyle = g;
+      ctx.fillRect(cx - rw / 2, top, rw, bot - top);
+      for (const [ky, dir] of [[top, -1], [bot, 1]]) {
+        const kg = ctx.createLinearGradient(cx - rw * 0.6, 0, cx + rw * 0.6, 0);
+        kg.addColorStop(0, "#cfc9b6");
+        kg.addColorStop(0.4, knob);
+        kg.addColorStop(1, "#b9b29c");
+        ctx.fillStyle = kg;
+        ctx.beginPath();
+        ctx.ellipse(cx, ky + dir * 12 * s, rw * 0.62, 14 * s, 0, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.strokeStyle = rgba(INK2.nong, 0.6);
+        ctx.lineWidth = Math.max(0.6, 1.2 * s);
+        ctx.stroke();
+      }
+    }
+    if (seal && t > 8) sealStamp(ctx, x + w + t * 0.5, y + h * 0.08 + t * 0.1, t * 0.42, { seed: 77 });
+    ctx.restore();
+  }
+
   // src/scenes/s03.js
-  var s03 = placeholderScene(stationByN(3));
+  var ST2 = stationByN(3);
+  var PX = K;
+  var P_SKY = 0.03;
+  var P_FAR1 = 0.1;
+  var P_FAR2 = 0.2;
+  var P_MIST = 0.3;
+  var P_MID = 0.45;
+  var P_NEAR = 0.8;
+  var P_FG2 = 1.3;
+  var TABLE = { x0: 585, x1: 800, top: 668 };
+  var MAN_X = 852;
+  var MAN_BASE = 792;
+  var LAND_X = 496;
+  var LINE_L = CHAR_X - 96;
+  var CUP_X = 640;
+  var SHED = { x0: 500, x1: 1090, eave: 432 };
+  var FLAG_X = 1150;
+  var T_LIFT = [GAG - 3.2, GAG - 1.4];
+  var T_TILT = [GAG - 0.75, GAG - 0.45];
+  var T_SPOUT = GAG - 0.5;
+  var T_LAND = GAG;
+  var T_FEET = GAG + 1.5;
+  var T_AHEAD = [GAG + 0.9, GAG + 3];
+  var T_STOP = GAG + 3.1;
+  var T_REST = [GAG + 3.3, GAG + 4.1];
+  var T_NOD = [GAG + 4.1, GAG + 4.9];
+  var R0 = (k) => rng("s03", k);
+  var lineY = (x) => ROAD_Y + 11 + Math.sin(x / 131) * 4.5 + (fbm(x / 190, 0.4, 33, 3) - 0.5) * 12;
+  function skyLayer() {
+    return strip("s03-sky", P_SKY, (ctx, x0, x1) => {
+      ctx.save();
+      ctx.filter = `blur(${6 * PX}px)`;
+      ctx.fillStyle = rgba("#e7c39a", 0.42);
+      ctx.beginPath();
+      ctx.arc(1130, 150, 62, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.filter = "none";
+      ctx.restore();
+    }, { y0: 40, y1: 300 });
+  }
+  function far1Layer() {
+    return strip("s03-far1", P_FAR1, (ctx, x0, x1) => {
+      mountain(ctx, x0, x1, { base: 600, height: 330, color: mix(INK2.qing, INK2.huaqing, 0.35), alpha: 0.75, fadeY: 600, seed: 11, peaks: 2.4, layers: 2, px: PX, blur: 4, steep: 1.3 });
+    }, { y0: 160, y1: 660 });
+  }
+  function far2Layer() {
+    return strip("s03-far2", P_FAR2, (ctx, x0, x1) => {
+      const top = mountain(ctx, x0, x1, { base: 660, height: 250, color: mix(INK2.dan, INK2.huaqing, 0.3), alpha: 0.72, fadeY: 650, seed: 23, peaks: 3.2, layers: 3, px: PX, blur: 3, steep: 1.5 });
+      const R = R0("far2pine");
+      for (let i = 8; i < top.length - 8; i += 9) {
+        const [x, y] = top[i];
+        if (y < top[i - 6][1] && y < top[i + 6][1] && R() < 0.7) for (let k = 0; k < 3; k++) inkDot(ctx, x - 8 + k * 8 + R() * 4, y - 4 - R() * 6, 3 + R() * 2, { ry: 5 + R() * 3, color: mix(INK2.zhong, INK2.huaqing, 0.25), alpha: 0.75, seed: i * 3 + k, bleed: 0.3 });
+      }
+    }, { y0: 300, y1: 700 });
+  }
+  function mistLayer() {
+    return strip("s03-mist", P_MIST, (ctx, x0, x1) => {
+      mistBand(ctx, x0, x1, 650, 90, { alpha: 0.9 });
+      ctx.save();
+      ctx.filter = `blur(${10 * PX}px)`;
+      ctx.fillStyle = rgba(INK2.paper, 0.85);
+      const R = R0("mist");
+      for (let x = x0; x < x1; x += 160 + R() * 220) ctx.fill(blobPath(x, 600 + R() * 50, 120 + R() * 140, 18 + R() * 16, { seed: x, rough: 0.3 }));
+      ctx.restore();
+    }, { y0: 520, y1: 720 });
+  }
+  function midLayer(cg) {
+    return strip("s03-mid", P_MID, (ctx, x0, x1) => {
+      const color = mix(INK2.zhong, INK2.huaqing, 0.12);
+      const top = mountain(ctx, x0, x1, { base: 760, height: 210, color, alpha: 0.62, fadeY: 760, seed: 37, peaks: 2.6, layers: 3, px: PX, blur: 2.2, steep: 1.9, cun: 2.6, moss: 0.3, rough: 0.25 });
+      const R = R0("midpine");
+      for (let i = 12; i < top.length - 12; i += 6) {
+        const [x, y] = top[i];
+        const sx = x - cg * P_MID;
+        if (sx > 150 && sx < 470) continue;
+        if (y <= top[i - 10][1] && y <= top[i + 10][1] && R() < 0.85) pine(ctx, x + (R() - 0.5) * 20, y + 6, 70 + R() * 50, { seed: i, color: INK2.nong, alpha: 0.82, lean: (R() - 0.5) * 0.4, px: PX });
+      }
+      mistBand(ctx, x0, x1, 772, 70, { alpha: 0.8 });
+    }, { y0: 420, y1: 810 });
+  }
+  function nearLayer(cg) {
+    return strip("s03-near", P_NEAR, (ctx, x0, x1) => {
+      const R = R0("near");
+      const pts = [];
+      for (let x = x0; x <= x1; x += 8) pts.push([x, 742 - 26 * fbm(x / 210, 0.2, 51, 3) - 14 * Math.sin(x / 330)]);
+      washShape(ctx, [...pts, [x1, 805], [x0, 805]], { color: mix(INK2.zheshi, INK2.dan, 0.4), alpha: 0.35, fadeY: 805, blur: 3, edge: 0.4, px: PX });
+      bristleStroke(ctx, pts.filter((_, i) => i % 3 === 0), { width: 3.5, color: INK2.zhong, alpha: 0.55, bristles: 6, dry: 0.55, seed: 52, px: PX, spacing: 3 });
+      for (let x = x0 + 80; x < x1; x += 260 + R() * 320) {
+        const sx = x - cg * P_NEAR;
+        if (sx > 120 && sx < 1120) continue;
+        const kind = R();
+        if (kind < 0.35) rock(ctx, x, 798, 80 + R() * 70, 46 + R() * 34, { seed: Math.round(x), color: INK2.zhong, px: PX });
+        else if (kind < 0.7) bamboo(ctx, x, 796, 240 + R() * 120, { seed: Math.round(x), color: INK2.nong, alpha: 0.75, stems: 2 + Math.floor(R() * 2), px: PX });
+        else {
+          grassTuft(ctx, x, 798, 40 + R() * 30, { seed: Math.round(x), px: PX });
+          rock(ctx, x + 50, 798, 50, 26, { seed: Math.round(x) + 1, px: PX });
+        }
+      }
+      for (let x = x0; x < x1; x += 170 + R() * 260) grassTuft(ctx, x, 800, 22 + R() * 22, { seed: Math.round(x) + 7, color: INK2.zhong, alpha: 0.6, blades: 4 + Math.floor(R() * 3), px: PX });
+    }, { y0: 480, y1: 812 });
+  }
+  function roadLayer2() {
+    return strip("s03-road", 1, (ctx, x0, x1) => {
+      const g = ctx.createLinearGradient(0, ROAD_Y, 0, 1e3);
+      g.addColorStop(0, rgba(INK2.zheshi, 0.42));
+      g.addColorStop(0.35, rgba(INK2.zheshi, 0.16));
+      g.addColorStop(1, rgba(INK2.zheshi, 0.05));
+      ctx.fillStyle = g;
+      ctx.fillRect(x0, ROAD_Y - 2, x1 - x0, 1e3 - ROAD_Y + 2);
+      const R = R0("road");
+      for (let x = x0; x < x1; ) {
+        const L = 120 + R() * 260;
+        const pts = [];
+        for (let u = 0; u <= L; u += 20) pts.push([x + u, ROAD_Y + 1 + Math.sin((x + u) / 47) * 1.5]);
+        bristleStroke(ctx, pts, { width: 3.4, color: INK2.zhong, alpha: 0.55, bristles: 6, dry: 0.55, seed: Math.round(x), taper: [0.7, 1, 0.3], px: PX });
+        x += L + 20 + R() * 60;
+      }
+      for (let x = x0; x < x1; x += 70 + R() * 130) {
+        const y = ROAD_Y + 30 + R() * 160, L = 40 + R() * 110;
+        bristleStroke(ctx, [[x, y], [x + L * 0.5, y + (R() - 0.5) * 4], [x + L, y + (R() - 0.5) * 6]], { width: 3 + R() * 3, color: INK2.dan, alpha: 0.45, bristles: 5, dry: 0.65, seed: Math.round(x) + 3, taper: [0.8, 1, 0.1], px: PX });
+      }
+      for (let x = x0; x < x1; x += 40 + R() * 90) inkDot(ctx, x, ROAD_Y + 20 + R() * 170, 2 + R() * 3.5, { ry: 1.4 + R() * 2, color: INK2.zhong, alpha: 0.6, seed: Math.round(x), bleed: 0.2 });
+      for (let x = x0; x < x1; x += 300) bristleStroke(ctx, [[x, 975], [x + 140, 972], [x + 290, 976]], { width: 4, color: INK2.dan, alpha: 0.35, bristles: 5, dry: 0.6, seed: Math.round(x) + 9, px: PX });
+    }, { y0: ROAD_Y - 6, y1: 1e3 });
+  }
+  var SHED_BOX = { x0: 440, x1: 1290, y0: 200, y1: 812 };
+  function shedImage(part) {
+    const { x0, x1, y0, y1 } = SHED_BOX;
+    return baked(`s03-shed-${part}`, (x1 - x0) * K, (y1 - y0) * K, (ctx) => {
+      ctx.scale(K, K);
+      ctx.translate(-x0, -y0);
+      if (part === "back") shedBack(ctx);
+      else shedFront(ctx);
+    });
+  }
+  function shedBack(ctx) {
+    const o = { px: PX };
+    bamboo(ctx, 1040, MAN_BASE - 10, 380, { seed: 301, color: mix(INK2.zhong, INK2.huaqing, 0.15), alpha: 0.6, stems: 3, ...o });
+    bamboo(ctx, 560, MAN_BASE - 10, 300, { seed: 307, color: mix(INK2.dan, INK2.huaqing, 0.2), alpha: 0.55, stems: 2, ...o });
+    for (const x of [600, 1010]) bristleStroke(ctx, [[x, MAN_BASE - 14], [x + 2, SHED.eave - 40]], { width: 9, color: INK2.zhong, alpha: 0.65, bristles: 6, dry: 0.25, seed: x, taper: [1, 0.9, 1], ...o });
+    ctx.save();
+    ctx.filter = `blur(${4 * PX}px)`;
+    ctx.fillStyle = rgba(INK2.dan, 0.25);
+    ctx.fill(blobPath(800, MAN_BASE + 4, 300, 12, { seed: 3, rough: 0.2 }));
+    ctx.restore();
+    const sx = 965;
+    const stove = [[sx - 34, MAN_BASE], [sx - 28, MAN_BASE - 92], [sx + 28, MAN_BASE - 92], [sx + 34, MAN_BASE]];
+    washShape(ctx, [...stove], { color: mix(INK2.zheshi, INK2.zhong, 0.35), alpha: 0.55, blur: 1, edge: 0, ...o });
+    bristleStroke(ctx, stove, { width: 4, color: INK2.nong, alpha: 0.85, bristles: 6, dry: 0.35, seed: 41, ...o });
+    ctx.save();
+    ctx.filter = `blur(${5 * PX}px)`;
+    ctx.fillStyle = rgba("#d9824e", 0.55);
+    ctx.beginPath();
+    ctx.ellipse(sx, MAN_BASE - 38, 13, 9, 0, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.restore();
+    bristleStroke(ctx, [[sx - 16, MAN_BASE - 40], [sx + 16, MAN_BASE - 40]], { width: 3, color: INK2.nong, alpha: 0.7, bristles: 3, ...o });
+    inkDot(ctx, sx, MAN_BASE - 112, 26, { ry: 20, color: mix(INK2.zhong, INK2.zheshi, 0.25), alpha: 0.85, seed: 5, bleed: 0.2, rough: 0.08 });
+    bristleStroke(ctx, [[sx - 8, MAN_BASE - 132], [sx + 8, MAN_BASE - 132]], { width: 5, color: INK2.jiao, alpha: 0.9, bristles: 3, ...o });
+    bristleStroke(ctx, [[520, MAN_BASE - 46], [575, MAN_BASE - 48]], { width: 7, color: INK2.nong, alpha: 0.8, bristles: 6, dry: 0.3, seed: 61, ...o });
+    for (const x of [527, 567]) bristleStroke(ctx, [[x, MAN_BASE - 44], [x + (x < 540 ? -3 : 3), MAN_BASE]], { width: 4, color: INK2.nong, alpha: 0.8, bristles: 4, seed: x, ...o });
+  }
+  function shedFront(ctx) {
+    const o = { px: PX };
+    for (const x of [SHED.x0 + 14, SHED.x1 - 18]) {
+      bristleStroke(ctx, [[x, ROAD_Y - 4], [x - 2, SHED.eave - 30]], { width: 12, color: INK2.nong, alpha: 0.85, bristles: 8, dry: 0.3, seed: x + 1, taper: [1.1, 0.9, 1], ...o });
+      for (let y = ROAD_Y - 90; y > SHED.eave; y -= 92) bristleStroke(ctx, [[x - 8, y], [x + 7, y - 2]], { width: 2.5, color: INK2.jiao, alpha: 0.85, bristles: 2, ...o });
+    }
+    const roof = [[SHED.x0 - 60, SHED.eave + 6], [SHED.x0 + 70, SHED.eave - 120], [SHED.x1 - 40, SHED.eave - 150], [SHED.x1 + 70, SHED.eave - 8]];
+    const roofPts = [...roof, [SHED.x1 + 50, SHED.eave + 8], [SHED.x0 - 40, SHED.eave + 18]];
+    washShape(ctx, roofPts, { color: mix(INK2.zheshi, INK2.dan, 0.55), alpha: 0.5, top: SHED.eave - 150, fadeY: SHED.eave + 40, blur: 1.5, edge: 0, ...o });
+    const R = R0("thatch");
+    for (let k = 0; k < 70; k++) {
+      const u = R();
+      const tx = lerp(roof[1][0], roof[2][0], u), ty = lerp(roof[1][1], roof[2][1], u);
+      const bx = lerp(SHED.x0 - 50, SHED.x1 + 60, u) + (R() - 0.5) * 30, by = SHED.eave + 6 + R() * 16;
+      const s = 0.1 + R() * 0.25;
+      bristleStroke(ctx, [[lerp(tx, bx, s), lerp(ty, by, s)], [lerp(tx, bx, 0.6) + (R() - 0.5) * 10, lerp(ty, by, 0.6)], [bx, by]], { width: 5 + R() * 6, color: R() < 0.3 ? INK2.nong : INK2.zhong, alpha: 0.5 + R() * 0.35, bristles: 6, dry: 0.5, seed: k + 400, taper: [0.5, 1, 0.3], ...o });
+    }
+    bristleStroke(ctx, [roof[1], [lerp(roof[1][0], roof[2][0], 0.5), lerp(roof[1][1], roof[2][1], 0.5) - 6], roof[2]], { width: 10, color: INK2.jiao, alpha: 0.85, bristles: 9, dry: 0.35, seed: 71, taper: [0.6, 1, 0.5], ...o });
+    bristleStroke(ctx, [[SHED.x0 - 30, SHED.eave + 10], [SHED.x1 + 40, SHED.eave + 2]], { width: 7, color: INK2.nong, alpha: 0.85, bristles: 7, dry: 0.25, seed: 73, ...o });
+    const { x0, x1, top } = TABLE;
+    const slab = [[x0 - 8, top], [x1 + 8, top - 2], [x1 + 6, top + 14], [x0 - 6, top + 15]];
+    washShape(ctx, slab, { color: mix(INK2.zheshi, INK2.zhong, 0.5), alpha: 0.75, blur: 0.8, edge: 0, ...o });
+    bristleStroke(ctx, [[x0 - 8, top], [x1 + 8, top - 2]], { width: 4.5, color: INK2.jiao, alpha: 0.9, bristles: 7, dry: 0.25, seed: 81, ...o });
+    bristleStroke(ctx, [[x0 - 6, top + 15], [x1 + 6, top + 14]], { width: 3, color: INK2.nong, alpha: 0.8, bristles: 5, dry: 0.3, seed: 82, ...o });
+    for (const x of [x0 + 14, x1 - 14]) bristleStroke(ctx, [[x, top + 14], [x + (x < 700 ? -5 : 5), MAN_BASE + 2]], { width: 9, color: INK2.nong, alpha: 0.85, bristles: 6, dry: 0.3, seed: x + 7, taper: [1, 0.9, 0.8], ...o });
+    washShape(ctx, [[x0 + 22, top + 15], [x1 - 22, top + 15], [x1 - 26, top + 52], [x0 + 26, top + 52]], { color: INK2.dan, alpha: 0.3, blur: 1.2, edge: 0, ...o });
+    const cy = top - 1;
+    inkDot(ctx, CUP_X, cy, 17, { ry: 3.5, color: INK2.dan, alpha: 0.6, seed: 91, bleed: 0.2, rough: 0.05 });
+    const cup = [[CUP_X - 14, cy - 26], [CUP_X + 14, cy - 26], [CUP_X + 9, cy - 3], [CUP_X - 9, cy - 3]];
+    washShape(ctx, cup, { color: INK2.paper, alpha: 1, blur: 0, edge: 0, ...o });
+    bristleStroke(ctx, [cup[0], cup[3], cup[2], cup[1]], { width: 2.6, color: INK2.nong, alpha: 0.9, bristles: 3, dry: 0.1, seed: 92, ...o });
+    ctx.save();
+    ctx.strokeStyle = INK2.nong;
+    ctx.lineWidth = 2.2;
+    ctx.beginPath();
+    ctx.ellipse(CUP_X, cy - 26, 14, 3.5, 0, 0, Math.PI * 2);
+    ctx.stroke();
+    ctx.restore();
+    const c2 = CUP_X + 46;
+    washShape(ctx, [[c2 - 9, cy - 22], [c2 + 9, cy - 22], [c2 + 13, cy - 2], [c2 - 13, cy - 2]], { color: INK2.qing, alpha: 0.8, blur: 0, edge: 0, ...o });
+    bristleStroke(ctx, [[c2 - 13, cy - 2], [c2 - 9, cy - 22], [c2 + 9, cy - 22], [c2 + 13, cy - 2]], { width: 2.4, color: INK2.nong, alpha: 0.85, bristles: 3, seed: 93, ...o });
+  }
+  var SHOULDER = [-14, -246];
+  var UPPER = 72;
+  var FORE = 72;
+  var ROBE = "#d6d1c4";
+  function manBody() {
+    const w = 220, h = 380;
+    return baked("s03-man", w * K, h * K, (ctx) => {
+      ctx.scale(K, K);
+      ctx.translate(110, 370);
+      const o = { px: PX };
+      washShape(ctx, [[18, -236], [40, -230], [44, -150], [24, -146]], { color: mix(ROBE, INK2.dan, 0.5), alpha: 0.9, blur: 0.6, edge: 0, ...o });
+      const robe = [[-30, -258], [6, -264], [34, -252], [56, -214], [62, -150], [60, -60], [66, 0], [-52, 0], [-50, -80], [-48, -170], [-40, -236]];
+      washShape(ctx, robe, { color: ROBE, alpha: 0.95, top: -264, fadeY: 30, blur: 0.8, edge: 0, ...o });
+      ctx.save();
+      ctx.globalAlpha = 0.5;
+      washShape(ctx, robe.slice(2, 7).concat([[30, -40], [20, -200]]), { color: INK2.dan, alpha: 0.55, blur: 2.5, edge: 0, ...o });
+      ctx.restore();
+      bristleStroke(ctx, [[6, -264], [34, -252], [56, -214], [62, -150], [60, -60], [66, 0]], { width: 5.5, color: INK2.nong, alpha: 0.85, bristles: 7, dry: 0.3, seed: 201, taper: [0.8, 1, 0.5], ...o });
+      bristleStroke(ctx, [[-40, -236], [-48, -170], [-50, -80], [-52, 0]], { width: 5, color: INK2.nong, alpha: 0.85, bristles: 7, dry: 0.35, seed: 202, taper: [0.9, 1, 0.4], ...o });
+      bristleStroke(ctx, [[10, -140], [14, -80], [8, -20]], { width: 3, color: INK2.zhong, alpha: 0.6, bristles: 4, dry: 0.5, seed: 203, ...o });
+      bristleStroke(ctx, [[-20, -130], [-24, -70]], { width: 2.6, color: INK2.zhong, alpha: 0.5, bristles: 4, dry: 0.5, seed: 204, ...o });
+      bristleStroke(ctx, [[-30, -256], [-6, -214], [8, -206]], { width: 4, color: INK2.nong, alpha: 0.85, bristles: 5, dry: 0.2, seed: 205, ...o });
+      bristleStroke(ctx, [[-50, -158], [6, -152], [60, -158]], { width: 14, color: INK2.jiao, alpha: 0.9, bristles: 9, dry: 0.25, seed: 206, taper: [1, 1, 0.9], ...o });
+      bristleStroke(ctx, [[-30, -150], [-36, -110], [-32, -92]], { width: 6, color: INK2.nong, alpha: 0.85, bristles: 5, dry: 0.3, seed: 207, taper: [1, 0.8, 0.4], ...o });
+      const hx = -22, hy = -298;
+      ctx.save();
+      ctx.fillStyle = mix(INK2.paper, INK2.zheshi, 0.45);
+      ctx.fill(blobPath(hx, hy, 29, 33, { seed: 3, rough: 0.05 }));
+      ctx.fillStyle = rgba(INK2.dan, 0.7);
+      ctx.fill(blobPath(hx + 16, hy - 4, 15, 27, { seed: 4, rough: 0.12 }));
+      ctx.restore();
+      bristleStroke(ctx, [[hx - 10, hy - 32], [hx + 14, hy - 33], [hx + 28, hy - 14], [hx + 27, hy + 12], [hx + 14, hy + 30]], { width: 3.4, color: INK2.nong, alpha: 0.9, bristles: 4, dry: 0.15, seed: 211, ...o });
+      bristleStroke(ctx, [[hx - 10, hy - 32], [hx - 26, hy - 20], [hx - 30, hy - 6]], { width: 3, color: INK2.nong, alpha: 0.9, bristles: 4, dry: 0.15, seed: 212, ...o });
+      bristleStroke(ctx, [[hx - 29, hy - 6], [hx - 37, hy + 5], [hx - 27, hy + 8]], { width: 3, color: INK2.nong, alpha: 0.9, bristles: 3, seed: 213, ...o });
+      inkDot(ctx, hx + 6, hy - 40, 11, { ry: 9, color: INK2.jiao, alpha: 0.9, seed: 214, bleed: 0.25 });
+      bristleStroke(ctx, [[hx - 12, hy - 36], [hx + 24, hy - 46]], { width: 2.4, color: mix(INK2.zheshi, INK2.nong, 0.5), alpha: 0.9, bristles: 2, ...o });
+      bristleStroke(ctx, [[hx + 6, hy - 6], [hx + 12, hy - 2], [hx + 10, hy + 8], [hx + 5, hy + 9]], { width: 2.2, color: INK2.nong, alpha: 0.8, bristles: 3, ...o });
+      bristleStroke(ctx, [[hx - 22, hy - 6], [hx - 16, hy - 10], [hx - 10, hy - 6]], { width: 2.6, color: INK2.jiao, alpha: 0.95, bristles: 3, ...o });
+      ctx.save();
+      ctx.fillStyle = INK2.paper;
+      const brow = new Path2D();
+      brow.moveTo(hx - 6, hy - 18);
+      brow.quadraticCurveTo(hx - 30, hy - 22, hx - 44, hy + 2);
+      brow.quadraticCurveTo(hx - 30, hy - 12, hx - 8, hy - 12);
+      brow.closePath();
+      ctx.fill(brow);
+      ctx.restore();
+      bristleStroke(ctx, [[hx - 6, hy - 18], [hx - 30, hy - 21], [hx - 44, hy + 2]], { width: 2, color: INK2.dan, alpha: 0.9, bristles: 3, ...o });
+      const beard = new Path2D();
+      beard.moveTo(hx - 32, hy + 10);
+      beard.quadraticCurveTo(hx - 46, hy + 50, hx - 40, hy + 96);
+      beard.quadraticCurveTo(hx - 30, hy + 60, hx - 6, hy + 24);
+      beard.closePath();
+      ctx.save();
+      ctx.fillStyle = INK2.paper;
+      ctx.fill(beard);
+      ctx.restore();
+      for (let k = 0; k < 4; k++) bristleStroke(ctx, [[hx - 30 + k * 5, hy + 12 + k * 3], [hx - 40 + k * 3, hy + 52], [hx - 40 + k * 1.5, hy + 92 - k * 6]], { width: 1.6, color: INK2.dan, alpha: 0.85, bristles: 2, dry: 0.2, seed: 220 + k, ...o });
+      bristleStroke(ctx, [[hx - 30, hy + 12], [hx - 22, hy + 16], [hx - 14, hy + 14]], { width: 2, color: INK2.zhong, alpha: 0.8, bristles: 2, ...o });
+    });
+  }
+  function elbowFor(hand) {
+    const [sx, sy] = SHOULDER;
+    const dx = hand[0] - sx, dy = hand[1] - sy;
+    const d = Math.min(UPPER + FORE - 0.5, Math.hypot(dx, dy));
+    const a = Math.atan2(dy, dx);
+    const c = clamp((UPPER * UPPER + d * d - FORE * FORE) / (2 * UPPER * d), -1, 1);
+    const e = a - Math.acos(c);
+    return [sx + Math.cos(e) * UPPER, sy + Math.sin(e) * UPPER];
+  }
+  var HAND_REST = [-82, -214];
+  var HAND_UP = [-142, -276];
+  function handAt(b) {
+    if (b < T_REST[0]) {
+      const u2 = ease.inOut(smoothstep(T_LIFT[0], T_LIFT[1], b));
+      const lift = [lerp(HAND_REST[0], HAND_UP[0], u2), lerp(HAND_REST[1], HAND_UP[1], u2) - Math.sin(u2 * Math.PI) * 18];
+      const pour = smoothstep(T_LAND, T_LAND + 0.3, b) * (1 - smoothstep(T_STOP - 0.3, T_STOP, b));
+      return [lift[0] + Math.sin(b * 9.4) * 2 * pour, lift[1] - pour * 10 + Math.sin(b * 6.3) * 2.5 * pour];
+    }
+    const u = ease.inOut(smoothstep(T_REST[0], T_REST[1], b));
+    return [lerp(HAND_UP[0], HAND_REST[0], u), lerp(HAND_UP[1] - 10, HAND_REST[1], u) - Math.sin(u * Math.PI) * 14];
+  }
+  var tiltAt = (b) => -0.62 * smoothstep(T_TILT[0], T_TILT[1], b) * (1 - smoothstep(T_STOP - 0.1, T_STOP + 0.3, b));
+  var SPOUT = [-74, 24];
+  function kettle(ctx) {
+    const k = baked("s03-kettle", 140 * K, 130 * K, (c) => {
+      c.scale(K, K);
+      c.translate(96, 16);
+      const o = { px: PX };
+      c.save();
+      c.fillStyle = mix(INK2.zhong, INK2.zheshi, 0.3);
+      c.fill(blobPath(0, 64, 37, 31, { seed: 8, rough: 0.04 }));
+      c.globalAlpha = 0.6;
+      c.fillStyle = INK2.nong;
+      c.fill(blobPath(10, 72, 26, 22, { seed: 9, rough: 0.1 }));
+      c.restore();
+      bristleStroke(c, [[-24, 52], [-14, 42], [0, 38]], { width: 4, color: INK2.paper, alpha: 0.7, bristles: 3, dry: 0.4, seed: 2, ...o });
+      const sp = new Path2D();
+      sp.moveTo(-30, 66);
+      sp.quadraticCurveTo(-52, 58, SPOUT[0], SPOUT[1] + 2);
+      sp.lineTo(SPOUT[0] + 4, SPOUT[1] - 4);
+      sp.quadraticCurveTo(-48, 44, -32, 50);
+      sp.closePath();
+      c.fillStyle = INK2.nong;
+      c.fill(sp);
+      bristleStroke(c, [[-18, 36], [0, 31], [18, 36]], { width: 4, color: INK2.jiao, alpha: 0.9, bristles: 4, ...o });
+      inkDot(c, 0, 27, 5, { color: INK2.jiao, seed: 3, bleed: 0.1 });
+      bristleStroke(c, [[-28, 44], [-24, 12], [-8, 0], [8, 0], [24, 12], [28, 44]], { width: 5, color: INK2.jiao, alpha: 0.9, bristles: 5, dry: 0.25, seed: 4, ...o });
+    });
+    ctx.drawImage(k, -96, -16, 140, 130);
+  }
+  function drawMan(ctx, b, x, y) {
+    const breath = Math.sin(b * Math.PI) * 1.2;
+    const nod = Math.sin(Math.PI * smoothstep(T_NOD[0], T_NOD[1], b)) * 0.06;
+    ctx.save();
+    ctx.translate(x, y);
+    ctx.rotate(-nod);
+    ctx.translate(0, breath * 0.3);
+    ctx.drawImage(manBody(), -110, -370, 220, 380);
+    const hand = handAt(b), elbow = elbowFor(hand);
+    const tilt = tiltAt(b);
+    const nrm = (a, c2) => {
+      const dx = c2[0] - a[0], dy = c2[1] - a[1], L = Math.hypot(dx, dy) || 1;
+      return [-dy / L, dx / L];
+    };
+    let n1 = nrm(SHOULDER, elbow), n2 = nrm(elbow, hand);
+    if (n1[1] > 0) n1 = [-n1[0], -n1[1]];
+    if (n2[1] > 0) n2 = [-n2[0], -n2[1]];
+    const ne = [(n1[0] + n2[0]) / 2, (n1[1] + n2[1]) / 2];
+    const P = (q, n, w) => [q[0] + n[0] * w, q[1] + n[1] * w];
+    const wrist = [hand[0] + (elbow[0] - hand[0]) * 0.12, hand[1] + (elbow[1] - hand[1]) * 0.12];
+    const topEdge = [P(SHOULDER, n1, 17), P(elbow, ne, 14), P(wrist, n2, 12)];
+    const cuffLow = [wrist[0] - n2[0] * 22 + 4, wrist[1] + 30];
+    const botEdge = [P(SHOULDER, n1, -18), P(elbow, ne, -16), [lerp(elbow[0], cuffLow[0], 0.55), Math.max(elbow[1], cuffLow[1]) + 8], cuffLow];
+    const sl = new Path2D();
+    [...topEdge, ...botEdge.slice().reverse()].forEach(([px, py], i) => i ? sl.lineTo(px, py) : sl.moveTo(px, py));
+    sl.closePath();
+    ctx.save();
+    ctx.fillStyle = ROBE;
+    ctx.fill(sl);
+    ctx.fillStyle = rgba(INK2.dan, 0.35);
+    ctx.fill(blobPath(elbow[0], elbow[1] + 8, 16, 12, { seed: 8, rough: 0.2 }));
+    ctx.restore();
+    bristleStroke(ctx, topEdge, { width: 3.6, color: INK2.nong, alpha: 0.9, bristles: 4, dry: 0.25, seed: 502, spacing: 3 });
+    bristleStroke(ctx, botEdge, { width: 3.6, color: INK2.nong, alpha: 0.9, bristles: 4, dry: 0.3, seed: 503, spacing: 3 });
+    bristleStroke(ctx, [topEdge[2], cuffLow], { width: 3, color: INK2.nong, alpha: 0.85, bristles: 3, dry: 0.2, seed: 504, spacing: 3 });
+    ctx.save();
+    ctx.translate(hand[0], hand[1]);
+    ctx.rotate(tilt);
+    kettle(ctx);
+    ctx.restore();
+    ctx.save();
+    ctx.fillStyle = mix(INK2.paper, INK2.zheshi, 0.45);
+    ctx.fill(blobPath(hand[0] + 1, hand[1] - 1, 9, 8, { seed: 6, rough: 0.1 }));
+    ctx.restore();
+    bristleStroke(ctx, [[hand[0] - 7, hand[1] - 8], [hand[0] - 10, hand[1] + 2], [hand[0] - 3, hand[1] + 7], [hand[0] + 8, hand[1] + 5]], { width: 2.2, color: INK2.nong, alpha: 0.9, bristles: 2, spacing: 2 });
+    ctx.restore();
+    const c = Math.cos(tilt - nod), s = Math.sin(tilt - nod);
+    const hx = hand[0] * Math.cos(-nod) - (hand[1] + breath * 0.3) * Math.sin(-nod), hy = hand[0] * Math.sin(-nod) + (hand[1] + breath * 0.3) * Math.cos(-nod);
+    return [x + hx + SPOUT[0] * c - SPOUT[1] * s, y + hy + SPOUT[0] * s + SPOUT[1] * c];
+  }
+  function linePts(cg, cEnd) {
+    const xa = LINE_L + cg, xb = cEnd + X_MAX + 260;
+    const pts = [];
+    for (let x = xa; x <= xb; x += 6) pts.push([x, lineY(x - cg)]);
+    return pts;
+  }
+  function lineLayer(env) {
+    const cg = env.camAt(GAG), cEnd = env.camAt(16.5);
+    return strip("s03-inkline", 1, (ctx, x0, x1) => {
+      const pts = linePts(cg, cEnd).filter(([x]) => x > x0 && x < x1);
+      inkRibbon(ctx, pts, { width: 17, vary: 0.55, seed: 7, px: PX, bleed: 4, dry: 0.55, taper: 60 });
+      inkDot(ctx, LAND_X + cg, lineY(LAND_X) + 1, 30, { ry: 9, seed: 31, bleed: 0.5, alpha: 0.9 });
+      inkDot(ctx, CHAR_X + cg - 10, lineY(CHAR_X - 10) + 1, 22, { ry: 6, seed: 32, bleed: 0.5, alpha: 0.75 });
+    }, { y0: ROAD_Y - 20, y1: ROAD_Y + 45 });
+  }
+  function lineEnds(b, env) {
+    if (b < T_LAND) return null;
+    const left = lerp(LAND_X, LINE_L, ease.out(smoothstep(T_LAND, T_FEET, b)));
+    const grow = lerp(LAND_X, X_MAX + 90, ease.inOut(smoothstep(T_AHEAD[0], T_AHEAD[1], b)));
+    const ahead = b >= T_AHEAD[1] ? env.cam - env.camAt(GAG) + X_MAX + 90 : -Infinity;
+    const spread = 30 * ease.out(smoothstep(T_LAND, T_LAND + 0.25, b));
+    return [Math.min(left, LAND_X - spread), Math.max(grow, ahead, LAND_X + spread)];
+  }
+  function drawInkLine(ctx, b, env) {
+    const E = lineEnds(b, env);
+    if (!E) return;
+    const off = env.camAt(GAG) - env.cam;
+    const S = lineLayer(env);
+    const xa = E[0] + off - (E[0] <= LINE_L + 1 ? 30 : 0), xb = E[1] + off;
+    ctx.save();
+    ctx.beginPath();
+    ctx.rect(xa, ROAD_Y - 30, xb - xa, 90);
+    ctx.clip();
+    drawStrip(ctx, S, env.cam);
+    ctx.restore();
+    if (b < T_FEET + 0.15) {
+      const k = 1 - smoothstep(T_FEET - 0.1, T_FEET + 0.15, b);
+      inkDot(ctx, E[0] + off, lineY(E[0]) - 0.5, 9 * k + 2, { ry: 6.5 * k + 1.5, seed: Math.floor(b * 8), bleed: 0.3 });
+    }
+    if (b < T_AHEAD[1] + 0.2 && b > T_AHEAD[0]) inkDot(ctx, xb, lineY(E[1]) - 0.5, 10, { ry: 7, seed: Math.floor(b * 8) + 3, bleed: 0.3 });
+  }
+  function drawSplash(ctx, b, env) {
+    if (b < T_LAND) return;
+    const off = env.camAt(GAG) - env.cam;
+    const u = clamp((b - T_LAND) / 0.32);
+    for (let k = 0; k < 16; k++) {
+      const dir = hash2(k, 1, 3) < 0.5 ? -1 : 1;
+      const dist2 = 20 + hash2(k, 2, 3) * 110;
+      const hgt = 30 + hash2(k, 3, 3) * 70;
+      const fx = LAND_X + dir * dist2 * ease.out(u), fy = lineY(LAND_X) + (hash2(k, 4, 3) - 0.3) * 26 - Math.sin(Math.PI * u) * hgt;
+      const r = 2 + hash2(k, 5, 3) * 4.5;
+      inkDot(ctx, fx + off, fy, r * (u < 1 ? 1 : 1.25), { ry: u < 1 ? r : r * 0.55, seed: k + 60, bleed: 0.25, alpha: 0.88 });
+    }
+  }
+  function drawSteps(ctx, b, env) {
+    for (let k = GAG + 4; k < 17; k++) {
+      if (b < k) break;
+      const u = clamp((b - k) / 0.3);
+      const wx = env.camAt(k) + CHAR_X + 62;
+      const sx = wx - env.cam;
+      if (sx < X_MIN - 40 || sx > X_MAX + 40) continue;
+      for (let j = 0; j < 6; j++) {
+        const dir = j % 2 ? 1 : -1;
+        const fx = sx + dir * (10 + hash2(k, j, 9) * 40) * ease.out(u), fy = lineY(wx - env.camAt(GAG)) - Math.sin(Math.PI * u) * (12 + hash2(j, k, 9) * 24) + hash2(k, j + 7, 9) * 8;
+        const r = 1.6 + hash2(k, j + 3, 9) * 2.6;
+        inkDot(ctx, fx, fy, r, { ry: u < 1 ? r : r * 0.6, seed: k * 10 + j, bleed: 0.2, alpha: 0.85 });
+      }
+    }
+  }
+  var circle2 = (ctx, x, y, r) => {
+    ctx.beginPath();
+    ctx.arc(x, y, r, 0, Math.PI * 2);
+    ctx.fill();
+  };
+  function drawBirds(ctx, b, cam) {
+    for (let k = 0; k < 3; k++) {
+      const x = 700 + k * 80 + b * 40 - cam * 0.05, y = 300 + k % 2 * 30 + Math.sin(b * 1.3 + k) * 8;
+      const flap = Math.sin(b * Math.PI * 2 + k * 1.7);
+      if (x < X_MIN - 30 || x > X_MAX + 30) continue;
+      ctx.save();
+      ctx.strokeStyle = INK2.nong;
+      ctx.lineWidth = 2.2;
+      ctx.lineCap = "round";
+      ctx.globalAlpha = 0.8;
+      ctx.beginPath();
+      ctx.moveTo(x - 12, y - 4 * flap);
+      ctx.quadraticCurveTo(x - 5, y - 6 * flap - 2, x, y);
+      ctx.quadraticCurveTo(x + 5, y - 6 * flap - 2, x + 12, y - 4 * flap);
+      ctx.stroke();
+      ctx.restore();
+    }
+  }
+  function drawSteam(ctx, b, x, y) {
+    ctx.save();
+    ctx.lineCap = "round";
+    for (let k = 0; k < 3; k++) {
+      const ph = (b * 0.55 + k / 3) % 1;
+      const a = Math.sin(Math.PI * ph) * 0.55;
+      ctx.strokeStyle = rgba(INK2.dan, a);
+      ctx.lineWidth = 3 - ph * 1.5;
+      ctx.beginPath();
+      for (let s = 0; s <= 12; s++) {
+        const t = s / 12;
+        const yy = y - 10 - (ph * 70 + t * 70);
+        const xx = x + (k - 1) * 8 + Math.sin(t * 5 + b * 2 + k) * (6 + t * 10);
+        s ? ctx.lineTo(xx, yy) : ctx.moveTo(xx, yy);
+      }
+      ctx.stroke();
+    }
+    ctx.restore();
+  }
+  function drawFlag(ctx, b, x) {
+    const top = 248, cross = 268;
+    bristleStroke(ctx, [[x, ROAD_Y - 6], [x + 3, top]], { width: 9, color: INK2.nong, alpha: 0.85, bristles: 6, dry: 0.3, seed: 601, taper: [1, 0.9, 0.7], spacing: 4 });
+    ctx.save();
+    ctx.strokeStyle = INK2.nong;
+    ctx.lineWidth = 4;
+    ctx.lineCap = "round";
+    ctx.beginPath();
+    ctx.moveTo(x + 2, cross);
+    ctx.lineTo(x + 92, cross - 6);
+    ctx.stroke();
+    const W2 = 84, H2 = 200;
+    const pts = [];
+    for (let i = 0; i <= 10; i++) {
+      const t = i / 10;
+      pts.push([x + 6 + W2 * t, cross - 6 * t + 3]);
+    }
+    for (let i = 0; i <= 12; i++) {
+      const t = i / 12;
+      pts.push([x + 6 + W2 + Math.sin(b * 2.6 + t * 3) * 6 * t + t * 4, cross + H2 * t]);
+    }
+    for (let i = 10; i >= 0; i--) {
+      const t = i / 10;
+      pts.push([x + 6 + W2 * t + Math.sin(b * 2.6 + 3 + t * 2) * 7, cross + H2 + Math.sin(b * 3.1 + t * 6) * 5 * t - 6 * t]);
+    }
+    for (let i = 12; i >= 0; i--) {
+      const t = i / 12;
+      pts.push([x + 6 + Math.sin(b * 2.6 + t * 2) * 3 * t, cross + H2 * t]);
+    }
+    const p = new Path2D();
+    pts.forEach(([px, py], i) => i ? p.lineTo(px, py) : p.moveTo(px, py));
+    p.closePath();
+    ctx.fillStyle = "#efe8d6";
+    ctx.fill(p);
+    ctx.clip(p);
+    ctx.fillStyle = rgba(INK2.seal, 0.85);
+    ctx.fillRect(x, cross - 10, W2 + 20, 18);
+    ctx.fillStyle = rgba(INK2.dan, 0.18);
+    ctx.fillRect(x + W2 * 0.55, cross, W2, H2 + 20);
+    const cx = x + 6 + W2 / 2 + Math.sin(b * 2.6 + 1.5) * 3, cy = cross + 112;
+    ctx.fillStyle = rgba(INK2.nong, 0.85);
+    ctx.fill(blobPath(cx + 2, cy, 22, 17, { seed: 12, rough: 0.05 }));
+    ctx.beginPath();
+    ctx.moveTo(cx - 16, cy + 2);
+    ctx.quadraticCurveTo(cx - 30, cy - 2, cx - 36, cy - 16);
+    ctx.lineTo(cx - 31, cy - 17);
+    ctx.quadraticCurveTo(cx - 26, cy - 8, cx - 14, cy - 8);
+    ctx.closePath();
+    ctx.fill();
+    ctx.fillRect(cx - 9, cy - 21, 22, 5);
+    circle2(ctx, cx + 2, cy - 24, 4);
+    ctx.strokeStyle = rgba(INK2.nong, 0.85);
+    ctx.lineWidth = 4;
+    ctx.beginPath();
+    ctx.arc(cx + 24, cy - 1, 9, -1.3, 1.3);
+    ctx.stroke();
+    ctx.lineWidth = 2.4;
+    ctx.strokeStyle = rgba(INK2.zhong, 0.7);
+    ctx.beginPath();
+    ctx.moveTo(cx + 2, cy - 32);
+    ctx.bezierCurveTo(cx - 8, cy - 44, cx + 12, cy - 52, cx + 2, cy - 66);
+    ctx.stroke();
+    ctx.restore();
+    ctx.save();
+    ctx.strokeStyle = rgba(INK2.nong, 0.8);
+    ctx.lineWidth = 2.2;
+    ctx.stroke(p);
+    ctx.restore();
+  }
+  function fgLayer(cg) {
+    return strip("s03-fg", P_FG2, (ctx, x0, x1) => {
+      const R = R0("fg");
+      for (let x = x0 + 100; x < x1; x += 380 + R() * 420) {
+        const sx = x - cg * P_FG2;
+        if (sx > 40 && sx < 1100) continue;
+        grassTuft(ctx, x, 1010, 90 + R() * 60, { seed: Math.round(x), color: INK2.zhong, alpha: 0.55, blades: 7, spread: 1.4, px: PX });
+        grassTuft(ctx, x + 40, 1012, 60 + R() * 40, { seed: Math.round(x) + 1, color: INK2.dan, alpha: 0.5, blades: 5, spread: 1.2, px: PX });
+      }
+    }, { y0: 840, y1: 1030 });
+  }
+  function inkCassette(ctx, cx, cy, s, spin) {
+    const w = 200 * s, h = 128 * s;
+    const body = baked("s03-cassette", w + 40, h + 40, (c) => {
+      c.translate(20 + w / 2, 20 + h / 2);
+      c.save();
+      c.shadowColor = "rgba(60,45,25,0.22)";
+      c.shadowBlur = 12;
+      c.shadowOffsetY = 4;
+      c.fillStyle = INK2.paper;
+      c.fill(blobPath(0, 0, w / 2 + 2, h / 2 + 2, { seed: 5, rough: 0.012, n: 60 }));
+      c.restore();
+      const rect = (x0, y0, x1, y1, o) => bristleStroke(c, [[x0, y0], [x1, y0 + 1], [x1 - 1, y1], [x0 + 1, y1 - 1], [x0, y0 + 2]], o);
+      rect(-w / 2 + 4, -h / 2 + 4, w / 2 - 4, h / 2 - 4, { width: 4.5, color: INK2.jiao, alpha: 0.9, bristles: 7, dry: 0.35, seed: 11, spacing: 1.6, taper: [1, 0.9, 0.7] });
+      c.save();
+      c.fillStyle = rgba(INK2.dan, 0.28);
+      c.fill(blobPath(0, -h / 2 + 46, w / 2 - 20, 30, { seed: 7, rough: 0.05 }));
+      c.restore();
+      rect(-w / 2 + 16, -h / 2 + 14, w / 2 - 16, -h / 2 + 78, { width: 2.6, color: INK2.nong, alpha: 0.85, bristles: 4, dry: 0.3, seed: 12, spacing: 1.6 });
+      sealStamp(c, w / 2 - 30, -h / 2 + 28, 18, { seed: 5 });
+      c.save();
+      c.fillStyle = INK2.paper;
+      c.fill(blobPath(0, -h / 2 + 51, 50, 15, { seed: 8, rough: 0.03 }));
+      c.restore();
+      bristleStroke(c, [[-50, -h / 2 + 36], [50, -h / 2 + 36], [52, -h / 2 + 66], [-50, -h / 2 + 66], [-50, -h / 2 + 37]], { width: 2.4, color: INK2.nong, alpha: 0.85, bristles: 3, seed: 13, spacing: 1.6 });
+      bristleStroke(c, [[-60, h / 2 - 4], [-48, h / 2 - 30], [48, h / 2 - 30], [60, h / 2 - 4]], { width: 3, color: INK2.nong, alpha: 0.85, bristles: 4, dry: 0.3, seed: 14, spacing: 1.6 });
+      for (const sx of [-1, 1]) inkDot(c, sx * 30, h / 2 - 15, 4.5, { color: INK2.jiao, seed: 15 + sx, bleed: 0.2 });
+    });
+    ctx.drawImage(body, cx - w / 2 - 20, cy - h / 2 - 20);
+    for (const sx of [-1, 1]) {
+      const rx = cx + sx * 34 * s, ry = cy - h / 2 + 51 * s;
+      ctx.save();
+      ctx.fillStyle = rgba(INK2.nong, 0.85);
+      ctx.beginPath();
+      ctx.arc(rx, ry, (sx < 0 ? 15 : 11) * s, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.fillStyle = INK2.paper;
+      ctx.beginPath();
+      ctx.arc(rx, ry, 8 * s, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.translate(rx, ry);
+      ctx.rotate(spin * (sx < 0 ? 1 : 1.35));
+      ctx.strokeStyle = INK2.jiao;
+      ctx.lineWidth = 2.4 * s;
+      ctx.lineCap = "round";
+      for (let i = 0; i < 6; i++) {
+        ctx.rotate(Math.PI / 3);
+        ctx.beginPath();
+        ctx.moveTo(0, -3 * s);
+        ctx.lineTo(0, -7.5 * s);
+        ctx.stroke();
+      }
+      ctx.restore();
+    }
+  }
+  var s03 = {
+    id: "s03",
+    station: ST2,
+    figureStyle: "ink",
+    // 人物（墨色）在中墨山坡、竹丛前：加一圈宣纸色留白边，保证轮廓反差
+    figureRim: { color: "#f7f3e8", width: 5, alpha: 0.95 },
+    freezeBeat: GAG + 2.5,
+    // Outro 展墙：墨线已经铺开，老人还在倒
+    drawBack(ctx, b, env) {
+      const cam = env.cam, cg = env.camAt(GAG);
+      const pw = Math.ceil((X_MAX - X_MIN) * K), ph = Math.ceil(1e3 * K);
+      ctx.drawImage(xuanPaper(pw, ph, { seed: 3 }), X_MIN, 0, X_MAX - X_MIN, 1e3);
+      drawStrip(ctx, skyLayer(), cam);
+      drawBirds(ctx, b, cam);
+      drawStrip(ctx, far1Layer(), cam);
+      drawStrip(ctx, far2Layer(), cam);
+      drawStrip(ctx, mistLayer(), cam - b * 10 / P_MIST);
+      drawStrip(ctx, midLayer(cg), cam);
+      drawStrip(ctx, nearLayer(cg), cam);
+      drawStrip(ctx, roadLayer2(), cam);
+      const off = cg - cam;
+      if (SHED_BOX.x1 + off > X_MIN && SHED_BOX.x0 + off < X_MAX + 60) {
+        const { x0, x1, y0, y1 } = SHED_BOX;
+        ctx.drawImage(shedImage("back"), x0 + off, y0, x1 - x0, y1 - y0);
+        drawSteam(ctx, b, 965 + off, MAN_BASE - 134);
+        const tip = drawMan(ctx, b, MAN_X + off, MAN_BASE);
+        ctx.drawImage(shedImage("front"), x0 + off, y0, x1 - x0, y1 - y0);
+        drawFlag(ctx, b, FLAG_X + off);
+        drawInkLine(ctx, b, env);
+        drawSplash(ctx, b, env);
+        if (b >= T_SPOUT && b < T_STOP + 0.5) {
+          const p2 = [LAND_X + off, lineY(LAND_X) - 2];
+          const p1 = [lerp(tip[0], p2[0], 0.62), tip[1] + 8];
+          const t1 = b < T_LAND ? ease.in(clamp((b - T_SPOUT) / (T_LAND - T_SPOUT))) : 1;
+          const t0 = b < T_STOP ? 0 : ease.in(clamp((b - T_STOP) / 0.45));
+          inkStream(ctx, tip, p1, p2, t0, t1, { w0: 6, w1: 10, wobble: 2.5, phase: b, seed: 3 });
+        }
+      } else {
+        drawInkLine(ctx, b, env);
+      }
+    },
+    drawFront(ctx, b, env) {
+      drawSteps(ctx, b, env);
+      drawStrip(ctx, fgLayer(env.camAt(GAG)), env.cam);
+    },
+    drawFrame(ctx, R) {
+      handscrollFrame(ctx, R);
+    },
+    cardStyle: {
+      ink: INK2.jiao,
+      accent: INK2.seal,
+      bar: false,
+      bgDraw(ctx, x, y, w, h) {
+        const { canvas, pad } = paperCard(w, h, { seed: 31, sealSize: 44, key: "s03-card" });
+        ctx.drawImage(canvas, x - pad, y - pad);
+      }
+    },
+    playerStyle: {
+      ink: INK2.jiao,
+      noteColor: INK2.seal,
+      backdrop: false,
+      plateDraw(ctx, x, y, w, h) {
+        const { canvas, pad } = paperCard(w, h, { seed: 41, seal: false, key: "s03-plate" });
+        ctx.drawImage(canvas, x - pad, y - pad);
+      },
+      drawPlayer(ctx, kind, cx, cy, s, spin) {
+        inkCassette(ctx, cx, cy, s, spin);
+      }
+    }
+  };
 
   // src/scenes/s04.js
   var s04 = placeholderScene(stationByN(4));
@@ -1997,21 +3319,21 @@
   }
 
   // src/scenes/s05.js
-  var ST2 = stationByN(5);
+  var ST3 = stationByN(5);
   var PAPER2 = "#f3ecdc";
   var PAPER_D = "#ebe2cf";
   var LEAD2 = "#8a847a";
   var LEAD_D = "#5f5a52";
   var LEAD_L = "#b4ada1";
-  var P_FAR2 = 0.3;
-  var P_MID = 0.7;
-  var P_FG2 = 1.25;
+  var P_FAR3 = 0.3;
+  var P_MID2 = 0.7;
+  var P_FG3 = 1.25;
   var FAR_BASE = 600;
   var BLOOM = [GAG, GAG + 2];
   var HELMET_SX = 560;
   var BEAR_SX = 1010;
   var SIGN_SX = 860;
-  var R0 = (k) => rng("s05", k);
+  var R02 = (k) => rng("s05", k);
   function jag(x0, x1, yBase, hMin, hMax, R, step = [18, 46]) {
     const pts = [[x0, yBase]];
     let x = x0;
@@ -2043,7 +3365,7 @@
     B2.noFill();
   }
   function farGeo() {
-    const R = R0("far"), out = [];
+    const R = R02("far"), out = [];
     const [x0, x1] = [-1100, 3e3];
     for (let x = x0; x < x1; ) {
       const w = 70 + R() * 150, h = 50 + R() * 170;
@@ -2053,10 +3375,10 @@
     return out;
   }
   function midGeo(c5) {
-    const R = R0("mid"), walls = [];
+    const R = R02("mid"), walls = [];
     for (let x = -1500; x < 3600; ) {
       const w = 220 + R() * 200, h = 200 + R() * 170, base = 790;
-      const sx = x - c5 * P_MID;
+      const sx = x - c5 * P_MID2;
       if (sx > 180 && sx < 760) {
         x += 140;
         continue;
@@ -2074,11 +3396,11 @@
       });
       x += w + 260 + R() * 420;
     }
-    const sign = { x: SIGN_SX + c5 * P_MID };
+    const sign = { x: SIGN_SX + c5 * P_MID2 };
     return { walls, sign };
   }
   function groundGeo(c5) {
-    const R = R0("ground"), stones = [], cracks = [];
+    const R = R02("ground"), stones = [], cracks = [];
     for (let x = -1200; x < 3600; x += 24 + R() * 60) {
       const y = ROAD_Y + 16 + R() * 170, r = 4 + R() * 13;
       const n = 6, pts = [];
@@ -2103,7 +3425,7 @@
   }
   function farLines(env) {
     const g = farGeo();
-    return sketchStrip("s05-far", P_FAR2, {
+    return sketchStrip("s05-far", P_FAR3, {
       y0: 300,
       y1: 640,
       fills: (ctx) => {
@@ -2127,7 +3449,7 @@
   }
   function farWash() {
     const g = farGeo();
-    return washStrip("s05-farw", P_FAR2, {
+    return washStrip("s05-farw", P_FAR3, {
       y0: 300,
       y1: 640,
       wash: (B2) => {
@@ -2141,7 +3463,7 @@
   }
   function midLines(env) {
     const g = midGeo(env.camAt(GAG));
-    return sketchStrip("s05-mid", P_MID, {
+    return sketchStrip("s05-mid", P_MID2, {
       y0: 300,
       y1: 820,
       fills: (ctx, x0, x1) => {
@@ -2157,7 +3479,7 @@
         }
       },
       lines: (B2, x0, x1) => {
-        const R = R0("midlines");
+        const R = R02("midlines");
         B2.set("2H", LEAD_L, 0.7);
         for (let x = x0; x < x1; x += 90 + R() * 160) {
           const y = 660 + R() * 120;
@@ -2218,11 +3540,11 @@
   }
   function midWash(env) {
     const g = midGeo(env.camAt(GAG));
-    return washStrip("s05-midw", P_MID, {
+    return washStrip("s05-midw", P_MID2, {
       y0: 300,
       y1: 820,
       wash: (B2, x0, x1) => {
-        const R = R0("midwash");
+        const R = R02("midwash");
         bWash(B2, [[x0, 650], [x1, 650], [x1, 800], [x0, 800]], "#e3d2ae", 70, 0.08);
         for (const w of g.walls) {
           bWash(B2, w.pts, R() < 0.5 ? "#e9b98f" : "#ecc9a2", 120, 0.2);
@@ -2291,7 +3613,7 @@
           B2.set(s.brick ? "HB" : "2H", s.brick ? LEAD2 : LEAD_L, 0.8);
           bPoly(B2, s.pts, true);
         }
-        const R = R0("glines");
+        const R = R02("glines");
         B2.set("2H", LEAD_L, 0.6);
         for (let x = x0; x < x1; x += 60 + R() * 120) {
           const y = ROAD_Y + 40 + R() * 150;
@@ -2320,7 +3642,7 @@
       wash: (B2, x0, x1) => {
         bWash(B2, [[x0, ROAD_Y], [x1, ROAD_Y], [x1, 1e3], [x0, 1e3]], "#dcc9a3", 80, 0.06);
         for (const s of g.stones) bWash(B2, s.pts, s.brick ? "#d98a62" : "#b9b6c4", 150, 0.05);
-        const R = R0("grass");
+        const R = R02("grass");
         for (const c of g.cracks) {
           const [gx, gy] = c[Math.floor(c.length / 2)];
           bWash(B2, ellipsePts(gx, gy, 22 + R() * 14, 7, 10), "#9ccb6e", 150, 0.15);
@@ -2334,8 +3656,8 @@
   }
   function fgLines(env) {
     const c5 = env.camAt(GAG);
-    const piles = [-260 + c5 * P_FG2, 1330 + c5 * P_FG2, 2600 + c5 * P_FG2];
-    const R = R0("fg");
+    const piles = [-260 + c5 * P_FG3, 1330 + c5 * P_FG3, 2600 + c5 * P_FG3];
+    const R = R02("fg");
     const chunks = [];
     for (const px of piles) for (let k = 0; k < 9; k++) {
       const x = px + (R() - 0.5) * 300, y = 940 + R() * 70, w = 40 + R() * 60, h = 22 + R() * 26, a = (R() - 0.5) * 0.5;
@@ -2343,7 +3665,7 @@
       chunks.push({ pts, brick: R() < 0.5 });
     }
     return {
-      lines: sketchStrip("s05-fg", P_FG2, {
+      lines: sketchStrip("s05-fg", P_FG3, {
         y0: 880,
         y1: 1060,
         fills: (ctx) => {
@@ -2354,7 +3676,7 @@
           for (const c of chunks) bPoly(B2, c.pts, true);
         }
       }),
-      wash: washStrip("s05-fgw", P_FG2, { y0: 880, y1: 1060, wash: (B2) => {
+      wash: washStrip("s05-fgw", P_FG3, { y0: 880, y1: 1060, wash: (B2) => {
         for (const c of chunks) bWash(B2, c.pts, c.brick ? "#d98a62" : "#c2bdb2", 150, 0.08);
       } })
     };
@@ -2365,7 +3687,7 @@
     return [0, 1].map((i) => u * u * u * P[0][i] + 3 * u * u * t * P[1][i] + 3 * u * t * t * P[2][i] + t * t * t * P[3][i]);
   }
   var DOVE_T = (b) => ease.out(clamp((b - BLOOM[0]) / 1.7));
-  function blobPath(path, cx, cy, r, seed, b) {
+  function blobPath2(path, cx, cy, r, seed, b) {
     const n = 56;
     for (let i = 0; i <= n; i++) {
       const a = i / n * Math.PI * 2;
@@ -2380,7 +3702,7 @@
     if (b >= BLOOM[1]) return "all";
     const t = (b - BLOOM[0]) / (BLOOM[1] - BLOOM[0]);
     const p = new Path2D();
-    blobPath(p, HELMET_SX, ROAD_Y - 40, 40 + 2e3 * ease.inOut(t) + grow, 3, b);
+    blobPath2(p, HELMET_SX, ROAD_Y - 40, 40 + 2e3 * ease.inOut(t) + grow, 3, b);
     if (grow === "main") return p;
     const dt = DOVE_T(b);
     for (let s = 0; s <= 10; s++) {
@@ -2388,7 +3710,7 @@
       const age = b - (BLOOM[0] + ts * 1.2);
       if (age <= 0) continue;
       const [x, y] = dovePath(ts);
-      blobPath(p, x, y, 30 + 520 * Math.min(1, age) + grow, s * 7.3, b);
+      blobPath2(p, x, y, 30 + 520 * Math.min(1, age) + grow, s * 7.3, b);
     }
     return p;
   }
@@ -2429,7 +3751,7 @@
     const t = (b - BLOOM[0]) / (BLOOM[1] - BLOOM[0]);
     const r = 40 + 2e3 * ease.inOut(t);
     const edge = new Path2D();
-    blobPath(edge, HELMET_SX, ROAD_Y - 40, r, 3, b);
+    blobPath2(edge, HELMET_SX, ROAD_Y - 40, r, 3, b);
     ctx.strokeStyle = rgba("#a9b9c8", 0.25 * smoothstep(250, 700, r));
     ctx.lineWidth = 6;
     ctx.stroke(edge);
@@ -2474,10 +3796,10 @@
       flower(ctx, sx, ROAD_Y + 6 + hash2(k, 2, 5) * 10, pop * (1.5 + hash2(k, 3, 5) * 0.4), FLOWER_COLS[k % FLOWER_COLS.length], k * 1.3);
     }
   }
-  function helmet(ctx, x, y, rock, color) {
+  function helmet(ctx, x, y, rock2, color) {
     ctx.save();
     ctx.translate(x, y);
-    ctx.rotate(-0.35 + rock);
+    ctx.rotate(-0.35 + rock2);
     const dome = ellipsePts(0, 0, 58, 44, 22, 0, Math.PI, Math.PI * 2);
     const rim = ellipsePts(0, 0, 70, 12, 22);
     poly(ctx, [...dome, [58, 0], [-58, 0]]);
@@ -2525,7 +3847,7 @@
     ctx.fill();
     ctx.restore();
   }
-  function paperCard(ctx, x, y, w, h, seed) {
+  function paperCard2(ctx, x, y, w, h, seed) {
     ctx.save();
     ctx.fillStyle = "rgba(90,80,60,0.12)";
     ctx.fillRect(x + 6, y + 8, w, h);
@@ -2582,7 +3904,7 @@
   }
   var s05 = {
     id: "s05",
-    station: ST2,
+    station: ST3,
     freezeBeat: GAG + 3,
     // Outro 展墙里定格成已经上色的样子
     drawFigure(ctx, fig, b, env) {
@@ -2626,8 +3948,8 @@
       }
       const hx = HELMET_SX + env.camAt(BLOOM[0]) - cam;
       const u = b - BLOOM[0];
-      const rock = u > 0 ? 0.22 * Math.exp(-u * 5) * Math.sin(u * 22) : 0;
-      helmet(ctx, hx, ROAD_Y + 4, rock, coverage(b, hx, ROAD_Y));
+      const rock2 = u > 0 ? 0.22 * Math.exp(-u * 5) * Math.sin(u * 22) : 0;
+      helmet(ctx, hx, ROAD_Y + 4, rock2, coverage(b, hx, ROAD_Y));
       drawFlowers(ctx, b, env);
     },
     drawFront(ctx, b, env) {
@@ -2661,7 +3983,7 @@
       accent: "#8c867b",
       bar: false,
       bgDraw(ctx, x, y, w, h) {
-        paperCard(ctx, x, y, w, h, 101);
+        paperCard2(ctx, x, y, w, h, 101);
       }
     },
     playerStyle: {
@@ -2669,7 +3991,7 @@
       noteColor: "#8c867b",
       backdrop: false,
       plateDraw(ctx, x, y, w, h) {
-        paperCard(ctx, x, y, w, h, 111);
+        paperCard2(ctx, x, y, w, h, 111);
       },
       drawPlayer(ctx, kind, cx, cy, s, spin) {
         sketchCassette(ctx, kind, cx, cy, s, spin);
@@ -2725,7 +4047,7 @@
   }
 
   // src/scenes/s09.js
-  var ST3 = stationByN(9);
+  var ST4 = stationByN(9);
   var CREAM2 = "#efe0bf";
   var PAPER3 = "#f4e8cc";
   var RED = "#d0533c";
@@ -3109,19 +4431,19 @@
   var T_REACH = [GAG - 1.5, GAG];
   var T_GIVE = GAG;
   var T_RISE = [GAG + 2.5, GAG + 3.8];
-  var T_LAND = GAG + 4;
+  var T_LAND2 = GAG + 4;
   var T_LET = GAG + 5.2;
   var s09 = {
     id: "s09",
-    station: ST3,
+    station: ST4,
     // 深蓝人物站在深蓝观众席前：加一圈米白描边（海报套印的白边），保证反差
     figureRim: { color: CREAM2, width: 6, alpha: 1 },
     figureAdjust(b) {
-      if (b >= T_RISE[0] && b < T_LAND) {
-        const up = b < T_RISE[1] ? ease.out((b - T_RISE[0]) / (T_RISE[1] - T_RISE[0])) : 1 - ease.in((b - T_RISE[1]) / (T_LAND - T_RISE[1]));
+      if (b >= T_RISE[0] && b < T_LAND2) {
+        const up = b < T_RISE[1] ? ease.out((b - T_RISE[0]) / (T_RISE[1] - T_RISE[0])) : 1 - ease.in((b - T_RISE[1]) / (T_LAND2 - T_RISE[1]));
         return { pose: "stand", dy: -150 * up, rotate: Math.sin((b - T_RISE[0]) * 9) * 0.04 * up };
       }
-      if (b >= T_LAND && b < T_LAND + 0.12) return { sx: 1.06, dy: 0 };
+      if (b >= T_LAND2 && b < T_LAND2 + 0.12) return { sx: 1.06, dy: 0 };
       return null;
     },
     drawBack(ctx, b, env) {
@@ -3150,7 +4472,7 @@
       const cx = 690 + c5 - cam;
       if (cx > X_MIN - 200 && cx < X_MAX + 200) {
         const reach = smoothstep(T_REACH[0], T_REACH[1], b) * (1 - smoothstep(GAG + 1, GAG + 1.5, b));
-        const laugh = smoothstep(T_RISE[0], T_RISE[1], b) * (1 - smoothstep(T_LAND + 0.5, T_LAND + 1, b)) + Math.max(0, Math.sin(b * Math.PI * 2)) * 0.15;
+        const laugh = smoothstep(T_RISE[0], T_RISE[1], b) * (1 - smoothstep(T_LAND2 + 0.5, T_LAND2 + 1, b)) + Math.max(0, Math.sin(b * Math.PI * 2)) * 0.15;
         ctx.fillStyle = rgba(NAVY, 0.25);
         ellipse(ctx, cx + 4, ROAD_Y + 4, 120, 16);
         ctx.fill();
@@ -3183,15 +4505,15 @@
         hx = fig.x + a[0] - t * 60;
         hy = fig.y + a[1] - t * t * 260 - t * 120;
       }
-      const lift = b >= T_RISE[0] && b < T_LAND ? 1 : 0;
+      const lift = b >= T_RISE[0] && b < T_LAND2 ? 1 : 0;
       const bx = hx + 34 + Math.sin(b * 1.7) * 14, by = hy - 370 - lift * 30;
       string(ctx, hx, hy, bx, by + 42, Math.sin(b * 2) * 18);
       balloon(ctx, bx, by, MUSTARD, 44 + lift * 4, Math.sin(b * 1.7) * 0.1);
-      const dust = smoothstep(T_LAND, T_LAND + 0.05, b) * (1 - smoothstep(T_LAND + 0.1, T_LAND + 0.5, b));
+      const dust = smoothstep(T_LAND2, T_LAND2 + 0.05, b) * (1 - smoothstep(T_LAND2 + 0.1, T_LAND2 + 0.5, b));
       if (dust > 0) {
         ctx.fillStyle = rgba("#c9a46a", 0.8 * dust);
         for (let k = 0; k < 9; k++) {
-          const t = (b - T_LAND) * 3;
+          const t = (b - T_LAND2) * 3;
           circle(ctx, fig.x + (k - 4) * 22 * (1 + t), ROAD_Y - 6 - Math.sin(k) * 10 * t - 8 * t, 5 + k % 3);
           ctx.fill();
         }
