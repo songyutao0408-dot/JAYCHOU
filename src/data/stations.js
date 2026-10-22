@@ -1,4 +1,4 @@
-// 16 站数据。英文名照 PROMPT.md 抄录，做正式标题卡前需逐一核对（enChecked）。
+// 16 站数据（人物全片固定一个形象，站点里不再有年龄）。英文名照 PROMPT.md 抄录，做正式标题卡前需逐一核对（enChecked）。
 // palette：占位阶段用的调色板 [底色, 中间色, 深色, 强调色]，正式画风由各站自定。
 const raw = [
   [2000, 'Jay', 'Jay', '可爱女人', '青春街角', '漫画网点分镜', '他一回头，背景瞬间铺满少女漫画闪光花朵，下一拍复原', ['#f4efe4', '#c9c2b4', '#26232a', '#e8467c']],
@@ -25,7 +25,6 @@ export const STATIONS = raw.map(([year, albumZh, albumEn, song, scene, style, ga
     n,
     id: `s${String(n).padStart(2, '0')}`,
     year,
-    age: 21 + (year - 2000),
     albumZh,
     albumEn,
     enChecked: false,
@@ -39,11 +38,3 @@ export const STATIONS = raw.map(([year, albumZh, albumEn, song, scene, style, ga
 });
 
 export const stationByN = (n) => STATIONS[n - 1];
-
-/** 年龄 → 档位 A/B/C/D */
-export function tierOf(age) {
-  if (age <= 24) return 'A';
-  if (age <= 29) return 'B';
-  if (age <= 37) return 'C';
-  return 'D';
-}

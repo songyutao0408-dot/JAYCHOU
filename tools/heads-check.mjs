@@ -1,4 +1,4 @@
-// 换头对照表：四档头像（A/B/C/D）在 16 种画风下各渲染一张，拼成一张图。
+// 换头对照表：头像（assets/heads/three-quarter.png，没有则为占位头）在 16 种画风下各渲染一张，拼成一张图。
 //   node tools/heads-check.mjs [--out 文件]
 // 先自动运行 build-heads.mjs，把 assets/heads/ 的最新素材打包进预览页。
 // 加 --src 目录 可以临时用别的素材目录检查（不会改动 assets/）。

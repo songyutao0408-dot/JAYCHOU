@@ -1,16 +1,18 @@
-// 换头接口。头部单独渲染，优先用我（用户）提供的素材，没有才画原创占位头。
-// 素材：assets/heads/<A|B|C|D>/<front|side|three-quarter>.png（1024×1024 透明底，脖子根部对齐底边中点）
-//       assets/heads/<档位>/<场景id>.png  某站专用，优先级最高（场景 id 如 s01、s11、intro）
-// 构建：node tools/build-heads.mjs 把素材缩成 512 并以 base64 写进 preview/build/heads.js。
-// 自动处理（按画风）：silhouette 皮影剪影 + 镂空；lines 刻线重画；ink 灰度晕染；tone 调色板映射。
+// 换头接口。头部单独渲染，优先用用户提供的素材，没有才画原创占位头。
+// 素材：assets/heads/three-quarter.png（1024×1024 透明底，脖子底部对齐底边中点）——全片唯一的头像
+//       assets/heads/<场景id>.png  某站专用，优先级最高（场景 id 如 intro、s01、s11）
+// 构建：node tools/build-heads.mjs 把素材以 base64 写进 preview/build/heads.js。
+// 自动处理（按画风）：silhouette 皮影剪影 + 镂空；lines 刻线重画；ink 灰度晕染；tone 调色板映射；fade 向纸色褪淡。
 import { makeCanvas, memo } from '../kit/canvas.js';
 import { hexToRgb, HEADPHONE_RED } from '../kit/color.js';
-import { ellipse, smoothPath, circle, roundRect } from '../kit/shapes.js';
+import { ellipse, smoothPath, circle, roundRect, capsule } from '../kit/shapes.js';
 import { hash2 } from '../kit/rng.js';
 
-const images = new Map(); // 'A/side' → HTMLImageElement
-export const HEAD_BOX = 112; // 素材 1024 方框在人物身上对应的边长（单位）
-export const VIEWS = ['side', 'three-quarter', 'front'];
+const images = new Map(); // 'three-quarter' / 's01' → HTMLImageElement
+export const MAIN_HEAD = 'three-quarter';
+export const HEAD_BOX = 145;                 // 素材 1024 方框在人物身上对应的边长（单位）
+export const HEAD_TILT = (12 * Math.PI) / 180; // 素材整体向下转 12°（以脖子底部为轴，下巴压低、视线平视）
+export const PLACEHOLDER_SCALE = 1.28;       // 占位头的漫画比例
 
 export async function loadHeadAssets() {
   const list = (typeof window !== 'undefined' && window.__HEADS) || {};
@@ -24,28 +26,34 @@ export async function loadHeadAssets() {
 }
 export const headAssetKeys = () => [...images.keys()];
 
-/** 按优先级找素材：场景专用 → 指定朝向 → 同档其他朝向 → null（用占位头）。 */
-export function findHeadAsset(tier, view, sceneId) {
-  if (sceneId && images.has(`${tier}/${sceneId}`)) return { key: `${tier}/${sceneId}`, img: images.get(`${tier}/${sceneId}`) };
-  for (const v of [view, ...VIEWS.filter((x) => x !== view)]) {
-    if (images.has(`${tier}/${v}`)) return { key: `${tier}/${v}`, img: images.get(`${tier}/${v}`), mirrored: false };
-  }
+/** 按优先级找素材：场景专用 → three-quarter.png → null（用占位头）。 */
+export function findHeadAsset(sceneId) {
+  if (sceneId && images.has(sceneId)) return { key: sceneId, img: images.get(sceneId) };
+  if (images.has(MAIN_HEAD)) return { key: MAIN_HEAD, img: images.get(MAIN_HEAD) };
   return null;
 }
 
 // ---------- 素材的画风处理 ----------
-const PROC = 256;
+const PROC = 384;
 function lumOf(d, i) { return (0.299 * d[i] + 0.587 * d[i + 1] + 0.114 * d[i + 2]) / 255; }
 
-/** treatment: { type:'none'|'tone'|'ink'|'silhouette'|'lines', palette:[暗,中,亮], color, seed } */
+/** treatment: { type:'none'|'fade'|'tone'|'ink'|'silhouette'|'lines', palette:[暗,中,亮], color, toward, k } */
 export function processedHead(key, img, treatment) {
   const tkey = JSON.stringify(treatment || { type: 'none' });
   return memo(`headproc|${key}|${tkey}`, () => {
+    const type = treatment?.type || 'none';
+    if (type === 'none') return img;
     const c = makeCanvas(PROC, PROC);
     const ctx = c.getContext('2d', { willReadFrequently: true });
     ctx.drawImage(img, 0, 0, PROC, PROC);
-    const type = treatment?.type || 'none';
-    if (type === 'none') return c;
+    if (type === 'fade') {
+      // 整体向某个颜色褪淡（与身体的 color 映射一致，比如 Intro 的铅笔纸面）
+      ctx.globalCompositeOperation = 'source-atop';
+      ctx.globalAlpha = treatment.k ?? 0.4;
+      ctx.fillStyle = treatment.toward || '#efe6d2';
+      ctx.fillRect(0, 0, PROC, PROC);
+      return c;
+    }
     const im = ctx.getImageData(0, 0, PROC, PROC);
     const d = im.data;
     if (type === 'tone' || type === 'ink') {
@@ -119,7 +127,7 @@ export function processedHead(key, img, treatment) {
 
 // ---------- 原创占位头 ----------
 // 坐标：脖子根部为 (0,0)，朝右，y 向下。占位造型刻意做成简单的漫画小人，不像任何真实人物。
-export const SKIN = '#f0d2b4';
+export const SKIN = '#f9c7a0'; // 与头像亮部肤色一致
 
 export function drawPlaceholderHead(ctx, look, o = {}) {
   const { view = 'side', ink = '#1d1b1a', lw = 2.6, skin = SKIN, flat = false, hairColor } = o;
@@ -140,7 +148,7 @@ export function drawPlaceholderHead(ctx, look, o = {}) {
   ctx.fill();
   if (!flat) {
     // 胡茬：下颌区域的淡灰
-    if (look.stubble > 0) {
+    if ((look.stubble || 0) > 0) {
       ctx.save();
       ctx.clip();
       ctx.fillStyle = `rgba(70,64,60,${0.04 + look.stubble * 0.16})`;
@@ -193,11 +201,11 @@ export function drawPlaceholderHead(ctx, look, o = {}) {
   ctx.beginPath(); ctx.arc(earX + 0.5, -45, 2.6, Math.PI * 0.6, Math.PI * 1.5); ctx.stroke();
   ctx.lineWidth = lw;
   // 鬓角：和头发连成一片，盖住耳朵上沿
-  ctx.fillStyle = look.grey > 0 ? mixGrey(hc, look.grey) : hc;
+  ctx.fillStyle = hc;
   const sx = tq ? -6 : 1;
   smoothPath(ctx, [[sx - 16, -66], [sx + 9, -66], [sx + 8, -56], [sx + 5, -49], [sx + 2, -55], [sx - 10, -55]], true);
   ctx.fill();
-  if (look.grey > 0) {
+  if ((look.grey || 0) > 0) {
     ctx.fillStyle = mixGrey(hc, look.grey * 0.75);
     smoothPath(ctx, [[-24, -58], [-14, -64], [-12, -56], [-20, -48]], true);
     ctx.fill();
@@ -266,18 +274,30 @@ function mixGrey(hex, k) {
 }
 
 /**
- * 画头：有素材画素材（按 treatment 处理），否则画占位头。
- * 坐标同上：脖子根部 (0,0)。
+ * 画头：有素材画素材（按 treatment 处理），否则画占位头（含一小段脖子）。
+ * 坐标：原点在身体的脖子底部（领口），朝右，y 向下。tilt 为头部相对身体的额外转角。
  */
 export function drawHead(ctx, look, o = {}) {
-  const { view = 'side', sceneId, treatment } = o;
-  const asset = findHeadAsset(look.tier, view, sceneId);
+  const { sceneId, treatment, tilt = 0, skin = SKIN, ink = '#1d1b1a', lw = 1.2 } = o;
+  const asset = findHeadAsset(sceneId);
+  ctx.save();
   if (asset) {
+    ctx.rotate(tilt + HEAD_TILT);
     const img = processedHead(asset.key, asset.img, treatment);
+    ctx.imageSmoothingQuality = 'high';
     ctx.drawImage(img, -HEAD_BOX / 2, -HEAD_BOX, HEAD_BOX, HEAD_BOX);
+    ctx.restore();
     return true;
   }
-  drawPlaceholderHead(ctx, look, o);
+  // 占位头：先画脖子，再在脖子顶端画头
+  ctx.lineWidth = lw; ctx.strokeStyle = ink;
+  capsule(ctx, [0, 0], [3, -14], 7.5, 7);
+  ctx.fillStyle = skin; ctx.fill(); ctx.stroke();
+  ctx.translate(3, -8);
+  ctx.rotate(tilt);
+  ctx.scale(PLACEHOLDER_SCALE, PLACEHOLDER_SCALE);
+  drawPlaceholderHead(ctx, look, { ...o, lw: lw / PLACEHOLDER_SCALE * 1.4 });
+  ctx.restore();
   return false;
 }
 

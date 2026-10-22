@@ -88,7 +88,6 @@
       n,
       id: `s${String(n).padStart(2, "0")}`,
       year,
-      age: 21 + (year - 2e3),
       albumZh,
       albumEn,
       enChecked: false,
@@ -101,12 +100,6 @@
     };
   });
   var stationByN = (n) => STATIONS[n - 1];
-  function tierOf(age) {
-    if (age <= 24) return "A";
-    if (age <= 29) return "B";
-    if (age <= 37) return "C";
-    return "D";
-  }
 
   // src/kit/color.js
   function hexToRgb(hex) {
@@ -308,16 +301,6 @@
   };
   var TAU = Math.PI * 2;
 
-  // src/rig/treatments.js
-  var LINES = { 5: "#0e0d0c", 7: "#2a2219", 9: "#2b2a3a" };
-  function headTreatmentFor(st) {
-    const [bg, mid, ink] = st.palette;
-    if (st.n === 11) return { type: "silhouette", color: "#3a1d10" };
-    if (LINES[st.n]) return { type: "lines", color: LINES[st.n], paper: st.n === 5 ? "#f6f4ee" : mix(bg, "#ffffff", 0.3) };
-    if (st.n === 3) return { type: "ink", palette: ["#1d1d1b", "#8d8a82", "#f2eee3"] };
-    return { type: "tone", palette: [ink, mix(mid, "#e8c8a8", 0.5), mix(bg, "#ffffff", 0.5)] };
-  }
-
   // src/scenes/placeholder.js
   function placeholderScene(st) {
     const [bg, mid, ink, acc2] = st.palette;
@@ -331,7 +314,8 @@
     return {
       id: st.id,
       station: st,
-      figureStyle: () => ({ headTreatment: headTreatmentFor(st) }),
+      // 占位阶段身体不按画风变色，头像也保持原样，保证肤色一致；正式场景再按画风处理（见 heads-check）
+      figureStyle: () => ({ headTreatment: { type: "none" } }),
       drawBack(ctx, b, env) {
         const cam = env.cam;
         const g = ctx.createLinearGradient(0, 0, 0, ROAD_Y);
@@ -672,8 +656,10 @@
 
   // src/rig/head.js
   var images = /* @__PURE__ */ new Map();
-  var HEAD_BOX = 112;
-  var VIEWS = ["side", "three-quarter", "front"];
+  var MAIN_HEAD = "three-quarter";
+  var HEAD_BOX = 145;
+  var HEAD_TILT = 12 * Math.PI / 180;
+  var PLACEHOLDER_SCALE = 1.28;
   async function loadHeadAssets() {
     const list = typeof window !== "undefined" && window.__HEADS || {};
     await Promise.all(Object.entries(list).map(([k, src]) => new Promise((res) => {
@@ -688,25 +674,30 @@
     return images.size;
   }
   var headAssetKeys = () => [...images.keys()];
-  function findHeadAsset(tier, view, sceneId) {
-    if (sceneId && images.has(`${tier}/${sceneId}`)) return { key: `${tier}/${sceneId}`, img: images.get(`${tier}/${sceneId}`) };
-    for (const v of [view, ...VIEWS.filter((x) => x !== view)]) {
-      if (images.has(`${tier}/${v}`)) return { key: `${tier}/${v}`, img: images.get(`${tier}/${v}`), mirrored: false };
-    }
+  function findHeadAsset(sceneId) {
+    if (sceneId && images.has(sceneId)) return { key: sceneId, img: images.get(sceneId) };
+    if (images.has(MAIN_HEAD)) return { key: MAIN_HEAD, img: images.get(MAIN_HEAD) };
     return null;
   }
-  var PROC = 256;
+  var PROC = 384;
   function lumOf(d, i) {
     return (0.299 * d[i] + 0.587 * d[i + 1] + 0.114 * d[i + 2]) / 255;
   }
   function processedHead(key, img, treatment) {
     const tkey = JSON.stringify(treatment || { type: "none" });
     return memo(`headproc|${key}|${tkey}`, () => {
+      const type = treatment?.type || "none";
+      if (type === "none") return img;
       const c = makeCanvas(PROC, PROC);
       const ctx = c.getContext("2d", { willReadFrequently: true });
       ctx.drawImage(img, 0, 0, PROC, PROC);
-      const type = treatment?.type || "none";
-      if (type === "none") return c;
+      if (type === "fade") {
+        ctx.globalCompositeOperation = "source-atop";
+        ctx.globalAlpha = treatment.k ?? 0.4;
+        ctx.fillStyle = treatment.toward || "#efe6d2";
+        ctx.fillRect(0, 0, PROC, PROC);
+        return c;
+      }
       const im = ctx.getImageData(0, 0, PROC, PROC);
       const d = im.data;
       if (type === "tone" || type === "ink") {
@@ -791,7 +782,7 @@
       return c;
     });
   }
-  var SKIN = "#f0d2b4";
+  var SKIN = "#f9c7a0";
   function drawPlaceholderHead(ctx, look, o = {}) {
     const { view = "side", ink = "#1d1b1a", lw = 2.6, skin = SKIN, flat = false, hairColor } = o;
     const hc = hairColor || look.colors.hair;
@@ -806,7 +797,7 @@
     ctx.fillStyle = skin;
     ctx.fill();
     if (!flat) {
-      if (look.stubble > 0) {
+      if ((look.stubble || 0) > 0) {
         ctx.save();
         ctx.clip();
         ctx.fillStyle = `rgba(70,64,60,${0.04 + look.stubble * 0.16})`;
@@ -856,11 +847,11 @@
     ctx.arc(earX + 0.5, -45, 2.6, Math.PI * 0.6, Math.PI * 1.5);
     ctx.stroke();
     ctx.lineWidth = lw;
-    ctx.fillStyle = look.grey > 0 ? mixGrey(hc, look.grey) : hc;
+    ctx.fillStyle = hc;
     const sx = tq ? -6 : 1;
     smoothPath(ctx, [[sx - 16, -66], [sx + 9, -66], [sx + 8, -56], [sx + 5, -49], [sx + 2, -55], [sx - 10, -55]], true);
     ctx.fill();
-    if (look.grey > 0) {
+    if ((look.grey || 0) > 0) {
       ctx.fillStyle = mixGrey(hc, look.grey * 0.75);
       smoothPath(ctx, [[-24, -58], [-14, -64], [-12, -56], [-20, -48]], true);
       ctx.fill();
@@ -973,34 +964,52 @@
     return `rgb(${r + (G[0] - r) * k},${g + (G[1] - g) * k},${b + (G[2] - b) * k})`;
   }
   function drawHead(ctx, look, o = {}) {
-    const { view = "side", sceneId, treatment } = o;
-    const asset = findHeadAsset(look.tier, view, sceneId);
+    const { sceneId, treatment, tilt = 0, skin = SKIN, ink = "#1d1b1a", lw = 1.2 } = o;
+    const asset = findHeadAsset(sceneId);
+    ctx.save();
     if (asset) {
+      ctx.rotate(tilt + HEAD_TILT);
       const img = processedHead(asset.key, asset.img, treatment);
+      ctx.imageSmoothingQuality = "high";
       ctx.drawImage(img, -HEAD_BOX / 2, -HEAD_BOX, HEAD_BOX, HEAD_BOX);
+      ctx.restore();
       return true;
     }
-    drawPlaceholderHead(ctx, look, o);
+    ctx.lineWidth = lw;
+    ctx.strokeStyle = ink;
+    capsule(ctx, [0, 0], [3, -14], 7.5, 7);
+    ctx.fillStyle = skin;
+    ctx.fill();
+    ctx.stroke();
+    ctx.translate(3, -8);
+    ctx.rotate(tilt);
+    ctx.scale(PLACEHOLDER_SCALE, PLACEHOLDER_SCALE);
+    drawPlaceholderHead(ctx, look, { ...o, lw: lw / PLACEHOLDER_SCALE * 1.4 });
+    ctx.restore();
     return false;
   }
 
   // src/rig/painter.js
   var add = (a, b, k = 1) => [a[0] + b[0] * k, a[1] + b[1] * k];
-  var HEAD_SCALE = 1.28;
   var DEFAULT_STYLE = {
-    ink: "#1d1b1a",
-    lw: 2.6,
-    skin: SKIN,
+    ink: "#1a1514",
+    lw: 1.2,
+    // 与头像轮廓线粗细一致（头像约 7px/1024 × 145 单位 ≈ 1 单位）
+    skin: null,
+    // null = 用 LOOK 里与头像一致的肤色
     red: HEADPHONE_RED,
     color: (hex) => hex,
-    // 衣服颜色映射（比如单色画风把彩色压成灰阶）
-    shade: true,
-    view: "side",
+    // 颜色映射（比如单色画风把彩色压成灰阶）；肤色也走这里，保持与头像处理一致
+    shade: 0.78,
+    // 暗部 = 底色 × shade；设为 1 关闭明暗
     headTreatment: { type: "none" }
   };
   function drawFigure(ctx, pose, look, style = {}) {
     const S = { ...DEFAULT_STYLE, ...style };
     const C = (k) => S.color(look.colors[k]);
+    const skin = S.skin || C("skin");
+    const skinShade = S.skin ? darken(S.skin, 0.86) : C("skinShade");
+    const shadeOf = (c) => S.shade >= 1 ? c : darken(c, S.shade);
     ctx.save();
     ctx.lineJoin = "round";
     ctx.lineCap = "round";
@@ -1009,326 +1018,206 @@
     const b = look.build;
     const f = [Math.cos(pose.tilt), Math.sin(pose.tilt)];
     const up = pose.up;
-    const limb = (a, c, ra, rc, fill) => {
-      capsule(ctx, a, c, ra, rc);
-      ctx.fillStyle = fill;
+    const cel = (path, base, shade, dx = 3.5, dy = -2) => {
+      path();
+      ctx.fillStyle = shade;
       ctx.fill();
+      if (shade !== base) {
+        ctx.save();
+        path();
+        ctx.clip();
+        ctx.translate(dx, dy);
+        path();
+        ctx.fillStyle = base;
+        ctx.fill();
+        ctx.restore();
+      }
+      path();
       ctx.stroke();
     };
-    const shoe = (leg2, near) => {
+    const shoe = (leg2) => {
       const { heel, toe, ankle } = leg2;
-      const col = S.color(look.colors.shoe);
-      const sole = S.color(look.colors.sole);
-      const big = look.shoes === "canvas" ? 1.05 : 1;
+      const col = C("shoe"), sole = C("sole");
       const dx = toe[0] - heel[0], dy = toe[1] - heel[1];
       const L = Math.hypot(dx, dy), ux = dx / L, uy = dy / L;
       const nx = uy, ny = -ux;
-      const h = 11 * big;
+      const h = 15;
       const pts = [
         add(heel, [nx, ny], 1),
-        add(heel, [nx, ny], h * 0.9),
-        add(ankle, [nx, ny], 5),
+        add(heel, [nx, ny], h * 0.95),
+        add(ankle, [nx, ny], 9),
         [toe[0] + nx * h * 0.55 - ux * 6, toe[1] + ny * h * 0.55 - uy * 6],
-        add(toe, [ux, uy], 3 * big),
+        add(toe, [ux, uy], 3),
         add(toe, [nx, ny], 1)
       ];
-      smoothPath(ctx, pts, true);
-      ctx.fillStyle = col;
+      cel(() => smoothPath(ctx, pts, true), col, shadeOf(col), 2.5, -2.5);
+      const soleP = [add(heel, [nx, ny], 4.5), add(heel, [ux, uy], -1.5), add(toe, [ux, uy], 3), add(toe, [nx, ny], 4.5)];
+      poly(ctx, soleP);
+      ctx.fillStyle = sole;
       ctx.fill();
       ctx.stroke();
-      ctx.lineWidth = S.lw * 1.6;
-      ctx.strokeStyle = sole;
-      ctx.beginPath();
-      ctx.moveTo(heel[0] - ux, heel[1] - uy + 1);
-      ctx.lineTo(toe[0] + ux * 3, toe[1] + uy * 3 + 1);
-      ctx.stroke();
-      ctx.strokeStyle = S.ink;
-      ctx.lineWidth = S.lw;
-      if (look.shoes === "canvas") {
-        ctx.lineWidth = S.lw * 0.6;
-        ctx.beginPath();
-        ctx.moveTo(ankle[0] + 2, ankle[1] - 1);
-        ctx.lineTo(toe[0] - ux * 10 + nx * 6, toe[1] - uy * 10 + ny * 6);
-        ctx.stroke();
-        ctx.lineWidth = S.lw;
-      }
     };
     const leg = (L, near) => {
       const pants = near ? C("pants") : darken(C("pants"), 0.82);
-      shoe(L, near);
-      tube(ctx, [L.hip, L.knee, L.ankle], [15 * b, 12 * b, 10 * b]);
-      ctx.fillStyle = pants;
-      ctx.fill();
-      ctx.stroke();
+      cel(() => tube(ctx, [L.hip, L.knee, L.ankle], [15 * b, 12 * b, 10 * b]), pants, shadeOf(pants));
+      shoe(L);
     };
     const arm = (A, near) => {
       const sleeve = near ? C("outer") : darken(C("outer"), 0.8);
       const hx = A.hand[0] + (A.hand[0] - A.wrist[0]) * 0.6, hy = A.hand[1] + (A.hand[1] - A.wrist[1]) * 0.6;
-      ellipse(ctx, hx, hy, 9, 10.5, A.angle);
-      ctx.fillStyle = near ? S.skin : darken(S.skin, 0.88);
-      ctx.fill();
+      const handC = near ? skin : darken(skin, 0.9);
+      cel(() => ellipse(ctx, hx, hy, 9, 10.5, A.angle), handC, near ? skinShade : darken(skinShade, 0.9), 2.5, -2);
+      const w2 = [A.elbow[0] + (A.wrist[0] - A.elbow[0]) * 0.96, A.elbow[1] + (A.wrist[1] - A.elbow[1]) * 0.96];
+      cel(() => tube(ctx, [A.shoulder, A.elbow, w2], [13 * b, 11 * b, 10 * b]), sleeve, mix(sleeve, "#000000", 0.35));
+      ctx.save();
+      ctx.lineWidth = S.lw * 0.8;
+      const d = [w2[0] - A.elbow[0], w2[1] - A.elbow[1]], dl = Math.hypot(...d) || 1;
+      const n = [-d[1] / dl, d[0] / dl];
+      const c0 = [w2[0] - d[0] / dl * 5, w2[1] - d[1] / dl * 5];
+      ctx.beginPath();
+      ctx.moveTo(c0[0] + n[0] * 10, c0[1] + n[1] * 10);
+      ctx.lineTo(c0[0] - n[0] * 10, c0[1] - n[1] * 10);
       ctx.stroke();
-      const cuff = look.outfit === "trench" || look.outfit === "jacket" ? 0.96 : 0.9;
-      const w2 = [A.elbow[0] + (A.wrist[0] - A.elbow[0]) * cuff, A.elbow[1] + (A.wrist[1] - A.elbow[1]) * cuff];
-      tube(ctx, [A.shoulder, A.elbow, w2], [13 * b, 11 * b, 10 * b]);
-      ctx.fillStyle = sleeve;
-      ctx.fill();
-      ctx.stroke();
+      ctx.restore();
     };
     arm(pose.arms.far, false);
     leg(pose.legs.far, false);
-    if (look.outfit === "trench") coatTail(ctx, pose, look, S, C, f, up, true);
     leg(pose.legs.near, true);
     const hip = pose.hip, sh = pose.shoulder, ch = pose.chest;
     const back = 25 * b, front = 23 * b;
-    const hemY = look.outfit === "trench" ? 0 : 8;
-    const hipB = add(add(hip, up, -hemY), f, -back + 1);
-    const hipF = add(add(hip, up, -hemY), f, front - 1);
+    const hipB = add(add(hip, up, -8), f, -back + 1);
+    const hipF = add(add(hip, up, -8), f, front - 1);
     const torso = [
       hipB,
-      add(add(ch, f, -back - 1), up, 0),
+      add(ch, f, -back - 1),
       add(add(sh, f, -back + 6), up, 4),
       add(sh, up, 9),
       add(add(sh, f, front - 4), up, 3),
       add(ch, f, front + 3),
       hipF
     ];
-    smoothPath(ctx, torso, true);
-    ctx.fillStyle = C("outer");
-    ctx.fill();
+    const outer = C("outer");
+    cel(() => smoothPath(ctx, torso, true), outer, mix(outer, "#000000", 0.35), 6, -3);
     ctx.save();
+    smoothPath(ctx, torso, true);
     ctx.clip();
-    torsoDetail(ctx, pose, look, S, C, f, up, back, front);
+    torsoDetail(ctx, pose, S, C, f, up, front);
     ctx.restore();
     smoothPath(ctx, torso, true);
     ctx.stroke();
-    if (look.outfit === "trench") coatTail(ctx, pose, look, S, C, f, up, false);
     const neckBase = add(sh, up, 6);
-    const neckTop = pose.neckTop;
-    ctx.lineWidth = S.lw * 2.2;
-    ctx.strokeStyle = S.red;
-    ctx.beginPath();
     const farCup = add(add(neckBase, f, -15), up, 2);
     const nearCup = add(add(neckBase, f, 13), up, 2);
+    const band = () => {
+      ctx.lineWidth = 5.5;
+      ctx.strokeStyle = S.ink;
+      ctx.stroke();
+      ctx.lineWidth = 3.4;
+      ctx.strokeStyle = S.red;
+      ctx.stroke();
+      ctx.strokeStyle = S.ink;
+      ctx.lineWidth = S.lw;
+    };
+    ctx.beginPath();
     ctx.moveTo(farCup[0], farCup[1]);
     ctx.quadraticCurveTo(neckBase[0] - f[0] * 30 + up[0] * 22, neckBase[1] - f[1] * 30 + up[1] * 22, neckBase[0] + up[0] * 18, neckBase[1] + up[1] * 18);
-    ctx.stroke();
-    ctx.strokeStyle = S.ink;
-    ctx.lineWidth = S.lw;
-    ellipse(ctx, farCup[0], farCup[1], 8, 10.5, pose.tilt + 0.5);
-    ctx.fillStyle = darken(S.red, 0.75);
-    ctx.fill();
-    ctx.stroke();
-    limb(neckBase, neckTop, 7.5, 7, S.skin);
+    band();
+    cel(() => ellipse(ctx, farCup[0], farCup[1], 8, 10.5, pose.tilt + 0.5), darken(S.red, 0.8), darken(S.red, 0.6), 2, -1.5);
     ctx.save();
-    ctx.translate(neckTop[0], neckTop[1] + 6);
-    ctx.rotate(pose.headTilt);
-    ctx.scale(HEAD_SCALE, HEAD_SCALE);
-    drawHead(ctx, look, { view: S.view, ink: S.ink, lw: S.lw, skin: S.skin, sceneId: S.sceneId, treatment: S.headTreatment, hairColor: S.color(look.colors.hair) });
+    ctx.translate(neckBase[0], neckBase[1]);
+    ctx.rotate(pose.tilt);
+    ctx.translate(0, 5);
+    drawHead(ctx, look, {
+      sceneId: S.sceneId,
+      treatment: S.headTreatment,
+      tilt: pose.headTilt - pose.tilt,
+      ink: S.ink,
+      lw: S.lw,
+      skin,
+      hairColor: C("hair")
+    });
     ctx.restore();
-    ctx.lineWidth = S.lw * 2.2;
-    ctx.strokeStyle = S.red;
+    const collar = [add(add(sh, f, -back + 8), up, 2), add(add(sh, f, -12), up, 15), add(add(sh, f, 2), up, 13), add(add(sh, f, 6), up, 4)];
+    cel(() => smoothPath(ctx, collar, true), outer, mix(outer, "#000000", 0.35), 3, -1);
     ctx.beginPath();
     ctx.moveTo(neckBase[0] + up[0] * 18, neckBase[1] + up[1] * 18);
     ctx.quadraticCurveTo(nearCup[0] + up[0] * 16 + f[0] * 4, nearCup[1] + up[1] * 16 + f[1] * 4, nearCup[0], nearCup[1]);
+    band();
+    cel(() => ellipse(ctx, nearCup[0], nearCup[1], 9, 12, pose.tilt - 0.35), S.red, darken(S.red, 0.72), 2.5, -2);
+    ellipse(ctx, nearCup[0] + 1.5, nearCup[1] - 1, 4.5, 6.5, pose.tilt - 0.35);
+    ctx.fillStyle = darken(S.red, 0.62);
+    ctx.fill();
+    ctx.strokeStyle = "rgba(255,255,255,0.55)";
+    ctx.lineWidth = 1.6;
+    ctx.beginPath();
+    ctx.ellipse(nearCup[0], nearCup[1], 6.5, 9.5, pose.tilt - 0.35, -2.6, -1.6);
     ctx.stroke();
     ctx.strokeStyle = S.ink;
     ctx.lineWidth = S.lw;
-    ellipse(ctx, nearCup[0], nearCup[1], 9, 12, pose.tilt - 0.35);
-    ctx.fillStyle = S.red;
-    ctx.fill();
-    ctx.stroke();
-    ellipse(ctx, nearCup[0] + 1.5, nearCup[1] - 1, 4.5, 6.5, pose.tilt - 0.35);
-    ctx.fillStyle = darken(S.red, 0.7);
-    ctx.fill();
     arm(pose.arms.near, true);
     ctx.restore();
   }
-  function torsoDetail(ctx, pose, look, S, C, f, up, back, front) {
+  function torsoDetail(ctx, pose, S, C, f, up, front) {
     const hip = pose.hip, sh = pose.shoulder;
-    ctx.lineWidth = S.lw * 0.7;
-    if (look.outfit === "tee-plaid") {
-      ctx.strokeStyle = S.color(look.colors.outer2);
-      ctx.globalAlpha = 0.75;
-      for (let k = -6; k <= 6; k++) {
-        ctx.lineWidth = k % 2 ? 1.6 : 3.4;
-        const a = add(add(hip, up, k * 16), f, -40), c = add(add(hip, up, k * 16), f, 40);
-        ctx.beginPath();
-        ctx.moveTo(...a);
-        ctx.lineTo(...c);
-        ctx.stroke();
-        const d = add(add(hip, f, k * 9), up, -20), e = add(add(hip, f, k * 9), up, 130);
-        ctx.beginPath();
-        ctx.moveTo(...d);
-        ctx.lineTo(...e);
-        ctx.stroke();
-      }
-      ctx.globalAlpha = 1;
-      const strip = [add(add(hip, f, front - 9), up, -12), add(add(hip, f, front + 10), up, -12), add(add(sh, f, front + 10), up, 10), add(add(sh, f, front - 6), up, 10)];
-      poly(ctx, strip);
-      ctx.fillStyle = C("top");
-      ctx.fill();
-      ctx.strokeStyle = S.ink;
-      ctx.lineWidth = S.lw * 0.8;
-      ctx.beginPath();
-      ctx.moveTo(...add(add(hip, f, front - 9), up, -10));
-      ctx.lineTo(...add(add(sh, f, front - 6), up, 4));
-      ctx.stroke();
-    } else if (look.outfit === "jacket") {
-      ctx.strokeStyle = "rgba(255,255,255,0.18)";
-      ctx.beginPath();
-      ctx.moveTo(...add(add(hip, f, front - 4), up, -8));
-      ctx.lineTo(...add(add(sh, f, front - 6), up, 2));
-      ctx.stroke();
-      ctx.fillStyle = S.color(look.colors.outer2);
-      poly(ctx, [add(add(hip, f, -40), up, 0), add(add(hip, f, 40), up, 0), add(add(hip, f, 40), up, 14), add(add(hip, f, -40), up, 14)]);
-      ctx.fill();
-      ctx.fillStyle = C("top");
-      poly(ctx, [add(add(sh, f, front - 14), up, 8), add(add(sh, f, front + 4), up, 8), add(add(sh, f, front - 2), up, -14)]);
-      ctx.fill();
-    } else if (look.outfit === "cardigan") {
-      ctx.strokeStyle = "rgba(0,0,0,0.12)";
-      ctx.lineWidth = 1.4;
-      for (let k = 0; k < 16; k++) {
-        const a = add(add(hip, up, k * 7.5), f, -40), c = add(add(hip, up, k * 7.5), f, 40);
-        ctx.setLineDash([3, 3]);
-        ctx.beginPath();
-        ctx.moveTo(...a);
-        ctx.lineTo(...c);
-        ctx.stroke();
-      }
-      ctx.setLineDash([]);
-      ctx.fillStyle = C("top");
-      poly(ctx, [add(add(sh, f, front - 16), up, 10), add(add(sh, f, front + 6), up, 10), add(add(sh, f, front + 2), up, -46)]);
-      ctx.fill();
-      ctx.fillStyle = darken(C("outer"), 0.8);
-      for (let k = 0; k < 3; k++) {
-        circle(ctx, ...add(add(hip, f, front - 2), up, 26 + k * 20), 2.2);
-        ctx.fill();
-      }
-    } else if (look.outfit === "trench") {
-      ctx.strokeStyle = "rgba(0,0,0,0.25)";
-      ctx.lineWidth = S.lw * 0.8;
-      ctx.fillStyle = S.color(look.colors.outer2);
-      poly(ctx, [add(add(hip, f, -40), up, 22), add(add(hip, f, 40), up, 22), add(add(hip, f, 40), up, 32), add(add(hip, f, -40), up, 32)]);
-      ctx.fill();
-      ctx.stroke();
-      ctx.fillStyle = darken(C("outer"), 0.9);
-      poly(ctx, [add(add(sh, f, front - 18), up, 8), add(add(sh, f, front + 6), up, 8), add(add(sh, f, front + 4), up, -40), add(add(sh, f, front - 6), up, -24)]);
-      ctx.fill();
-      ctx.stroke();
-      ctx.fillStyle = C("top");
-      poly(ctx, [add(add(sh, f, front - 10), up, 9), add(add(sh, f, front + 2), up, 9), add(add(sh, f, front - 2), up, -10)]);
-      ctx.fill();
-    }
-  }
-  function coatTail(ctx, pose, look, S, C, f, up, behind) {
-    const hip = pose.hip;
-    const down = [-up[0], -up[1]];
-    const L = BONES.thigh * 1.05;
-    const kn = pose.legs.near.knee, kf = pose.legs.far.knee;
-    const fx = Math.max(kn[0], kf[0]) - hip[0], bx = Math.min(kn[0], kf[0]) - hip[0];
-    if (behind) {
-      const pts2 = [add(hip, f, -24), [hip[0] + bx * 0.9 - 30, hip[1] + L + 4], [hip[0] + fx * 0.4, hip[1] + L + 8], add(hip, f, 10)];
-      poly(ctx, pts2);
-      ctx.fillStyle = darken(C("outer"), 0.78);
-      ctx.fill();
-      ctx.stroke();
-      return;
-    }
-    const pts = [add(add(hip, up, 26), f, -26), add(hip, f, -27), [hip[0] + bx * 0.55 - 30, hip[1] + L], [hip[0] + fx * 0.75 + 26, hip[1] + L + 2], add(hip, f, 26), add(add(hip, up, 26), f, 25)];
-    smoothPath(ctx, pts, true);
-    ctx.fillStyle = C("outer");
+    const tee = C("top");
+    const strip = [add(add(hip, f, front - 11), up, -12), add(add(hip, f, front + 12), up, -12), add(add(sh, f, front + 12), up, 12), add(add(sh, f, front - 8), up, 12)];
+    poly(ctx, strip);
+    ctx.fillStyle = darken(tee, 0.86);
     ctx.fill();
-    ctx.stroke();
+    const lit = strip.map((p) => [p[0] + 2.5, p[1] - 1.5]);
+    poly(ctx, lit);
+    ctx.fillStyle = tee;
+    ctx.fill();
+    ctx.lineWidth = S.lw;
+    ctx.strokeStyle = S.ink;
     ctx.beginPath();
-    const mid = [hip[0] + (fx * 0.75 + bx * 0.55) / 2 + 4, hip[1] + L + 1];
-    ctx.moveTo(...add(hip, f, 14));
-    ctx.lineTo(...mid);
+    ctx.moveTo(...add(add(hip, f, front - 11), up, -10));
+    ctx.lineTo(...add(add(sh, f, front - 8), up, 6));
     ctx.stroke();
-    void down;
+    const outer2 = C("outer2");
+    poly(ctx, [add(add(hip, f, -40), up, -10), add(add(hip, f, front - 10), up, -10), add(add(hip, f, front - 10), up, 4), add(add(hip, f, -40), up, 4)]);
+    ctx.fillStyle = outer2;
+    ctx.fill();
+    ctx.beginPath();
+    ctx.moveTo(...add(add(hip, f, -40), up, 4));
+    ctx.lineTo(...add(add(hip, f, front - 10), up, 4));
+    ctx.stroke();
+    ctx.lineWidth = S.lw * 0.8;
+    ctx.beginPath();
+    ctx.moveTo(...add(add(hip, f, 2), up, 34));
+    ctx.lineTo(...add(add(hip, f, 10), up, 18));
+    ctx.stroke();
   }
   function darken(hex, k) {
     if (!hex.startsWith("#")) return hex;
     const v = hex.replace("#", "");
     const r = parseInt(v.slice(0, 2), 16) * k, g = parseInt(v.slice(2, 4), 16) * k, b2 = parseInt(v.slice(4, 6), 16) * k;
-    return `rgb(${r | 0},${g | 0},${b2 | 0})`;
+    return "#" + [r, g, b2].map((x) => Math.round(Math.max(0, Math.min(255, x))).toString(16).padStart(2, "0")).join("");
   }
 
   // src/rig/look.js
-  var RANGE = { A: [21, 24], B: [25, 29], C: [31, 37], D: [43, 47] };
-  function lookFor(age) {
-    const tier = tierOf(age);
-    const [a0, a1] = RANGE[tier];
-    const t = clamp((age - a0) / (a1 - a0));
-    const L = { age, tier, t };
-    switch (tier) {
-      case "A":
-        Object.assign(L, {
-          build: lerp(0.86, 0.93, t),
-          posture: lerp(-0.01, 0, t),
-          hair: "fringe",
-          hairVol: lerp(1, 0.9, t),
-          stubble: 0,
-          grey: 0,
-          glasses: false,
-          outfit: "tee-plaid",
-          shoes: "canvas",
-          bounce: 1.15,
-          armK: 1.05,
-          colors: { top: "#f7f5ef", outer: "#3f6fae", outer2: "#c8423b", pants: "#4a5d7a", shoe: "#f2f0e8", sole: "#d8d2c4", hair: "#1c1a19" }
-        });
-        break;
-      case "B":
-        Object.assign(L, {
-          build: lerp(0.97, 1.02, t),
-          posture: lerp(0, 0.01, t),
-          hair: "short",
-          hairVol: lerp(0.9, 0.82, t),
-          stubble: 0,
-          grey: 0,
-          glasses: false,
-          outfit: "jacket",
-          shoes: "sneaker",
-          bounce: 1,
-          armK: 1,
-          colors: { top: "#e9e6df", outer: "#1d1f24", outer2: "#2d3038", pants: "#2e3442", shoe: "#22252b", sole: "#e8e6e0", hair: "#191817" }
-        });
-        break;
-      case "C":
-        Object.assign(L, {
-          build: lerp(1.03, 1.08, t),
-          posture: 0.01,
-          hair: "slick",
-          hairVol: lerp(0.86, 0.8, t),
-          stubble: lerp(0.25, 0.5, t),
-          grey: lerp(0, 0.08, t),
-          glasses: true,
-          outfit: "cardigan",
-          shoes: "loafer",
-          bounce: 0.9,
-          armK: 0.92,
-          colors: { top: "#efe9dc", outer: "#7a6a58", outer2: "#5f5244", pants: "#3b3a3f", shoe: "#6b4529", sole: "#3a2a1f", hair: "#1d1b1a" }
-        });
-        break;
-      default:
-        Object.assign(L, {
-          build: lerp(1.08, 1.1, t),
-          posture: lerp(0.015, 0.02, t),
-          hair: "slick-grey",
-          hairVol: lerp(0.82, 0.78, t),
-          stubble: lerp(0.7, 0.85, t),
-          grey: lerp(0.35, 0.6, t),
-          glasses: false,
-          outfit: "trench",
-          shoes: "leather",
-          bounce: 0.7,
-          armK: 0.78,
-          colors: { top: "#e6e1d6", outer: "#a68a62", outer2: "#8a7150", pants: "#2f2e33", shoe: "#2b211b", sole: "#16110e", hair: "#22201e" }
-        });
+  var LOOK = {
+    build: 1,
+    posture: 5e-3,
+    hair: "short",
+    hairVol: 0.88,
+    // 只用于占位头
+    outfit: "jacket",
+    shoes: "sneaker",
+    bounce: 1,
+    armK: 1,
+    colors: {
+      skin: "#f9c7a0",
+      skinShade: "#e2a47e",
+      top: "#f4f1ea",
+      outer: "#24272e",
+      outer2: "#33373f",
+      pants: "#34405a",
+      shoe: "#f2f0ea",
+      sole: "#cfc9bc",
+      hair: "#1b1918"
     }
-    return L;
-  }
+  };
 
   // src/scenes/intro.js
   var PAPER = "#efe6d2";
@@ -1344,13 +1233,12 @@
   var T_SUB1 = B(2, 3);
   var T_SUB2 = B(3, 1);
   var T_OUT = B(3, 1);
-  var SUBTITLES = ["2000 \u5E74\uFF0C\u4ED6 21 \u5C81\u3002", "\u524D\u9762\u662F\u5341\u516D\u5F20\u4E13\u8F91\u3002"];
+  var SUBTITLES = ["2000 \u5E74\uFF0C\u4ED6\u51FA\u53D1\u4E86\u3002", "\u524D\u9762\u662F\u5341\u516D\u5F20\u4E13\u8F91\u3002"];
   var pencilStyle = {
     ink: INK,
-    lw: 2.5,
-    skin: mix("#f0d2b4", PAPER, 0.35),
+    lw: 1.3,
     color: (hex) => mix(hex, PAPER, 0.42),
-    headTreatment: { type: "tone", palette: [INK, "#9a8d7c", PAPER] }
+    headTreatment: { type: "fade", toward: PAPER, k: 0.42 }
   };
   function deckStrokes() {
     return bakeBrush("intro-deck", DECK.w * K + 20, DECK.h * K + 20, (Bx) => {
@@ -1403,7 +1291,6 @@
   var intro = {
     id: "intro",
     station: null,
-    age: 21,
     figureStyle: () => pencilStyle,
     figureAdjust(b, env) {
       if (b < T_OUT) return { hidden: true };
@@ -1477,8 +1364,8 @@
         ctx.save();
         ctx.translate(LABEL.dx + LABEL.w * 0.5, LABEL.dy + LABEL.h - 6);
         ctx.scale(0.24, 0.24);
-        const pose = figurePose(WALK_START, lookFor(21));
-        drawFigure(ctx, pose, lookFor(21), { ...pencilStyle, lw: 4 });
+        const pose = figurePose(WALK_START, LOOK);
+        drawFigure(ctx, pose, LOOK, { ...pencilStyle, lw: 3 });
         ctx.restore();
       }
       ctx.restore();
@@ -1977,7 +1864,6 @@
   var TAIL = 0.4;
   var sceneOf = (sec) => SCENES[sec.id];
   var camDist = (gb) => dist(Math.max(gb, WALK_START));
-  var ageOf = (sec) => sec.station ? stationByN(sec.station).age : sceneOf(sec).age || 21;
   function envFor(sec, gb, extra = {}) {
     const scene = sceneOf(sec);
     let b = gb - sec.start;
@@ -1992,7 +1878,7 @@
       gbq: sec.start + b,
       cam: camDist(gb) - camDist(sec.start),
       // 镜头平移不量化
-      look: lookFor(ageOf(sec)),
+      look: LOOK,
       ...extra
     };
   }
@@ -2255,6 +2141,16 @@
     requestAnimationFrame(tick);
   }
 
+  // src/rig/treatments.js
+  var LINES = { 5: "#0e0d0c", 7: "#2a2219", 9: "#2b2a3a" };
+  function headTreatmentFor(st) {
+    const [bg, mid, ink] = st.palette;
+    if (st.n === 11) return { type: "silhouette", color: "#3a1d10" };
+    if (LINES[st.n]) return { type: "lines", color: LINES[st.n], paper: st.n === 5 ? "#f6f4ee" : mix(bg, "#ffffff", 0.3) };
+    if (st.n === 3) return { type: "ink", palette: ["#1d1d1b", "#8d8a82", "#f2eee3"] };
+    return { type: "tone", palette: [ink, mix(mid, "#e8c8a8", 0.5), mix(bg, "#ffffff", 0.5)] };
+  }
+
   // src/main/sheets.js
   function contactSheet(ctx, canvas, { items, cols = 6, cellW = 400, title = "" }) {
     const cellH = Math.round(cellW * 9 / 16), labelH = 34, pad = 10, titleH = title ? 56 : 0;
@@ -2280,92 +2176,76 @@
     });
     return sheet;
   }
-  function headsCheck({ cell = 190 } = {}) {
-    const tiers = ["A", "B", "C", "D"];
-    const ages = { A: 22, B: 27, C: 34, D: 45 };
-    const headW = 90, headH = 70, pad = 6;
-    const sheet = makeCanvas(headW + STATIONS.length * (cell + pad) + pad, headH + tiers.length * (cell + pad) + pad + 40);
+  function headsCheck({ cell = 300 } = {}) {
+    const cols = 4, rows = 4, pad = 8, refW = 420, top = 64;
+    const sheet = makeCanvas(refW + pad + cols * (cell + pad) + pad, top + rows * (cell + pad) + 44);
     const sc = sheet.getContext("2d");
     sc.fillStyle = "#202020";
     sc.fillRect(0, 0, sheet.width, sheet.height);
-    font(sc, 20, { family: SANS, weight: 700 });
+    const src = findHeadAsset(null);
+    font(sc, 28, { family: SANS, weight: 700 });
     sc.fillStyle = "#eee";
+    sc.fillText(`\u6362\u5934\u5BF9\u7167\u8868 \xB7 \u7D20\u6750\uFF1A${src ? `assets/heads/${src.key}.png` : "\u6CA1\u6709\u7D20\u6750\uFF08\u539F\u521B\u5360\u4F4D\u5934\uFF09"} \xB7 \u5DF2\u6309\u8116\u5B50\u5E95\u90E8\u5411\u4E0B\u65CB\u8F6C 12\xB0`, 16, 42);
+    const drawAt = (x, y, w, h, bg, treatment, sceneId, label) => {
+      sc.fillStyle = bg;
+      sc.fillRect(x, y, w, h);
+      sc.save();
+      sc.beginPath();
+      sc.rect(x, y, w, h);
+      sc.clip();
+      const side = Math.min(w, h);
+      sc.translate(x + w / 2 - side * 0.04, y + (h + side) / 2 - 6);
+      const k = side * 0.95 / 160;
+      sc.scale(k, k);
+      drawHead(sc, LOOK, { sceneId, treatment });
+      sc.restore();
+      font(sc, 18, { family: SANS, weight: 700 });
+      sc.fillStyle = "rgba(0,0,0,0.55)";
+      sc.fillRect(x, y, w, 30);
+      sc.fillStyle = "#fff";
+      sc.fillText(label, x + 8, y + 22);
+    };
+    drawAt(pad, top, refW - pad, rows * (cell + pad) - pad, "#f3efe6", { type: "none" }, null, "\u539F\u56FE\uFF08\u4E0D\u5904\u7406\uFF09");
     STATIONS.forEach((st, i) => {
-      const x = headW + pad + i * (cell + pad);
-      sc.fillText(`${st.n}`, x + 4, 26);
-      font(sc, 16, { family: SANS, weight: 400 });
-      sc.fillText(st.style.slice(0, 10), x + 4, 52);
-      font(sc, 20, { family: SANS, weight: 700 });
-    });
-    tiers.forEach((tier, r) => {
-      const y = headH + r * (cell + pad);
-      font(sc, 34, { family: SANS, weight: 700 });
-      sc.fillStyle = "#eee";
-      sc.fillText(tier, 30, y + cell / 2 + 12);
-      STATIONS.forEach((st, i) => {
-        const x = headW + pad + i * (cell + pad);
-        const look = lookFor(ages[tier]);
-        const scene = SCENES[st.id];
-        const style = scene.figureStyle ? scene.figureStyle(4, { look, st }) : {};
-        const treatment = style.headTreatment || headTreatmentFor(st);
-        sc.fillStyle = st.palette[0];
-        sc.fillRect(x, y, cell, cell);
-        sc.save();
-        sc.beginPath();
-        sc.rect(x, y, cell, cell);
-        sc.clip();
-        sc.translate(x + cell / 2, y + cell - 12);
-        sc.scale(1.45, 1.45);
-        drawHead(sc, look, { view: "side", sceneId: st.id, treatment, ink: style.ink || "#1d1b1a" });
-        sc.restore();
-        const src = findHeadAsset(tier, "side", st.id);
-        font(sc, 14, { family: SANS, weight: 400 });
-        sc.fillStyle = mix(st.palette[2], "#888888", 0.3);
-        sc.fillText(src ? src.key : "\u5360\u4F4D", x + 4, y + 16);
-      });
+      const x = refW + pad + i % cols * (cell + pad), y = top + Math.floor(i / cols) * (cell + pad);
+      const t = headTreatmentFor(st);
+      const own = findHeadAsset(st.id);
+      const tag = own && own.key === st.id ? " \xB7 \u4E13\u7528\u5934\u50CF" : "";
+      drawAt(x, y, cell, cell, st.palette[0], t, st.id, `${st.n} ${st.style.slice(0, 9)} \xB7 ${t.type}${tag}`);
     });
     font(sc, 18, { family: SANS, weight: 400 });
     sc.fillStyle = "#aaa";
-    sc.fillText("\u5DE6\u4E0A\u89D2\u5C0F\u5B57\uFF1A\u6240\u7528\u7D20\u6750\uFF08\u6863\u4F4D/\u671D\u5411\u6216\u573A\u666F id\uFF09\uFF0C\u300C\u5360\u4F4D\u300D\u8868\u793A\u6CA1\u6709\u7D20\u6750\u3001\u753B\u539F\u521B\u5360\u4F4D\u5934\u3002", headW, sheet.height - 14);
+    sc.fillText("\u5904\u7406\u65B9\u5F0F\uFF1Atone \u8C03\u8272\u677F\u6620\u5C04\uFF08\u4FDD\u7559\u7EA2\u8272\uFF09\xB7 ink \u7070\u5EA6\u6655\u67D3 \xB7 lines \u523B\u7EBF\u6392\u7EBF \xB7 silhouette \u76AE\u5F71\u526A\u5F71 + \u9542\u7A7A\u3002\u5404\u7AD9\u6B63\u5F0F\u753B\u98CE\u505A\u597D\u540E\u4F1A\u518D\u7EC6\u8C03\u3002", 16, sheet.height - 14);
     return sheet;
   }
-  function rigSheet({ cell = 230, phases = 8, gb0 = 20 } = {}) {
-    const tiers = [["A", 22], ["B", 27], ["C", 34], ["D", 45]];
-    const rowH = 420, pad = 10, left = 80;
-    const sheet = makeCanvas(left + phases * cell + pad, tiers.length * rowH + 60);
+  function rigSheet({ cell = 300, phases = 8, gb0 = 20, scale = 1.25 } = {}) {
+    const rowH = 600, left = 20;
+    const sheet = makeCanvas(left + phases * cell + 20, rowH + 60);
     const sc = sheet.getContext("2d");
     sc.fillStyle = "#f3efe6";
     sc.fillRect(0, 0, sheet.width, sheet.height);
     font(sc, 22, { family: SANS, weight: 700 });
     sc.fillStyle = "#333";
-    for (let i = 0; i < phases; i++) sc.fillText(`\u7B2C ${(gb0 + i * 2 / phases).toFixed(2)} \u62CD`, left + i * cell + 40, 34);
-    tiers.forEach(([tier, age], r) => {
-      const look = lookFor(age);
-      const y0 = 60 + r * rowH + rowH - 30;
-      font(sc, 40, { family: SANS, weight: 700 });
-      sc.fillStyle = "#333";
-      sc.fillText(tier, 24, y0 - 150);
-      font(sc, 20, { family: SANS, weight: 400 });
-      sc.fillText(`${age} \u5C81`, 20, y0 - 116);
-      for (let i = 0; i < phases; i++) {
-        const gb = gb0 + i * 2 / phases;
-        const x0 = left + i * cell + cell / 2;
-        sc.strokeStyle = "#999";
-        sc.lineWidth = 2;
-        sc.beginPath();
-        sc.moveTo(x0 - cell / 2 + 6, y0);
-        sc.lineTo(x0 + cell / 2 - 6, y0);
-        sc.stroke();
-        const off = dist(gb) % 40;
-        sc.fillStyle = "#bbb";
-        for (let k = -4; k <= 4; k++) sc.fillRect(x0 + k * 40 * 1 - off, y0 + 4, 3, 10);
-        sc.save();
-        sc.translate(x0, y0);
-        sc.scale(1, 1);
-        drawFigure(sc, figurePose(gb, look), look, {});
-        sc.restore();
-      }
-    });
+    for (let i = 0; i < phases; i++) sc.fillText(`\u7B2C ${(gb0 + i * 2 / phases).toFixed(2)} \u62CD`, left + i * cell + 90, 34);
+    const y0 = 60 + rowH - 40;
+    for (let i = 0; i < phases; i++) {
+      const gb = gb0 + i * 2 / phases;
+      const x0 = left + i * cell + cell / 2;
+      sc.strokeStyle = "#999";
+      sc.lineWidth = 2;
+      sc.beginPath();
+      sc.moveTo(x0 - cell / 2 + 6, y0);
+      sc.lineTo(x0 + cell / 2 - 6, y0);
+      sc.stroke();
+      const off = dist(gb) * scale % 40;
+      sc.fillStyle = "#bbb";
+      for (let k = -4; k <= 4; k++) sc.fillRect(x0 + k * 40 - off, y0 + 4, 3, 10);
+      sc.save();
+      sc.translate(x0, y0);
+      sc.scale(scale, scale);
+      drawFigure(sc, figurePose(gb, LOOK), LOOK, {});
+      sc.restore();
+    }
     return sheet;
   }
 

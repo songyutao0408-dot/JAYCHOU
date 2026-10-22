@@ -1,11 +1,11 @@
 // 主调度：成片时间 t → 一帧画面（纯函数）。
 // 段落切换用「穿过画框」：下一站以一幅画的形式从右侧出现、变大，路面始终对齐；
-// 第 1 拍强拍时画框左沿正好扫过人物，人物在边沿两侧分别用新旧两种画风绘制。
+// 第 1 拍强拍时画框左沿正好扫过人物，人物在边沿两侧分别用新旧两种画风绘制（形象不变，只换画风）。
 import { W, H, K, OX, ROAD_Y, CHAR_X, applyUnits } from './layout.js';
 import { beatAt, sections, sectionAt, sectionById, quantizeBeats, TOTAL_BEATS } from '../beat/time.js';
 import { SCENES } from '../scenes/index.js';
 import { stationByN } from '../data/stations.js';
-import { lookFor } from '../rig/look.js';
+import { LOOK } from '../rig/look.js';
 import { drawFigure } from '../rig/painter.js';
 import { dist } from './walk.js';
 import { pushAt, PUSH_AMOUNT } from './camera.js';
@@ -24,7 +24,6 @@ export const TAIL = 0.4; // 强拍后 0.4 拍画框完全扫出画面
 const sceneOf = (sec) => SCENES[sec.id];
 /** 镜头累计平移：人物开始走（Intro 第 3 小节）之前镜头不动。 */
 const camDist = (gb) => dist(Math.max(gb, WALK_START));
-const ageOf = (sec) => (sec.station ? stationByN(sec.station).age : sceneOf(sec).age || 21);
 
 /** 某段落在全局拍位 gb 时的环境。 */
 export function envFor(sec, gb, extra = {}) {
@@ -36,7 +35,7 @@ export function envFor(sec, gb, extra = {}) {
     sec, scene, st, gb, b,
     gbq: sec.start + b,
     cam: camDist(gb) - camDist(sec.start), // 镜头平移不量化
-    look: lookFor(ageOf(sec)),
+    look: LOOK,
     ...extra,
   };
 }

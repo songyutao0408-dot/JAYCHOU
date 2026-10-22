@@ -21,11 +21,11 @@
 | --- | --- |
 | `src/beat/` | 节拍网格。**`config.js` 里的 `BPM`、`FIRST_DOWNBEAT` 是全片唯一的时间来源** |
 | `src/kit/` | 共用绘图工具包（随机数、噪声、纸纹、形状、文字、p5.brush 烘焙；刻线 / 水墨 / 水彩共用渲染在第二、三阶段加入） |
-| `src/rig/` | 人物骨骼木偶、步态、年龄参数（四档）、默认画法、换头接口 |
+| `src/rig/` | 人物骨骼木偶、步态、固定形象（一个头像 + 一套服装）、默认画法、换头接口 |
 | `src/scenes/` | 每站一个场景文件（第一阶段为标名占位）、Intro |
 | `src/main/` | 调度、「穿过画框」转场、镜头、Outro、预览页、自查拼图 |
 | `src/hud/` | 标题卡、播放器（磁带 / CD / 手机）、字幕 |
-| `assets/heads/` | 你的头像素材（规格见该目录 README） |
+| `assets/heads/` | 你的头像素材 `three-quarter.png`（规格见该目录 README） |
 | `tools/` | 构建、截图、接触表、成片渲染、换头对照表、合成配乐 |
 | `briefs/` | 每站美术简报 |
 | `preview/` | 预览页用到的库和打包结果（双击即用，已提交） |
@@ -38,8 +38,8 @@ npm run build                 # 打包 src/ → preview/build/bundle.js（加 --
 npm test                      # 节拍网格测试 + 场景时间写法检查（只许用小节/拍）
 npm run shot -- s01:5 12.3    # 截图（时间写法：秒数 / b:全局拍 / s03:5 第 3 站第 5 拍 / intro:9 / outro:17）
 npm run contact               # 全片接触表 → render/contact.png
-npm run heads-check           # 四档头像 × 16 种画风对照表 → render/heads-check.png
-npm run rig-sheet             # 人物四档 × 步态相位检查表
+npm run heads-check           # 头像 × 16 种画风对照表 → render/heads-check.png
+npm run rig-sheet             # 人物步态相位检查表
 npm run render -- --fps 30    # 成片（无音轨）→ render/film_1080p_30fps.mp4；--height 480 出小样
 npm run mux -- --video render/film_1080p_30fps.mp4 --audio 我的配乐.wav   # 把配乐合成进去
 ```

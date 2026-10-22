@@ -12,7 +12,7 @@ import { clamp, ease, lerp, smoothstep, keyframes } from '../kit/math.js';
 import { B } from '../beat/time.js';
 import { figurePose, WALK_START } from '../main/figure.js';
 import { drawFigure } from '../rig/painter.js';
-import { lookFor } from '../rig/look.js';
+import { LOOK } from '../rig/look.js';
 
 const PAPER = '#efe6d2';
 const INK = '#3a3129';
@@ -30,12 +30,13 @@ const T_CLICK = B(2, 1);
 const T_SUB1 = B(2, 3);
 const T_SUB2 = B(3, 1);
 const T_OUT = B(3, 1); // 人物走出标签
-export const SUBTITLES = ['2000 年，他 21 岁。', '前面是十六张专辑。'];
+export const SUBTITLES = ['2000 年，他出发了。', '前面是十六张专辑。'];
 
+// 铅笔纸面：身体所有颜色（含肤色）向纸色褪 42%，头像用同样的比例褪淡，保持一致
 const pencilStyle = {
-  ink: INK, lw: 2.5, skin: mix('#f0d2b4', PAPER, 0.35),
+  ink: INK, lw: 1.3,
   color: (hex) => mix(hex, PAPER, 0.42),
-  headTreatment: { type: 'tone', palette: [INK, '#9a8d7c', PAPER] },
+  headTreatment: { type: 'fade', toward: PAPER, k: 0.42 },
 };
 
 function deckStrokes() {
@@ -94,7 +95,6 @@ function cassetteY(b) {
 export const intro = {
   id: 'intro',
   station: null,
-  age: 21,
   figureStyle: () => pencilStyle,
   figureAdjust(b, env) {
     if (b < T_OUT) return { hidden: true };
@@ -165,8 +165,8 @@ export const intro = {
       ctx.save();
       ctx.translate(LABEL.dx + LABEL.w * 0.5, LABEL.dy + LABEL.h - 6);
       ctx.scale(0.24, 0.24);
-      const pose = figurePose(WALK_START, lookFor(21));
-      drawFigure(ctx, pose, lookFor(21), { ...pencilStyle, lw: 4 });
+      const pose = figurePose(WALK_START, LOOK);
+      drawFigure(ctx, pose, LOOK, { ...pencilStyle, lw: 3 });
       ctx.restore();
     }
     ctx.restore();

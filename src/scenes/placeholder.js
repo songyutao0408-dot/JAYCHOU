@@ -7,7 +7,6 @@ import { font, SERIF, SANS } from '../kit/text.js';
 import { roundRect, circle, poly } from '../kit/shapes.js';
 import { pulse, smoothstep } from '../kit/math.js';
 import { SB } from '../beat/time.js';
-import { headTreatmentFor } from '../rig/treatments.js';
 
 export function placeholderScene(st) {
   const [bg, mid, ink, acc] = st.palette;
@@ -24,7 +23,8 @@ export function placeholderScene(st) {
   return {
     id: st.id,
     station: st,
-    figureStyle: () => ({ headTreatment: headTreatmentFor(st) }),
+    // 占位阶段身体不按画风变色，头像也保持原样，保证肤色一致；正式场景再按画风处理（见 heads-check）
+    figureStyle: () => ({ headTreatment: { type: 'none' } }),
     drawBack(ctx, b, env) {
       const cam = env.cam;
       // 天空

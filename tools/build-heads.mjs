@@ -1,5 +1,8 @@
-// 把 assets/heads/<档位>/*.png 缩到 512×512 并以 base64 写进 preview/build/heads.js，
+// 把 assets/heads/*.png 以 base64 写进 preview/build/heads.js，
 // 这样双击打开预览页也能读到头像（file:// 下画布不会被「污染」）。
+//   assets/heads/three-quarter.png  全片唯一的头像
+//   assets/heads/<场景id>.png        某站专用（如 s01.png、s11.png、intro.png），优先级最高
+// 统一缩到 768×768（屏幕上头部约 160px，留足推近和 Outro 余量）。
 // 用法：node tools/build-heads.mjs [--src 其他目录]
 import fs from 'node:fs';
 import path from 'node:path';
@@ -9,13 +12,17 @@ import { launch } from './lib/browser.mjs';
 const args = parseArgs();
 const SRC = path.resolve(args.src || path.join(ROOT, 'assets/heads'));
 const OUT = path.join(ROOT, 'preview/build/heads.js');
-const SIZE = 512;
+const SIZE = 768;
+const VALID = /^(three-quarter|intro|outro|s\d\d)$/;
 
 const files = [];
-for (const tier of ['A', 'B', 'C', 'D']) {
-  const dir = path.join(SRC, tier);
-  if (!fs.existsSync(dir)) continue;
-  for (const f of fs.readdirSync(dir)) if (/\.png$/i.test(f)) files.push({ key: `${tier}/${f.replace(/\.png$/i, '')}`, file: path.join(dir, f) });
+if (fs.existsSync(SRC)) {
+  for (const f of fs.readdirSync(SRC)) {
+    if (!/\.png$/i.test(f)) continue;
+    const key = f.replace(/\.png$/i, '');
+    if (!VALID.test(key)) { console.warn(`跳过 ${f}：文件名应为 three-quarter.png 或 <场景id>.png（intro、s01…s16）`); continue; }
+    files.push({ key, file: path.join(SRC, f) });
+  }
 }
 
 const out = {};

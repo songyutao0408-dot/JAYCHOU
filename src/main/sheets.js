@@ -1,9 +1,9 @@
-// 自查用的拼图：接触表（多帧缩略图 + 标签）与换头对照表（四档 × 16 种画风）。
+// 自查用的拼图：接触表（多帧缩略图 + 标签）、换头对照表（头像 × 16 种画风）、人物步态检查表。
 import { renderAt, renderBeat } from './film.js';
 import { makeCanvas } from '../kit/canvas.js';
 import { font, SANS } from '../kit/text.js';
 import { STATIONS } from '../data/stations.js';
-import { lookFor } from '../rig/look.js';
+import { LOOK } from '../rig/look.js';
 import { drawHead, findHeadAsset } from '../rig/head.js';
 import { headTreatmentFor } from '../rig/treatments.js';
 import { SCENES } from '../scenes/index.js';
@@ -35,93 +35,78 @@ export function contactSheet(ctx, canvas, { items, cols = 6, cellW = 400, title 
   return sheet;
 }
 
-/** 四档头像在 16 种画风下各渲染一张。 */
-export function headsCheck({ cell = 190 } = {}) {
-  const tiers = ['A', 'B', 'C', 'D'];
-  const ages = { A: 22, B: 27, C: 34, D: 45 };
-  const headW = 90, headH = 70, pad = 6;
-  const sheet = makeCanvas(headW + STATIONS.length * (cell + pad) + pad, headH + tiers.length * (cell + pad) + pad + 40);
+/** 换头对照表：这张头像（或占位头）在 16 种画风下的自动处理，左侧是原图。 */
+export function headsCheck({ cell = 300 } = {}) {
+  const cols = 4, rows = 4, pad = 8, refW = 420, top = 64;
+  const sheet = makeCanvas(refW + pad + cols * (cell + pad) + pad, top + rows * (cell + pad) + 44);
   const sc = sheet.getContext('2d');
   sc.fillStyle = '#202020';
   sc.fillRect(0, 0, sheet.width, sheet.height);
-  font(sc, 20, { family: SANS, weight: 700 });
+  const src = findHeadAsset(null);
+  font(sc, 28, { family: SANS, weight: 700 });
   sc.fillStyle = '#eee';
+  sc.fillText(`换头对照表 · 素材：${src ? `assets/heads/${src.key}.png` : '没有素材（原创占位头）'} · 已按脖子底部向下旋转 12°`, 16, 42);
+  // 原图
+  const drawAt = (x, y, w, h, bg, treatment, sceneId, label) => {
+    sc.fillStyle = bg;
+    sc.fillRect(x, y, w, h);
+    sc.save();
+    sc.beginPath(); sc.rect(x, y, w, h); sc.clip();
+    const side = Math.min(w, h);
+    sc.translate(x + w / 2 - side * 0.04, y + (h + side) / 2 - 6);
+    const k = (side * 0.95) / 160;
+    sc.scale(k, k);
+    drawHead(sc, LOOK, { sceneId, treatment });
+    sc.restore();
+    font(sc, 18, { family: SANS, weight: 700 });
+    sc.fillStyle = 'rgba(0,0,0,0.55)';
+    sc.fillRect(x, y, w, 30);
+    sc.fillStyle = '#fff';
+    sc.fillText(label, x + 8, y + 22);
+  };
+  drawAt(pad, top, refW - pad, rows * (cell + pad) - pad, '#f3efe6', { type: 'none' }, null, '原图（不处理）');
   STATIONS.forEach((st, i) => {
-    const x = headW + pad + i * (cell + pad);
-    sc.fillText(`${st.n}`, x + 4, 26);
-    font(sc, 16, { family: SANS, weight: 400 });
-    sc.fillText(st.style.slice(0, 10), x + 4, 52);
-    font(sc, 20, { family: SANS, weight: 700 });
-  });
-  tiers.forEach((tier, r) => {
-    const y = headH + r * (cell + pad);
-    font(sc, 34, { family: SANS, weight: 700 });
-    sc.fillStyle = '#eee';
-    sc.fillText(tier, 30, y + cell / 2 + 12);
-    STATIONS.forEach((st, i) => {
-      const x = headW + pad + i * (cell + pad);
-      const look = lookFor(ages[tier]);
-      const scene = SCENES[st.id];
-      const style = scene.figureStyle ? scene.figureStyle(4, { look, st }) : {};
-      const treatment = style.headTreatment || headTreatmentFor(st);
-      sc.fillStyle = st.palette[0];
-      sc.fillRect(x, y, cell, cell);
-      sc.save();
-      sc.beginPath(); sc.rect(x, y, cell, cell); sc.clip();
-      sc.translate(x + cell / 2, y + cell - 12);
-      sc.scale(1.45, 1.45);
-      drawHead(sc, look, { view: 'side', sceneId: st.id, treatment, ink: style.ink || '#1d1b1a' });
-      sc.restore();
-      const src = findHeadAsset(tier, 'side', st.id);
-      font(sc, 14, { family: SANS, weight: 400 });
-      sc.fillStyle = mix(st.palette[2], '#888888', 0.3);
-      sc.fillText(src ? src.key : '占位', x + 4, y + 16);
-    });
+    const x = refW + pad + (i % cols) * (cell + pad), y = top + Math.floor(i / cols) * (cell + pad);
+    const t = headTreatmentFor(st);
+    const own = findHeadAsset(st.id);
+    const tag = own && own.key === st.id ? ' · 专用头像' : '';
+    drawAt(x, y, cell, cell, st.palette[0], t, st.id, `${st.n} ${st.style.slice(0, 9)} · ${t.type}${tag}`);
   });
   font(sc, 18, { family: SANS, weight: 400 });
   sc.fillStyle = '#aaa';
-  sc.fillText('左上角小字：所用素材（档位/朝向或场景 id），「占位」表示没有素材、画原创占位头。', headW, sheet.height - 14);
+  sc.fillText('处理方式：tone 调色板映射（保留红色）· ink 灰度晕染 · lines 刻线排线 · silhouette 皮影剪影 + 镂空。各站正式画风做好后会再细调。', 16, sheet.height - 14);
   return sheet;
 }
 
-/** 人物检查表：四档 × 一个步态循环（2 拍）的 8 个相位，脚下画出地面和世界刻度，检查是否打滑。 */
+/** 人物检查表：一个步态循环（2 拍）的 8 个相位，脚下画出地面和世界刻度，检查是否打滑。 */
 import { figurePose } from './figure.js';
 import { drawFigure as paintFigure } from '../rig/painter.js';
 import { dist } from './walk.js';
-export function rigSheet({ cell = 230, phases = 8, gb0 = 20 } = {}) {
-  const tiers = [['A', 22], ['B', 27], ['C', 34], ['D', 45]];
-  const rowH = 420, pad = 10, left = 80;
-  const sheet = makeCanvas(left + phases * cell + pad, tiers.length * rowH + 60);
+export function rigSheet({ cell = 300, phases = 8, gb0 = 20, scale = 1.25 } = {}) {
+  const rowH = 600, left = 20;
+  const sheet = makeCanvas(left + phases * cell + 20, rowH + 60);
   const sc = sheet.getContext('2d');
   sc.fillStyle = '#f3efe6';
   sc.fillRect(0, 0, sheet.width, sheet.height);
   font(sc, 22, { family: SANS, weight: 700 });
   sc.fillStyle = '#333';
-  for (let i = 0; i < phases; i++) sc.fillText(`第 ${(gb0 + (i * 2) / phases).toFixed(2)} 拍`, left + i * cell + 40, 34);
-  tiers.forEach(([tier, age], r) => {
-    const look = lookFor(age);
-    const y0 = 60 + r * rowH + rowH - 30;
-    font(sc, 40, { family: SANS, weight: 700 });
-    sc.fillStyle = '#333';
-    sc.fillText(tier, 24, y0 - 150);
-    font(sc, 20, { family: SANS, weight: 400 });
-    sc.fillText(`${age} 岁`, 20, y0 - 116);
-    for (let i = 0; i < phases; i++) {
-      const gb = gb0 + (i * 2) / phases;
-      const x0 = left + i * cell + cell / 2;
-      sc.strokeStyle = '#999';
-      sc.lineWidth = 2;
-      sc.beginPath(); sc.moveTo(x0 - cell / 2 + 6, y0); sc.lineTo(x0 + cell / 2 - 6, y0); sc.stroke();
-      // 世界刻度：随行走距离后退，支撑脚应与刻度保持相对静止
-      const off = dist(gb) % 40;
-      sc.fillStyle = '#bbb';
-      for (let k = -4; k <= 4; k++) sc.fillRect(x0 + k * 40 * 1.0 - off, y0 + 4, 3, 10);
-      sc.save();
-      sc.translate(x0, y0);
-      sc.scale(1.0, 1.0);
-      paintFigure(sc, figurePose(gb, look), look, {});
-      sc.restore();
-    }
-  });
+  for (let i = 0; i < phases; i++) sc.fillText(`第 ${(gb0 + (i * 2) / phases).toFixed(2)} 拍`, left + i * cell + 90, 34);
+  const y0 = 60 + rowH - 40;
+  for (let i = 0; i < phases; i++) {
+    const gb = gb0 + (i * 2) / phases;
+    const x0 = left + i * cell + cell / 2;
+    sc.strokeStyle = '#999';
+    sc.lineWidth = 2;
+    sc.beginPath(); sc.moveTo(x0 - cell / 2 + 6, y0); sc.lineTo(x0 + cell / 2 - 6, y0); sc.stroke();
+    // 世界刻度：随行走距离后退，支撑脚应与刻度保持相对静止
+    const off = (dist(gb) * scale) % 40;
+    sc.fillStyle = '#bbb';
+    for (let k = -4; k <= 4; k++) sc.fillRect(x0 + k * 40 - off, y0 + 4, 3, 10);
+    sc.save();
+    sc.translate(x0, y0);
+    sc.scale(scale, scale);
+    paintFigure(sc, figurePose(gb, LOOK), LOOK, {});
+    sc.restore();
+  }
   return sheet;
 }
