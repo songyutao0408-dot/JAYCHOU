@@ -8,13 +8,13 @@ import { noise2 } from '../kit/noise.js';
 
 /** 各站使用的人物画风。 */
 export const STATION_STYLE = {
-  1: 'halftone', 2: 'relief', 3: 'ink', 4: 'stained', 5: 'woodcut', 6: 'pen', 7: 'etching', 8: 'film',
+  1: 'halftone', 2: 'relief', 3: 'ink', 4: 'stained', 5: 'sketch', 6: 'pen', 7: 'etching', 8: 'film',
   9: 'litho', 10: 'watercolor-cool', 11: 'puppet', 12: 'nianhua', 13: 'crayon', 14: 'watercolor-warm',
   15: 'postcard', 16: 'cinematic',
 };
 export const STYLE_LABEL = {
   none: '原样', comic: '漫画化底层', pencil: '铅笔纸面', halftone: '漫画网点', relief: '浮雕', ink: '水墨', stained: '彩色玻璃',
-  woodcut: '木刻', pen: '钢笔排线', etching: '铜版排线', film: '老胶片', litho: '石版', 'watercolor-cool': '水彩（冷）',
+  woodcut: '木刻', sketch: '铅笔素描', 'sketch-color': '素描上色', pen: '钢笔排线', etching: '铜版排线', film: '老胶片', litho: '石版', 'watercolor-cool': '水彩（冷）',
   puppet: '皮影', nianhua: '年画', crayon: '蜡笔', 'watercolor-warm': '水彩（暖）', postcard: '明信片', cinematic: '电影感厚涂',
 };
 
@@ -196,9 +196,56 @@ function hatchStyle(src, { paper, ink, angle1 = 0.8, angle2 = -0.8, gap = 5, sol
   return O;
 }
 
+// 铅笔素描：纸色垫底（挡住背景线条）+ 边缘线 + 暗部斜向排线 + 铅笔颗粒。color=true 时先铺一层水彩。
+function sketchStyle(I, color) {
+  const S = smoothColor(I, 1.2);
+  const O = clone(S);
+  const n = S.w * S.h;
+  const L = lumaArray(S, 0.6);
+  const E = sobel(L, S.w, S.h);
+  const F = sobel(lumaArray(smoothColor(I, 0.6), 0.6), S.w, S.h);
+  const paper = rgbf('#f6efe0'), lead = rgbf('#4f4a44'), indigo = rgbf('#8592ad');
+  const W = color ? smoothColor(I, 3) : null;
+  const A = blur(I.a, S.w, S.h, 3);
+  for (let y = 0; y < S.h; y++) for (let x = 0; x < S.w; x++) {
+    const i = y * S.w + x;
+    if (I.a[i] < 0.02) continue;
+    let base = paper;
+    if (color) {
+      // 水彩：原色向纸色提亮；黑衣服画成靛蓝色的淡彩；边缘积一点色
+      let c = [W.r[i], W.g[i], W.b[i]];
+      const l = 0.299 * c[0] + 0.587 * c[1] + 0.114 * c[2];
+      c = mixc(c, paper, 0.4);
+      if (l < 0.3) c = mixc(indigo, c, l / 0.3);
+      const pool = Math.max(0, 0.75 - A[i]) * 0.5;
+      base = mixc(c, [c[0] * 0.8, c[1] * 0.8, c[2] * 0.85], pool);
+      const g = (noise2(x * 0.3, y * 0.3, 41) - 0.5) * 0.08;
+      base = [base[0] + g, base[1] + g, base[2] + g];
+    }
+    const l = L[i];
+    const skin = I.r[i] > 0.38 && I.r[i] > I.g[i] && I.g[i] > I.b[i] && I.r[i] - I.b[i] > 0.1;
+    // 线：外形边缘 + 内部边缘（皮肤处更细的边保五官）
+    let ink = Math.max(sstep(0.5, 0.95, E[i]), skin ? sstep(0.3, 0.6, F[i]) * 0.9 : 0);
+    // 暗部排线（45° 一组，更暗处再加一组反向）
+    const g1 = ((x + y) % 5 + 5) % 5 < 1.1, g2 = ((x - y) % 6 + 6) % 6 < 1.0;
+    if (l < 0.42 && g1) ink = Math.max(ink, 0.55 * (1 - l / 0.42) + 0.25);
+    if (l < 0.2 && g2) ink = Math.max(ink, 0.5);
+    ink *= 0.75 + 0.35 * noise2(x * 0.5, y * 0.5, 17); // 铅笔颗粒
+    ink = Math.min(1, ink) * (color ? 0.85 : 1);
+    O.r[i] = base[0] + (lead[0] - base[0]) * ink;
+    O.g[i] = base[1] + (lead[1] - base[1]) * ink;
+    O.b[i] = base[2] + (lead[2] - base[2]) * ink;
+    O.a[i] = I.a[i] > 0.5 ? (color ? 1 : 0.94) : I.a[i];
+  }
+  outline(O, I.a, 1.3, lead);
+  return O;
+}
+
 const STYLES = {
   none: (I) => I,
   comic: (I) => comicBase(I),
+  sketch: (I) => sketchStyle(I, false),
+  'sketch-color': (I) => sketchStyle(I, true),
   pencil: (I) => {
     const O = comicBase(I, { levels: 5, keep: 0.3, lw: 1.4, ink: '#3a3129' });
     const P = rgbf('#efe6d2');

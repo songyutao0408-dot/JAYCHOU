@@ -4,12 +4,12 @@
 
 ## 当前状态
 
-**第二阶段已完成，等待确认。** 精做的三站按用户要求改为第 2、5、9 站（原计划第 1、11、16 站）。demo 在 [`demo/2/`](demo/2/)。
+**第二阶段：第 2、9 站已确认；第 5 站按用户要求重做为「铅笔速写 + 色彩晕开」，等待确认。** demo 在 [`demo/2/`](demo/2/)。
 
 | 阶段 | 状态 |
 | --- | --- |
 | 1 骨架 | ✅ 完成并确认 |
-| 2 精做第 2、5、9 站（用户改选） | ✅ 完成，待确认 |
+| 2 精做第 2、5、9 站（用户改选） | 第 2、9 站已确认；第 5 站已重做，待确认 |
 | 3 其余 13 站（简报 + 子代理分批） | 未开始 |
 | 4 对拍 | 未开始（需要配乐） |
 | 5 打磨、导出成片 | 未开始 |
@@ -74,9 +74,9 @@ Intro 用「铅笔纸面」：漫画化后整体向纸色褪 42%。
 
 ## 第二阶段做了什么
 
-- **共用工具**：`src/kit/strip.js`（视差长条：每层预先烘焙成一张宽图，每帧按镜头平移）；`src/kit/etch.js`（刻线共用渲染：排线 `hatch`、木刻 `woodcut`、让刀 `carveEdge`、石版颗粒 `grainPattern`、点刻 `stipple`，第 5、7、9 站共用）；`ANCHORS`（人物站立 / 走路帧上的肩、手、头顶、耳朵位置，梗里挂东西用）；`env.figure()`、`env.camAt(拍)`；标题卡和歌名底板支持各站自绘（`cardStyle.bgDraw`、`playerStyle.plateDraw`）。
+- **共用工具**：`src/kit/sketch.js`（铅笔速写：p5.brush 铅笔线 + 水彩长条、手绘抖动线、排线）；`src/kit/strip.js`（视差长条：每层预先烘焙成一张宽图，每帧按镜头平移）；`src/kit/etch.js`（刻线共用渲染：排线 `hatch`、木刻 `woodcut`、让刀 `carveEdge`、石版颗粒 `grainPattern`、点刻 `stipple`，第 7、9 站共用；第 5 站已不用）；`ANCHORS`（人物站立 / 走路帧上的肩、手、头顶、耳朵位置，梗里挂东西用）；`env.figure()`、`env.camAt(拍)`；标题卡和歌名底板支持各站自绘（`cardStyle.bgDraw`、`playerStyle.plateDraw`）。
 - **第 2 站 · 巴比伦城墙**（`src/scenes/s02.js`，简报 `briefs/s02.md`）：青金石釉砖墙 + 金色狮子带 + 砂岩浮雕队列（每拍迈一步）。梗：他正面站着，浮雕人人照走，最近的一个转正脸瞟他；第 7 拍前他被压扁成侧身。
-- **第 5 站 · 硝烟与白鸽**（`src/scenes/s05.js`，`briefs/s05.md`）：全木刻（灰纸黑墨，刻线表现明暗），残楼、翻滚的硝烟、铁丝网、枯树、沙袋。梗：全画面唯一的白——白鸽第 5 拍强拍落在他肩上，第 7 拍跳到走路的肩背，第 8 拍飞走。
+- **第 5 站 · 废墟里的白鸽**（`src/scenes/s05.js`，`briefs/s05.md`）：最初做成黑白木刻，用户觉得太暗，**重做为铅笔速写 + 色彩晕开**——浅米色速写纸、浅灰铅笔线（p5.brush），炸断的墙、倒下的路牌（无字）、旧玩具熊、旧钢盔；人物转成铅笔素描（`sketch`）。他每迈一步，脚下裂缝里冒出一朵小彩花。第 5 拍强拍钢盔里飞出白鸽，颜色像水彩一样从画面中间沿鸽子路径晕开（墙上长绿藤、天空变淡蓝、人物淡入 `sketch-color`），两拍内整幅变彩色；第 7～8 拍身后保持彩色。标题卡、磁带、画框都是铅笔速写风格。Outro 定格在已上色的第 7.1 拍。
 - **第 9 站 · 马戏团**（`src/scenes/s09.js`，`briefs/s09.md`）：石版海报（五色套印、套色错位、颗粒），条纹大棚、帷幔、彩旗、探照灯、观众席、原创丑角「乔克叔叔」。梗：丑角递气球，第 5 拍强拍接住，第 6.5 拍被带着飘起，第 7 拍强拍落回、扬起木屑，第 8 拍松手。
 - **简报模板**：`briefs/TEMPLATE.md`，三站简报作为第三阶段样例。
 
@@ -87,14 +87,14 @@ Intro 用「铅笔纸面」：漫画化后整体向纸色褪 42%。
 | 站 | PROMPT 里 | 查到的 | 建议 |
 | --- | --- | --- | --- |
 | 1、2、3、5、6、7、8、9、10、12、13、15 | 同右 | Jay / Fantasy / The Eight Dimensions / Common Jasmine Orange / November's Chopin / Still Fantasy / On the Run! / Capricorn / The Era / Opus 12 / Aiyo, Not Bad / Greatest Works of Art | 一致，不改 |
-| 4 叶惠美 | Ye Hui Mei | 英文维基：**Yeh Hui-Mei**；Qobuz：Ye Hui Mei | 待用户决定 |
-| 11 惊叹号 | Exclamation Point | 英文维基条目名 **Wow!**，同页也称 Exclamation Point | 待用户决定 |
-| 14 床边故事 | Bedtime Stories | **Jay Chou's Bedtime Stories** | 待用户决定 |
+| 4 叶惠美 | Ye Hui Mei | 英文维基：**Yeh Hui-Mei**；Qobuz：Ye Hui Mei | **已定：Yeh Hui-Mei** |
+| 11 惊叹号 | Exclamation Point | 英文维基条目名 **Wow!**，同页也称 Exclamation Point | **已定：Wow!** |
+| 14 床边故事 | Bedtime Stories | **Jay Chou's Bedtime Stories** | **已定：Jay Chou's Bedtime Stories** |
 | 16 太阳之子 | Children of the Sun | Children of the Sun（2026 年 3 月 25 日上架；「那天下雨了」英文 The Day It Rained） | 一致，不改 |
 
 ## 下一步（第三阶段，等用户说开始）
 
-1. 用户确认第 4、11、14 站的英文名。
+1. 用户确认重做后的第 5 站。
 2. 其余 13 站（1、3、4、6、7、8、10、11、12、13、14、15、16）按 `briefs/TEMPLATE.md` 写简报，每 2～3 站一批派子代理制作，每批用接触表自查后给用户看。
 3. 第 14→15 站撕页转场放在最后一批。
 

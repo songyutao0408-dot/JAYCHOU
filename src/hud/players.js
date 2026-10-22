@@ -130,7 +130,8 @@ export function drawPlayerHUD(ctx, st, b, gb, W, H, style = {}) {
   if (style.backdrop !== false) {
     ctx.shadowColor = 'rgba(0,0,0,0.3)'; ctx.shadowBlur = 16; ctx.shadowOffsetY = 5;
   }
-  drawPlayerKind(ctx, st.player, cx, cy, s, spinAt(gb), P, gb);
+  if (style.drawPlayer) style.drawPlayer(ctx, st.player, cx, cy, s, spinAt(gb), P, gb);
+  else drawPlayerKind(ctx, st.player, cx, cy, s, spinAt(gb), P, gb);
   ctx.shadowColor = 'transparent';
   // 歌名（播放器左侧），带底板保证可读
   const px = 52;

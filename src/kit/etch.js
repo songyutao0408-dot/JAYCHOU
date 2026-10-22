@@ -1,4 +1,4 @@
-// 「刻线」共用渲染：第 5 站木刻、第 7 站铜版、第 9 站石版共用的排线、刀刻和颗粒。
+// 「刻线」共用渲染：第 7 站铜版、第 9 站石版共用的排线、刀刻和颗粒（第 5 站已改为铅笔速写，见 kit/sketch.js）。
 // 都是 Canvas2D 操作，作用在 Path2D 形状上；建议在烘焙阶段（strip / baked）调用。
 import { rng } from './rng.js';
 import { noise2 } from './noise.js';

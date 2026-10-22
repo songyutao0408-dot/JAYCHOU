@@ -67,21 +67,21 @@
     [2e3, "Jay", "Jay", "\u53EF\u7231\u5973\u4EBA", "\u9752\u6625\u8857\u89D2", "\u6F2B\u753B\u7F51\u70B9\u5206\u955C", "\u4ED6\u4E00\u56DE\u5934\uFF08\u5B9A\u683C\u6362\u6210\u6B63\u9762\u7AD9\u7ACB\u5E27\uFF09\uFF0C\u80CC\u666F\u77AC\u95F4\u94FA\u6EE1\u5C11\u5973\u6F2B\u753B\u95EA\u5149\u82B1\u6735\uFF0C\u4E0B\u4E00\u62CD\u590D\u539F", ["#f4efe4", "#c9c2b4", "#26232a", "#e8467c"]],
     [2001, "\u8303\u7279\u897F", "Fantasy", "\u7231\u5728\u897F\u5143\u524D", "\u53E4\u5DF4\u6BD4\u4F26\u57CE\u5899", "\u4E24\u6CB3\u6D41\u57DF\u6D6E\u96D5", "\u6D6E\u96D5\u91CC\u4EBA\u4EBA\u4FA7\u8EAB\u884C\u8FDB\uFF0C\u53EA\u6709\u5B9A\u683C\u7684\u4ED6\u6B63\u9762\u7AD9\u7740\uFF1B\u4E0B\u4E00\u62CD\u4ED6\u4E5F\u88AB\u8FEB\u4FA7\u7740\u8EAB\u5B50\u7EE7\u7EED\u8D70", ["#e7d3a8", "#c49a5c", "#4a3320", "#2f6fb0"]],
     [2002, "\u516B\u5EA6\u7A7A\u95F4", "The Eight Dimensions", "\u7237\u7237\u6CE1\u7684\u8336", "\u5C71\u95F4\u8336\u68DA", "\u6C34\u58A8", "\u8001\u4EBA\u659F\u8336\uFF0C\u8336\u6C34\u5012\u6210\u4E00\u9053\u58A8\u7EBF\u4E00\u8DEF\u6D41\u5230\u8DEF\u4E0A\uFF0C\u4ED6\u8E29\u7740\u58A8\u7EBF\u8D70", ["#f2eee3", "#a9a69c", "#1d1d1b", "#7a8c5a"]],
-    [2003, "\u53F6\u60E0\u7F8E", "Ye Hui Mei", "\u4EE5\u7236\u4E4B\u540D", "\u54E5\u7279\u6559\u5802", "\u5F69\u8272\u73BB\u7483", "\u4ED6\u8D70\u8FDB\u7A97\u683C\uFF0C\u88AB\u94C5\u6761\u5207\u6210\u4E00\u5757\u5757\u5F69\u8272\u73BB\u7483\uFF0C\u5F3A\u62CD\u4E0A\u4E00\u675F\u5149\u6253\u4E0B", ["#1c2140", "#3b5fa8", "#0c0d14", "#d9a73a"]],
-    [2004, "\u4E03\u91CC\u9999", "Common Jasmine Orange", "\u6B62\u6218\u4E4B\u6B87", "\u785D\u70DF\u91CC\u7684\u767D\u9E3D", "\u9ED1\u767D\u6728\u523B\u7248\u753B", "\u4E00\u53EA\u767D\u9E3D\u843D\u5728\u4ED6\u80A9\u4E0A\uFF0C\u662F\u6574\u5E45\u753B\u91CC\u552F\u4E00\u7684\u767D", ["#5b5852", "#2c2a27", "#0e0d0c", "#f6f4ee"]],
+    [2003, "\u53F6\u60E0\u7F8E", "Yeh Hui-Mei", "\u4EE5\u7236\u4E4B\u540D", "\u54E5\u7279\u6559\u5802", "\u5F69\u8272\u73BB\u7483", "\u4ED6\u8D70\u8FDB\u7A97\u683C\uFF0C\u88AB\u94C5\u6761\u5207\u6210\u4E00\u5757\u5757\u5F69\u8272\u73BB\u7483\uFF0C\u5F3A\u62CD\u4E0A\u4E00\u675F\u5149\u6253\u4E0B", ["#1c2140", "#3b5fa8", "#0c0d14", "#d9a73a"]],
+    [2004, "\u4E03\u91CC\u9999", "Common Jasmine Orange", "\u6B62\u6218\u4E4B\u6B87", "\u5E9F\u589F\u91CC\u7684\u767D\u9E3D", "\u94C5\u7B14\u901F\u5199 + \u8272\u5F69\u6655\u5F00", "\u94A2\u76D4\u91CC\u98DE\u51FA\u4E00\u53EA\u767D\u9E3D\uFF0C\u9E3D\u5B50\u98DE\u8FC7\u7684\u5730\u65B9\u989C\u8272\u50CF\u6C34\u5F69\u4E00\u6837\u6655\u5F00\uFF0C\u4E24\u62CD\u5185\u6574\u5E45\u753B\u4ECE\u7070\u8272\u901F\u5199\u53D8\u6210\u5F69\u8272", ["#f3ecdc", "#b4ada1", "#5f5a52", "#8fb8d8"]],
     [2005, "\u5341\u4E00\u6708\u7684\u8427\u90A6", "November's Chopin", "\u591C\u66F2", "\u6708\u591C\u91CC\u7684\u4E00\u67B6\u94A2\u7434", "\u9ED1\u767D\u94A2\u7B14\u753B", "\u7434\u76D6\u4E0A\u7684\u4E4C\u9E26\u6392\u6210\u4E00\u884C\u97F3\u7B26\uFF0C\u5F3A\u62CD\u4E0A\u540C\u65F6\u626D\u5934", ["#f3f1ea", "#9b9890", "#151515", "#6c7a96"]],
     [2006, "\u4F9D\u7136\u8303\u7279\u897F", "Still Fantasy", "\u591C\u7684\u7B2C\u4E03\u7AE0", "\u7EF4\u591A\u5229\u4E9A\u96FE\u591C\uFF0C\u4FA6\u63A2", "\u94DC\u7248\u753B", "\u4E00\u53EA\u653E\u5927\u955C\u4ECE\u753B\u5916\u4F38\u8FDB\u6765\uFF0C\u5BF9\u51C6\u4ED6\u8033\u6735\u4E0A\u7684\u8033\u673A", ["#d8cdb4", "#8a7b62", "#2a2219", "#7d5a36"]],
     [2007, "\u6211\u5F88\u5FD9", "On the Run!", "\u6700\u957F\u7684\u7535\u5F71", "\u8001\u7535\u5F71\u9662", "\u80F6\u7247\u5212\u75D5 + 4:3 \u753B\u5E45", "\u753B\u5E45\u7A81\u7136\u7F29\u6210 4:3\uFF0C\u4ED6\u8D70\u5728\u94F6\u5E55\u91CC\uFF0C\u524D\u6392\u89C2\u4F17\u526A\u5F71\u4E00\u8D77\u626D\u5934", ["#2a2622", "#8f8576", "#0d0c0b", "#e8d9b0"]],
     [2008, "\u9B54\u6770\u5EA7", "Capricorn", "\u4E54\u514B\u53D4\u53D4", "\u9A6C\u620F\u56E2\u5C0F\u4E11", "19 \u4E16\u7EAA\u77F3\u7248\u753B\u6D77\u62A5", "\u5C0F\u4E11\u9012\u6765\u4E00\u53EA\u6C14\u7403\uFF0C\u5B9A\u683C\u7684\u4ED6\u88AB\u6574\u4E2A\u5E26\u7740\u98D8\u8D77\u534A\u62CD\uFF0C\u5F3A\u62CD\u843D\u56DE", ["#efe0bf", "#d0533c", "#2b2a3a", "#2f7d6d"]],
     [2010, "\u8DE8\u65F6\u4EE3", "The Era", "\u96E8\u4E0B\u4E00\u6574\u665A", "\u57CE\u5E02\u591C\u96E8", "\u6C34\u5F69\u6655\u67D3", "\u96E8\u6C34\u628A\u989C\u6599\u6655\u5F00\uFF0C\u8FDE\u4ED6\u7684\u4F1E\u90FD\u5316\u6210\u4E00\u6EE9\u989C\u8272\uFF0C\u4E0B\u4E00\u62CD\u6536\u56DE", ["#e9eef2", "#7f9bb5", "#27364a", "#e0a24f"]],
-    [2011, "\u60CA\u53F9\u53F7", "Exclamation Point", "\u8FF7\u9B42\u66F2", "\u4E2D\u56FD\u53E4\u4EE3\u76AE\u5F71\u620F", "\u76AE\u5F71", "\u6CB9\u706F\u4E00\u6643\uFF0C\u4ED6\u7684\u76AE\u5F71\uFF08\u540C\u4E00\u5E27\u526A\u5F71\uFF09\u4E00\u5206\u4E3A\u4E09\u5DE6\u53F3\u9519\u5F00\uFF0C\u5F3A\u62CD\u4E0A\u5408\u56DE\u4E00\u4E2A", ["#f0c77a", "#c46a2c", "#3a1d10", "#b8322a"]],
+    [2011, "\u60CA\u53F9\u53F7", "Wow!", "\u8FF7\u9B42\u66F2", "\u4E2D\u56FD\u53E4\u4EE3\u76AE\u5F71\u620F", "\u76AE\u5F71", "\u6CB9\u706F\u4E00\u6643\uFF0C\u4ED6\u7684\u76AE\u5F71\uFF08\u540C\u4E00\u5E27\u526A\u5F71\uFF09\u4E00\u5206\u4E3A\u4E09\u5DE6\u53F3\u9519\u5F00\uFF0C\u5F3A\u62CD\u4E0A\u5408\u56DE\u4E00\u4E2A", ["#f0c77a", "#c46a2c", "#3a1d10", "#b8322a"]],
     [2012, "\u5341\u4E8C\u65B0\u4F5C", "Opus 12", "\u7EA2\u5C18\u5BA2\u6808", "\u6B66\u4FA0\u5BA2\u6808", "\u6728\u7248\u5E74\u753B", "\u5E97\u5C0F\u4E8C\u628A\u4ED6\u5F53\u6210\u5927\u4FA0\uFF0C\u62B1\u62F3\u4F5C\u63D6", ["#f1e3c4", "#d4a02f", "#2d1f18", "#c23b2b"]],
     [2014, "\u54CE\u5466\uFF0C\u4E0D\u9519\u54E6", "Aiyo, Not Bad", "\u978B\u5B50\u7279\u5927\u53F7", "\u8721\u7B14\u753B\u7684\u5C0F\u9547", "\u513F\u7AE5\u8721\u7B14\u753B", "\u6BD4\u4F8B\u5168\u9519\uFF0C\u4ED6\u811A\u4E0B\u90A3\u4E00\u622A\u88AB\u5355\u72EC\u653E\u5927\u6210\u7279\u5927\u53F7\u978B\u5B50\uFF0C\u4E00\u6B65\u8DE8\u8FC7\u534A\u4E2A\u753B\u9762", ["#fbf7ec", "#8cc06a", "#3a3a8c", "#f2a33a"]],
-    [2016, "\u5468\u6770\u4F26\u7684\u5E8A\u8FB9\u6545\u4E8B", "Bedtime Stories", "\u524D\u4E16\u60C5\u4EBA", "\u6E29\u99A8\u7684\u7236\u5973\u573A\u666F", "\u7AE5\u4E66\u7ED8\u672C\u6C34\u5F69", "\u5C0F\u5973\u5B69\u8E2E\u811A\u7ED9\u5B9A\u683C\u7AD9\u7740\u7684\u4ED6\u6234\u4E0A\u4E00\u9876\u7EB8\u7687\u51A0", ["#fbf1e4", "#e6b8a2", "#5a4a5e", "#e8c25a"]],
+    [2016, "\u5468\u6770\u4F26\u7684\u5E8A\u8FB9\u6545\u4E8B", "Jay Chou's Bedtime Stories", "\u524D\u4E16\u60C5\u4EBA", "\u6E29\u99A8\u7684\u7236\u5973\u573A\u666F", "\u7AE5\u4E66\u7ED8\u672C\u6C34\u5F69", "\u5C0F\u5973\u5B69\u8E2E\u811A\u7ED9\u5B9A\u683C\u7AD9\u7740\u7684\u4ED6\u6234\u4E0A\u4E00\u9876\u7EB8\u7687\u51A0", ["#fbf1e4", "#e6b8a2", "#5a4a5e", "#e8c25a"]],
     [2022, "\u6700\u4F1F\u5927\u7684\u4F5C\u54C1", "Greatest Works of Art", "\u8FD8\u5728\u6D41\u6D6A", "\u516C\u8DEF\u65C5\u884C", "\u590D\u53E4\u660E\u4FE1\u7247", "\u4E00\u4E2A\u90AE\u6233\u300C\u556A\u300D\u5730\u76D6\u5728\u4ED6\u8EAB\u4E0A\uFF0C\u65E5\u671F 2022", ["#f0e2c4", "#5aa0b4", "#3a2c24", "#d6643a"]],
     [2026, "\u592A\u9633\u4E4B\u5B50", "Children of the Sun", "\u90A3\u5929\u4E0B\u96E8\u4E86", "\u96E8\u591C\u516C\u4EA4\u7AD9\u53F0\uFF0C\u4E00\u7537\u4E00\u5973\u5404\u6253\u4E00\u628A\u4F1E", "\u7535\u5F71\u611F\u539A\u6D82\u63D2\u753B\uFF0C\u8DEF\u706F\u6696\u5149\u5BF9\u51B7\u96E8", "\u516C\u4EA4\u8F66\u9A76\u8FC7\u6E85\u8D77\u6C34\u82B1\uFF0C\u4E24\u628A\u4F1E\u5728\u5F3A\u62CD\u4E0A\u540C\u65F6\u4E00\u6B6A\uFF08\u4ED6\u7684\u4F1E\u753B\u5728\u7AD9\u7ACB\u5E27\u7684\u624B\u4E0A\uFF09", ["#1b2230", "#3d5670", "#0a0e15", "#f0b25a"]]
   ];
-  var EN_CHECKED = /* @__PURE__ */ new Set([1, 2, 3, 5, 6, 7, 8, 9, 10, 12, 13, 15, 16]);
+  var EN_CHECKED = new Set(Array.from({ length: 16 }, (_, i) => i + 1));
   var STATIONS = raw.map(([year, albumZh, albumEn, song, scene, style, gag, palette], i) => {
     const n = i + 1;
     return {
@@ -493,7 +493,7 @@
     2: "relief",
     3: "ink",
     4: "stained",
-    5: "woodcut",
+    5: "sketch",
     6: "pen",
     7: "etching",
     8: "film",
@@ -515,6 +515,8 @@
     ink: "\u6C34\u58A8",
     stained: "\u5F69\u8272\u73BB\u7483",
     woodcut: "\u6728\u523B",
+    sketch: "\u94C5\u7B14\u7D20\u63CF",
+    "sketch-color": "\u7D20\u63CF\u4E0A\u8272",
     pen: "\u94A2\u7B14\u6392\u7EBF",
     etching: "\u94DC\u7248\u6392\u7EBF",
     film: "\u8001\u80F6\u7247",
@@ -715,9 +717,51 @@
     if (halo) outline(O, O.a.slice(), haloW, rgbf(halo));
     return O;
   }
+  function sketchStyle(I, color) {
+    const S = smoothColor(I, 1.2);
+    const O = clone(S);
+    const n = S.w * S.h;
+    const L = lumaArray(S, 0.6);
+    const E = sobel(L, S.w, S.h);
+    const F = sobel(lumaArray(smoothColor(I, 0.6), 0.6), S.w, S.h);
+    const paper = rgbf("#f6efe0"), lead = rgbf("#4f4a44"), indigo = rgbf("#8592ad");
+    const W2 = color ? smoothColor(I, 3) : null;
+    const A = blur(I.a, S.w, S.h, 3);
+    for (let y = 0; y < S.h; y++) for (let x = 0; x < S.w; x++) {
+      const i = y * S.w + x;
+      if (I.a[i] < 0.02) continue;
+      let base = paper;
+      if (color) {
+        let c = [W2.r[i], W2.g[i], W2.b[i]];
+        const l2 = 0.299 * c[0] + 0.587 * c[1] + 0.114 * c[2];
+        c = mixc(c, paper, 0.4);
+        if (l2 < 0.3) c = mixc(indigo, c, l2 / 0.3);
+        const pool = Math.max(0, 0.75 - A[i]) * 0.5;
+        base = mixc(c, [c[0] * 0.8, c[1] * 0.8, c[2] * 0.85], pool);
+        const g = (noise2(x * 0.3, y * 0.3, 41) - 0.5) * 0.08;
+        base = [base[0] + g, base[1] + g, base[2] + g];
+      }
+      const l = L[i];
+      const skin = I.r[i] > 0.38 && I.r[i] > I.g[i] && I.g[i] > I.b[i] && I.r[i] - I.b[i] > 0.1;
+      let ink = Math.max(sstep(0.5, 0.95, E[i]), skin ? sstep(0.3, 0.6, F[i]) * 0.9 : 0);
+      const g1 = ((x + y) % 5 + 5) % 5 < 1.1, g2 = ((x - y) % 6 + 6) % 6 < 1;
+      if (l < 0.42 && g1) ink = Math.max(ink, 0.55 * (1 - l / 0.42) + 0.25);
+      if (l < 0.2 && g2) ink = Math.max(ink, 0.5);
+      ink *= 0.75 + 0.35 * noise2(x * 0.5, y * 0.5, 17);
+      ink = Math.min(1, ink) * (color ? 0.85 : 1);
+      O.r[i] = base[0] + (lead[0] - base[0]) * ink;
+      O.g[i] = base[1] + (lead[1] - base[1]) * ink;
+      O.b[i] = base[2] + (lead[2] - base[2]) * ink;
+      O.a[i] = I.a[i] > 0.5 ? color ? 1 : 0.94 : I.a[i];
+    }
+    outline(O, I.a, 1.3, lead);
+    return O;
+  }
   var STYLES = {
     none: (I) => I,
     comic: (I) => comicBase(I),
+    sketch: (I) => sketchStyle(I, false),
+    "sketch-color": (I) => sketchStyle(I, true),
     pencil: (I) => {
       const O = comicBase(I, { levels: 5, keep: 0.3, lw: 1.4, ink: "#3a3129" });
       const P = rgbf("#efe6d2");
@@ -1824,65 +1868,774 @@
     }
   };
 
-  // src/kit/etch.js
-  function hatch(ctx, path, o = {}) {
-    const { angle = 0, gap = 8, color = "#111", width = () => 1.5, wobble = 1.2, step = 6, seed = 1, bounds } = o;
-    const [bx, by, bw, bh] = bounds || [-2e3, -200, 6e3, 1400];
-    const c = Math.cos(angle), s = Math.sin(angle);
-    const diag = Math.hypot(bw, bh);
-    const cx = bx + bw / 2, cy = by + bh / 2;
+  // src/kit/sketch.js
+  function sketchStrip(key, p, { fills, lines, y0 = 0, y1 = 1e3 }) {
+    const [x0, x1] = stripRange(p);
+    const w = (x1 - x0) * K, h = (y1 - y0) * K;
+    const brushLayer = lines ? brushStrip(`${key}|lines`, x0, y0, w, h, lines, x1) : null;
+    const canvas = baked(`sketch|${key}|${p}`, w, h, (ctx) => {
+      ctx.save();
+      ctx.scale(K, K);
+      ctx.translate(-x0, -y0);
+      if (fills) fills(ctx, x0, x1);
+      ctx.restore();
+      if (brushLayer) ctx.drawImage(brushLayer, 0, 0);
+    });
+    return { canvas, x0, x1, y0, y1, p };
+  }
+  function washStrip(key, p, { wash, y0 = 0, y1 = 1e3 }) {
+    const [x0, x1] = stripRange(p);
+    const w = (x1 - x0) * K, h = (y1 - y0) * K;
+    const canvas = brushStrip(`${key}|wash`, x0, y0, w, h, wash, x1);
+    return { canvas, x0, x1, y0, y1, p };
+  }
+  function brushStrip(key, x0, y0, w, h, draw, x1) {
+    return bakeBrush(`bstrip|${key}`, w, h, (B2) => {
+      B2.scale(K, K);
+      B2.translate(-x0, -y0);
+      draw(B2, x0, x1);
+    });
+  }
+  var jit = (i, k, seed, amp) => (hash2(i, k, seed) - 0.5) * 2 * amp;
+  function sketchPoly(ctx, pts, { close = true, seed = 1, color = "#5c564e", width = 1.6, passes = 2, jitter = 1.2, over = 5, alpha = 0.85 } = {}) {
+    const n = pts.length, segs = close ? n : n - 1;
     ctx.save();
-    ctx.clip(path);
     ctx.strokeStyle = color;
     ctx.lineCap = "round";
-    for (let d = -diag / 2; d <= diag / 2; d += gap) {
-      let prev = null;
-      for (let t = -diag / 2; t <= diag / 2; t += step) {
-        const wob = (noise2(t * 0.01, d * 0.05, seed) - 0.5) * 2 * wobble;
-        const x = cx + c * t - s * (d + wob), y = cy + s * t + c * (d + wob);
-        if (prev) {
-          const w = width(x, y);
-          if (w > 0.05) {
-            ctx.lineWidth = w;
-            ctx.beginPath();
-            ctx.moveTo(prev[0], prev[1]);
-            ctx.lineTo(x, y);
-            ctx.stroke();
-          }
-        }
-        prev = [x, y];
+    for (let p = 0; p < passes; p++) {
+      ctx.globalAlpha *= p ? alpha * 0.7 : alpha;
+      ctx.lineWidth = width * (p ? 0.7 : 1);
+      for (let i = 0; i < segs; i++) {
+        const a = pts[i], b = pts[(i + 1) % n];
+        const dx = b[0] - a[0], dy = b[1] - a[1], L = Math.hypot(dx, dy) || 1;
+        const ux = dx / L, uy = dy / L;
+        const o1 = over * (0.3 + hash2(i, p, seed + 7)), o2 = over * (0.3 + hash2(i, p, seed + 8));
+        const ax = a[0] - ux * o1 + jit(i, p * 4, seed, jitter), ay = a[1] - uy * o1 + jit(i, p * 4 + 1, seed, jitter);
+        const bx = b[0] + ux * o2 + jit(i, p * 4 + 2, seed, jitter), by = b[1] + uy * o2 + jit(i, p * 4 + 3, seed, jitter);
+        const mx = (ax + bx) / 2 + jit(i, p * 4 + 9, seed, jitter * 1.4), my = (ay + by) / 2 + jit(i, p * 4 + 10, seed, jitter * 1.4);
+        ctx.beginPath();
+        ctx.moveTo(ax, ay);
+        ctx.quadraticCurveTo(mx, my, bx, by);
+        ctx.stroke();
       }
     }
     ctx.restore();
   }
-  function woodcut(ctx, path, o = {}) {
-    const { ink = "#121110", paper = "#8f8a80", tone = () => 0.3, gap = 7, angle = 0, wobble = 2, seed = 3, bounds } = o;
-    ctx.fillStyle = ink;
-    ctx.fill(path);
-    hatch(ctx, path, {
-      angle,
-      gap,
-      wobble,
-      seed,
-      bounds,
-      color: paper,
-      step: 5,
-      width: (x, y) => {
-        const t = Math.min(1, Math.max(0, tone(x, y)));
-        return t * gap * 0.82 * (0.85 + 0.3 * noise2(x * 0.02, y * 0.02, seed + 9));
+  function ellipsePts(cx, cy, rx, ry, n = 28, rot = 0, a0 = 0, a1 = Math.PI * 2) {
+    const pts = [];
+    for (let i = 0; i <= n; i++) {
+      const a = a0 + (a1 - a0) * i / n;
+      const x = Math.cos(a) * rx, y = Math.sin(a) * ry;
+      pts.push([cx + x * Math.cos(rot) - y * Math.sin(rot), cy + x * Math.sin(rot) + y * Math.cos(rot)]);
+    }
+    return pts;
+  }
+  function sketchEllipse(ctx, cx, cy, rx, ry, o = {}) {
+    sketchPoly(ctx, ellipsePts(cx, cy, rx, ry, 24, o.rot || 0), { ...o, close: false, over: 2 });
+  }
+  var sketchLine = (ctx, a, b, o = {}) => sketchPoly(ctx, [a, b], { ...o, close: false });
+  function sketchHatch(ctx, x, y, w, h, { angle = 0.9, gap = 6, color = "#7a746a", width = 1, alpha = 0.6, seed = 3 } = {}) {
+    ctx.save();
+    ctx.beginPath();
+    ctx.rect(x, y, w, h);
+    ctx.clip();
+    ctx.strokeStyle = color;
+    ctx.lineWidth = width;
+    ctx.globalAlpha *= alpha;
+    const c = Math.cos(angle), s = Math.sin(angle), D = Math.hypot(w, h);
+    let i = 0;
+    for (let d = -D; d <= D; d += gap, i++) {
+      const cx = x + w / 2 - s * d, cy = y + h / 2 + c * d;
+      ctx.beginPath();
+      ctx.moveTo(cx - c * D + jit(i, 1, seed, 1.5), cy - s * D + jit(i, 2, seed, 1.5));
+      ctx.lineTo(cx + c * D + jit(i, 3, seed, 1.5), cy + s * D + jit(i, 4, seed, 1.5));
+      ctx.stroke();
+    }
+    ctx.restore();
+  }
+
+  // src/scenes/s05.js
+  var ST2 = stationByN(5);
+  var PAPER2 = "#f3ecdc";
+  var PAPER_D = "#ebe2cf";
+  var LEAD2 = "#8a847a";
+  var LEAD_D = "#5f5a52";
+  var LEAD_L = "#b4ada1";
+  var P_FAR2 = 0.3;
+  var P_MID = 0.7;
+  var P_FG2 = 1.25;
+  var FAR_BASE = 600;
+  var BLOOM = [SB(5), SB(7)];
+  var HELMET_SX = 560;
+  var BEAR_SX = 1010;
+  var SIGN_SX = 860;
+  var R0 = (k) => rng("s05", k);
+  function jag(x0, x1, yBase, hMin, hMax, R, step = [18, 46]) {
+    const pts = [[x0, yBase]];
+    let x = x0;
+    pts.push([x0, yBase - lerp(hMin, hMax, R())]);
+    while (x < x1) {
+      x = Math.min(x1, x + lerp(step[0], step[1], R()));
+      pts.push([x, yBase - lerp(hMin, hMax, R())]);
+    }
+    pts.push([x1, yBase]);
+    return pts;
+  }
+  var fillPoly = (ctx, pts, color) => {
+    poly(ctx, pts);
+    ctx.fillStyle = color;
+    ctx.fill();
+  };
+  function bPoly(B2, pts, closed = true) {
+    const n = pts.length, segs = closed ? n : n - 1;
+    for (let i = 0; i < segs; i++) {
+      const a = pts[i], b = pts[(i + 1) % n];
+      B2.line(a[0], a[1], b[0], b[1]);
+    }
+  }
+  function bWash(B2, pts, color, alpha = 110, bleed = 0.18) {
+    B2.noStroke();
+    B2.fill(color, alpha);
+    B2.fillBleed(bleed, "out");
+    B2.polygon(pts);
+    B2.noFill();
+  }
+  function farGeo() {
+    const R = R0("far"), out = [];
+    const [x0, x1] = [-1100, 3e3];
+    for (let x = x0; x < x1; ) {
+      const w = 70 + R() * 150, h = 50 + R() * 170;
+      out.push({ x, w, h, pts: jag(x, x + w, FAR_BASE, h * 0.75, h, R, [14, 34]), wins: Math.floor(R() * 6) });
+      x += w + 10 + R() * 60;
+    }
+    return out;
+  }
+  function midGeo(c5) {
+    const R = R0("mid"), walls = [];
+    for (let x = -1500; x < 3600; ) {
+      const w = 220 + R() * 200, h = 200 + R() * 170, base = 790;
+      const sx = x - c5 * P_MID;
+      if (sx > 180 && sx < 760) {
+        x += 140;
+        continue;
+      }
+      walls.push({
+        x,
+        w,
+        h,
+        base,
+        pts: jag(x, x + w, base, h * 0.55, h, R, [22, 60]),
+        win: R() < 0.7 ? { x: x + w * (0.25 + R() * 0.3), y: base - h * 0.62, w: 46 + R() * 20, h: 70 + R() * 20 } : null,
+        brick: { x: x + w * R() * 0.4, y: base - h * (0.2 + R() * 0.3), w: w * 0.45, h: 70 },
+        rebar: R() < 0.6,
+        seed: Math.floor(R() * 1e3)
+      });
+      x += w + 260 + R() * 420;
+    }
+    const sign = { x: SIGN_SX + c5 * P_MID };
+    return { walls, sign };
+  }
+  function groundGeo(c5) {
+    const R = R0("ground"), stones = [], cracks = [];
+    for (let x = -1200; x < 3600; x += 24 + R() * 60) {
+      const y = ROAD_Y + 16 + R() * 170, r = 4 + R() * 13;
+      const n = 6, pts = [];
+      for (let k = 0; k < n; k++) {
+        const a = k / n * Math.PI * 2 + R() * 0.4;
+        pts.push([x + Math.cos(a) * r * (0.7 + R() * 0.5), y + Math.sin(a) * r * 0.6 * (0.7 + R() * 0.5)]);
+      }
+      stones.push({ pts, brick: R() < 0.25 });
+    }
+    for (let x = -1200; x < 3600; x += 120 + R() * 180) {
+      const pts = [[x, ROAD_Y + 4]];
+      let cx = x, cy = ROAD_Y + 4;
+      const n = 4 + Math.floor(R() * 4);
+      for (let k = 0; k < n; k++) {
+        cx += 10 + R() * 30;
+        cy += 8 + R() * 22;
+        pts.push([cx, cy]);
+      }
+      cracks.push(pts);
+    }
+    return { stones, cracks, bear: { x: BEAR_SX + c5 } };
+  }
+  function farLines(env) {
+    const g = farGeo();
+    return sketchStrip("s05-far", P_FAR2, {
+      y0: 300,
+      y1: 640,
+      fills: (ctx) => {
+        for (const b of g) fillPoly(ctx, b.pts, PAPER2);
+      },
+      lines: (B2) => {
+        B2.set("2H", LEAD_L, 0.9);
+        for (const b of g) {
+          bPoly(B2, b.pts.slice(1, -1), false);
+          B2.line(b.x, FAR_BASE - 2, b.x, b.pts[1][1]);
+          B2.line(b.x + b.w, FAR_BASE - 2, b.x + b.w, b.pts[b.pts.length - 2][1]);
+          for (let k = 0; k < b.wins; k++) {
+            const wx = b.x + 10 + k * 37 % Math.max(20, b.w - 26), wy = FAR_BASE - 30 - k * 53 % Math.max(30, b.h * 0.6);
+            B2.rect(wx, wy, 10, 14);
+          }
+        }
+        B2.set("2H", LEAD_L, 0.8);
+        B2.line(-1100, FAR_BASE, 3e3, FAR_BASE);
       }
     });
   }
-  function carveEdge(ctx, path, { color = "#8f8a80", width = 2, offset = 3 } = {}) {
+  function farWash() {
+    const g = farGeo();
+    return washStrip("s05-farw", P_FAR2, {
+      y0: 300,
+      y1: 640,
+      wash: (B2) => {
+        g.forEach((b, i) => bWash(B2, b.pts, ["#b9b4d6", "#c3d3e2", "#d4c6dc"][i % 3], 70, 0.12));
+      }
+    });
+  }
+  function signPts(s) {
+    const top = [s.x + 70, 650], foot = [s.x - 110, 782];
+    return { top, foot, plate: ellipsePts(top[0] + 26, top[1] - 18, 44, 44, 20) };
+  }
+  function midLines(env) {
+    const g = midGeo(env.camAt(SB(5)));
+    return sketchStrip("s05-mid", P_MID, {
+      y0: 300,
+      y1: 820,
+      fills: (ctx, x0, x1) => {
+        ctx.fillStyle = PAPER2;
+        ctx.fillRect(x0, 640, x1 - x0, 180);
+        for (const w of g.walls) {
+          fillPoly(ctx, w.pts, PAPER_D);
+          if (w.win) {
+            ctx.fillStyle = mix(PAPER_D, "#d8cdb8", 0.6);
+            roundRect(ctx, w.win.x, w.win.y, w.win.w, w.win.h, w.win.w / 2);
+            ctx.fill();
+          }
+        }
+      },
+      lines: (B2, x0, x1) => {
+        const R = R0("midlines");
+        B2.set("2H", LEAD_L, 0.7);
+        for (let x = x0; x < x1; x += 90 + R() * 160) {
+          const y = 660 + R() * 120;
+          B2.line(x, y, x + 30 + R() * 80, y + (R() - 0.5) * 6);
+        }
+        for (const w of g.walls) {
+          B2.set("HB", LEAD2, 1.1);
+          bPoly(B2, w.pts.slice(1, -1), false);
+          B2.line(w.x, w.base, w.x, w.pts[1][1]);
+          B2.line(w.x + w.w, w.base, w.x + w.w, w.pts[w.pts.length - 2][1]);
+          B2.set("2H", LEAD2, 0.8);
+          const bk = w.brick;
+          for (let r = 0; r < 4; r++) {
+            const yy = bk.y + r * 17;
+            B2.line(bk.x, yy, bk.x + bk.w * (0.6 + R() * 0.4), yy);
+            for (let xx = bk.x + r % 2 * 18; xx < bk.x + bk.w * 0.8; xx += 36) B2.line(xx, yy, xx, yy + 17);
+          }
+          if (w.win) {
+            const { x, y, w: ww, h } = w.win;
+            B2.set("HB", LEAD2, 0.9);
+            B2.spline([[x, y + h], [x, y + ww / 2], [x + ww / 2, y], [x + ww, y + ww / 2], [x + ww, y + h]], 0.6);
+            B2.line(x, y + h, x + ww, y + h);
+            B2.set("2H", LEAD_L, 0.7);
+            for (let k = 6; k < ww + h; k += 9) B2.line(x + Math.max(0, k - h), y + Math.min(h, k), x + Math.min(ww, k), y + Math.max(ww * 0.4, k - ww));
+          }
+          B2.set("2H", LEAD2, 0.8);
+          let cx = w.x + w.w * (0.5 + R() * 0.3), cy = w.pts[3] ? w.pts[3][1] + 10 : w.base - w.h * 0.8;
+          for (let k = 0; k < 5; k++) {
+            const nx = cx + (R() - 0.5) * 30, ny = cy + 18 + R() * 20;
+            B2.line(cx, cy, nx, ny);
+            cx = nx;
+            cy = ny;
+          }
+          if (w.rebar) {
+            B2.set("HB", LEAD_D, 0.8);
+            const t = w.pts[2];
+            B2.line(t[0], t[1], t[0] + 14, t[1] - 46);
+            B2.line(t[0] + 10, t[1] + 2, t[0] + 30, t[1] - 36);
+          }
+          B2.set("2H", LEAD2, 0.8);
+          for (let k = 0; k < 5; k++) {
+            const bx = w.x - 30 + R() * (w.w + 60);
+            B2.rect(bx, w.base - 10 - R() * 6, 16 + R() * 14, 10);
+          }
+        }
+        const s = signPts(g.sign);
+        B2.set("HB", LEAD_D, 1.2);
+        B2.line(s.foot[0], s.foot[1], s.top[0], s.top[1]);
+        B2.line(s.foot[0] + 8, s.foot[1] + 4, s.top[0] + 6, s.top[1] + 6);
+        bPoly(B2, s.plate, true);
+        B2.set("HB", LEAD2, 1);
+        const [px, py] = [s.top[0] + 26, s.top[1] - 18];
+        B2.line(px - 22, py + 14, px + 18, py - 16);
+        B2.line(px + 18, py - 16, px + 2, py - 16);
+        B2.line(px + 18, py - 16, px + 16, py);
+      }
+    });
+  }
+  function midWash(env) {
+    const g = midGeo(env.camAt(SB(5)));
+    return washStrip("s05-midw", P_MID, {
+      y0: 300,
+      y1: 820,
+      wash: (B2, x0, x1) => {
+        const R = R0("midwash");
+        bWash(B2, [[x0, 650], [x1, 650], [x1, 800], [x0, 800]], "#e3d2ae", 70, 0.08);
+        for (const w of g.walls) {
+          bWash(B2, w.pts, R() < 0.5 ? "#e9b98f" : "#ecc9a2", 120, 0.2);
+          const bk = w.brick;
+          bWash(B2, [[bk.x, bk.y], [bk.x + bk.w * 0.9, bk.y], [bk.x + bk.w * 0.8, bk.y + 66], [bk.x, bk.y + 66]], "#d27f5c", 120, 0.15);
+          if (w.win) bWash(B2, ellipsePts(w.win.x + w.win.w / 2, w.win.y + w.win.h / 2, w.win.w / 2, w.win.h / 2, 14), "#9fc3df", 110, 0.1);
+        }
+        const s = signPts(g.sign);
+        bWash(B2, s.plate, "#6f9fd0", 150, 0.08);
+        for (const w of g.walls) {
+          for (let v = 0; v < 4; v++) {
+            let x = w.x + 20 + R() * (w.w - 40), y = w.base;
+            const top = w.base - w.h * (0.45 + R() * 0.45);
+            const pts = [[x, y]];
+            while (y > top) {
+              y -= 26;
+              x += Math.sin(y * 0.05 + v) * 14;
+              pts.push([x, y]);
+            }
+            B2.set("cpencil", "#3f7a2e", 1.8);
+            B2.spline(pts, 0.5);
+            for (let k = 1; k < pts.length; k++) {
+              const [lx, ly] = pts[k], sd = k % 2 ? 1 : -1;
+              bWash(B2, ellipsePts(lx + sd * 15, ly, 16, 9, 8, sd * 0.6), k % 3 ? "#6fb84c" : "#4f9a3a", 220, 0.08);
+              if (k % 2) bWash(B2, ellipsePts(lx - sd * 10, ly - 10, 11, 7, 8, -sd * 0.5), "#8fcf68", 200, 0.08);
+            }
+          }
+        }
+      }
+    });
+  }
+  function bearPts(x) {
+    const y = ROAD_Y - 6;
+    return {
+      body: ellipsePts(x, y - 40, 40, 44, 18),
+      head: ellipsePts(x + 6, y - 104, 32, 29, 16),
+      earL: ellipsePts(x - 18, y - 128, 12, 12, 10),
+      earR: ellipsePts(x + 30, y - 126, 11, 11, 10),
+      armL: ellipsePts(x - 40, y - 46, 14, 22, 10, 0.5),
+      armR: ellipsePts(x + 40, y - 40, 14, 22, 10, -0.6),
+      legL: ellipsePts(x - 22, y - 8, 20, 13, 10),
+      legR: ellipsePts(x + 26, y - 6, 20, 13, 10),
+      snout: ellipsePts(x + 20, y - 96, 13, 10, 10),
+      patch: [[x - 14, y - 56], [x + 6, y - 60], [x + 8, y - 40], [x - 12, y - 38]],
+      eye: [x + 12, y - 110],
+      nose: [x + 30, y - 98]
+    };
+  }
+  function groundLines(env) {
+    const g = groundGeo(env.camAt(SB(5)));
+    return sketchStrip("s05-ground", 1, {
+      y0: ROAD_Y - 150,
+      y1: 1e3,
+      fills: (ctx, x0, x1) => {
+        ctx.fillStyle = PAPER2;
+        ctx.fillRect(x0, ROAD_Y, x1 - x0, 1e3 - ROAD_Y);
+        const b = bearPts(g.bear.x);
+        for (const k of ["armL", "legL", "body", "legR", "head", "earL", "earR", "armR"]) fillPoly(ctx, b[k], PAPER_D);
+      },
+      lines: (B2, x0, x1) => {
+        B2.set("HB", LEAD2, 1.2);
+        B2.line(x0, ROAD_Y, x1, ROAD_Y);
+        B2.set("2H", LEAD2, 0.8);
+        for (const c of g.cracks) bPoly(B2, c, false);
+        for (const s of g.stones) {
+          B2.set(s.brick ? "HB" : "2H", s.brick ? LEAD2 : LEAD_L, 0.8);
+          bPoly(B2, s.pts, true);
+        }
+        const R = R0("glines");
+        B2.set("2H", LEAD_L, 0.6);
+        for (let x = x0; x < x1; x += 60 + R() * 120) {
+          const y = ROAD_Y + 40 + R() * 150;
+          B2.line(x, y, x + 40 + R() * 70, y + (R() - 0.5) * 4);
+        }
+        const b = bearPts(g.bear.x);
+        B2.set("HB", LEAD_D, 0.9);
+        for (const k of ["armL", "legL", "body", "legR", "head", "earL", "earR", "armR", "snout"]) bPoly(B2, b[k], true);
+        B2.set("2H", LEAD2, 0.8);
+        bPoly(B2, b.patch, true);
+        for (let k = 0; k < 4; k++) B2.line(b.patch[0][0] + 4 + k * 5, b.patch[0][1] - 4, b.patch[0][0] + 4 + k * 5, b.patch[0][1] + 4);
+        B2.set("pen", LEAD_D, 0.9);
+        B2.circle(b.eye[0], b.eye[1], 3.5);
+        B2.circle(b.nose[0], b.nose[1], 4);
+        B2.set("2H", LEAD_D, 0.7);
+        B2.line(b.eye[0] - 22, b.eye[1] + 2, b.eye[0] - 14, b.eye[1] + 6);
+        B2.line(b.eye[0] - 22, b.eye[1] + 6, b.eye[0] - 14, b.eye[1] + 2);
+      }
+    });
+  }
+  function groundWash(env) {
+    const g = groundGeo(env.camAt(SB(5)));
+    return washStrip("s05-groundw", 1, {
+      y0: ROAD_Y - 150,
+      y1: 1e3,
+      wash: (B2, x0, x1) => {
+        bWash(B2, [[x0, ROAD_Y], [x1, ROAD_Y], [x1, 1e3], [x0, 1e3]], "#dcc9a3", 80, 0.06);
+        for (const s of g.stones) bWash(B2, s.pts, s.brick ? "#d98a62" : "#b9b6c4", 150, 0.05);
+        const R = R0("grass");
+        for (const c of g.cracks) {
+          const [gx, gy] = c[Math.floor(c.length / 2)];
+          bWash(B2, ellipsePts(gx, gy, 22 + R() * 14, 7, 10), "#9ccb6e", 150, 0.15);
+        }
+        const b = bearPts(g.bear.x);
+        for (const k of ["armL", "legL", "body", "legR", "head", "earL", "earR", "armR"]) bWash(B2, b[k], "#c98a55", 160, 0.12);
+        bWash(B2, b.snout, "#efd0a8", 160, 0.1);
+        bWash(B2, b.patch, "#7fa6d6", 170, 0.05);
+      }
+    });
+  }
+  function fgLines(env) {
+    const c5 = env.camAt(SB(5));
+    const piles = [-260 + c5 * P_FG2, 1330 + c5 * P_FG2, 2600 + c5 * P_FG2];
+    const R = R0("fg");
+    const chunks = [];
+    for (const px of piles) for (let k = 0; k < 9; k++) {
+      const x = px + (R() - 0.5) * 300, y = 940 + R() * 70, w = 40 + R() * 60, h = 22 + R() * 26, a = (R() - 0.5) * 0.5;
+      const pts = [[-w / 2, -h / 2], [w / 2, -h / 2 + R() * 6], [w / 2, h / 2], [-w / 2, h / 2]].map(([u, v]) => [x + u * Math.cos(a) - v * Math.sin(a), y + u * Math.sin(a) + v * Math.cos(a)]);
+      chunks.push({ pts, brick: R() < 0.5 });
+    }
+    return {
+      lines: sketchStrip("s05-fg", P_FG2, {
+        y0: 880,
+        y1: 1060,
+        fills: (ctx) => {
+          for (const c of chunks) fillPoly(ctx, c.pts, PAPER_D);
+        },
+        lines: (B2) => {
+          B2.set("HB", LEAD_D, 1.1);
+          for (const c of chunks) bPoly(B2, c.pts, true);
+        }
+      }),
+      wash: washStrip("s05-fgw", P_FG2, { y0: 880, y1: 1060, wash: (B2) => {
+        for (const c of chunks) bWash(B2, c.pts, c.brick ? "#d98a62" : "#c2bdb2", 150, 0.08);
+      } })
+    };
+  }
+  function dovePath(t) {
+    const P = [[HELMET_SX + 26, ROAD_Y + 2], [HELMET_SX + 10, 520], [760, 240], [1300, 70]];
+    const u = 1 - t;
+    return [0, 1].map((i) => u * u * u * P[0][i] + 3 * u * u * t * P[1][i] + 3 * u * t * t * P[2][i] + t * t * t * P[3][i]);
+  }
+  var DOVE_T = (b) => ease.out(clamp((b - BLOOM[0]) / 1.7));
+  function blobPath(path, cx, cy, r, seed, b) {
+    const n = 56;
+    for (let i = 0; i <= n; i++) {
+      const a = i / n * Math.PI * 2;
+      const k = 1 + 0.16 * (noise2(Math.cos(a) * 1.6 + seed, Math.sin(a) * 1.6 + b * 0.15, 61) - 0.5) * 2;
+      const x = cx + Math.cos(a) * r * k, y = cy + Math.sin(a) * r * k;
+      i ? path.lineTo(x, y) : path.moveTo(x, y);
+    }
+    path.closePath();
+  }
+  function bloomPath(b, grow = 0) {
+    if (b < BLOOM[0]) return null;
+    if (b >= BLOOM[1]) return "all";
+    const t = (b - BLOOM[0]) / (BLOOM[1] - BLOOM[0]);
+    const p = new Path2D();
+    blobPath(p, HELMET_SX, ROAD_Y - 40, 40 + 2e3 * ease.inOut(t) + grow, 3, b);
+    if (grow === "main") return p;
+    const dt = DOVE_T(b);
+    for (let s = 0; s <= 10; s++) {
+      const ts = s / 10 * dt;
+      const age = b - (BLOOM[0] + ts * 1.2);
+      if (age <= 0) continue;
+      const [x, y] = dovePath(ts);
+      blobPath(p, x, y, 30 + 520 * Math.min(1, age) + grow, s * 7.3, b);
+    }
+    return p;
+  }
+  function coverage(b, x, y) {
+    if (b < BLOOM[0]) return 0;
+    if (b >= BLOOM[1]) return 1;
+    const t = (b - BLOOM[0]) / (BLOOM[1] - BLOOM[0]);
+    let best = 2e3 * ease.inOut(t) + 40 - Math.hypot(x - HELMET_SX, y - (ROAD_Y - 40));
+    const dt = DOVE_T(b);
+    for (let s = 0; s <= 10; s++) {
+      const ts = s / 10 * dt, age = b - (BLOOM[0] + ts * 1.2);
+      if (age <= 0) continue;
+      const [dx, dy] = dovePath(ts);
+      best = Math.max(best, 30 + 520 * Math.min(1, age) - Math.hypot(x - dx, y - dy));
+    }
+    return smoothstep(-60, 120, best);
+  }
+  function withBloom(ctx, b, draw) {
+    const m = bloomPath(b);
+    if (!m) return;
     ctx.save();
-    ctx.clip(path);
-    ctx.strokeStyle = color;
-    ctx.lineWidth = width;
-    ctx.setLineDash([14, 5, 6, 4]);
-    ctx.translate(offset * 0.5, offset * 0.5);
-    ctx.stroke(path);
+    ctx.globalCompositeOperation = "multiply";
+    if (m === "all") {
+      draw();
+      ctx.restore();
+      return;
+    }
+    const outer = bloomPath(b, 34);
+    ctx.save();
+    ctx.clip(outer);
+    ctx.globalAlpha = 0.4;
+    draw();
+    ctx.restore();
+    ctx.save();
+    ctx.clip(m);
+    draw();
+    ctx.restore();
+    const t = (b - BLOOM[0]) / (BLOOM[1] - BLOOM[0]);
+    const r = 40 + 2e3 * ease.inOut(t);
+    const edge = new Path2D();
+    blobPath(edge, HELMET_SX, ROAD_Y - 40, r, 3, b);
+    ctx.strokeStyle = rgba("#a9b9c8", 0.25 * smoothstep(250, 700, r));
+    ctx.lineWidth = 6;
+    ctx.stroke(edge);
     ctx.restore();
   }
+  var FLOWER_COLS = ["#f28aa5", "#f7c948", "#7fb7e8", "#f59b5a", "#c58fe0"];
+  function flower(ctx, x, y, s, col, seed) {
+    if (s <= 0.01) return;
+    ctx.save();
+    ctx.translate(x, y);
+    ctx.scale(s, s);
+    ctx.strokeStyle = "#5f9a45";
+    ctx.lineWidth = 2.4;
+    ctx.lineCap = "round";
+    ctx.beginPath();
+    ctx.moveTo(0, 0);
+    ctx.quadraticCurveTo(-4, -12, 0, -26);
+    ctx.stroke();
+    ctx.fillStyle = "#7fbf5e";
+    ellipse(ctx, 6, -12, 7, 3.5, -0.6);
+    ctx.fill();
+    for (let k = 0; k < 5; k++) {
+      const a = k / 5 * Math.PI * 2 + seed;
+      ellipse(ctx, Math.cos(a) * 8, -30 + Math.sin(a) * 8, 7, 5, a);
+      ctx.fillStyle = col;
+      ctx.fill();
+    }
+    circle(ctx, 0, -30, 4.5);
+    ctx.fillStyle = "#fbe6a0";
+    ctx.fill();
+    sketchEllipse(ctx, 0, -30, 14, 14, { seed: seed * 10, color: LEAD_D, width: 1, jitter: 1.4, passes: 1, alpha: 0.6 });
+    ctx.restore();
+  }
+  function drawFlowers(ctx, b, env) {
+    for (let k = 0; k <= 7; k++) {
+      if (k === 4 || k === 5) continue;
+      if (b < k) break;
+      const wx = env.camAt(k) + CHAR_X + 92 + (hash2(k, 1, 5) - 0.5) * 14;
+      const sx = wx - env.cam;
+      if (sx < X_MIN - 60 || sx > X_MAX + 60) continue;
+      const pop = ease.outBack(clamp((b - k) / 0.35));
+      flower(ctx, sx, ROAD_Y + 6 + hash2(k, 2, 5) * 10, pop * (1.5 + hash2(k, 3, 5) * 0.4), FLOWER_COLS[k % FLOWER_COLS.length], k * 1.3);
+    }
+  }
+  function helmet(ctx, x, y, rock, color) {
+    ctx.save();
+    ctx.translate(x, y);
+    ctx.rotate(-0.35 + rock);
+    const dome = ellipsePts(0, 0, 58, 44, 22, 0, Math.PI, Math.PI * 2);
+    const rim = ellipsePts(0, 0, 70, 12, 22);
+    poly(ctx, [...dome, [58, 0], [-58, 0]]);
+    ctx.fillStyle = PAPER_D;
+    ctx.fill();
+    if (color > 0) {
+      ctx.globalAlpha = color;
+      poly(ctx, dome);
+      ctx.fillStyle = "#9aa77a";
+      ctx.fill();
+      ctx.globalAlpha = 1;
+    }
+    ctx.beginPath();
+    ctx.ellipse(0, 0, 70, 12, 0, 0, Math.PI * 2);
+    ctx.fillStyle = color > 0 ? mix(PAPER_D, "#6f7a55", color * 0.6) : "#ddd3bf";
+    ctx.fill();
+    sketchPoly(ctx, dome, { close: false, seed: 51, color: LEAD_D, width: 1.6 });
+    sketchPoly(ctx, rim, { close: false, seed: 52, color: LEAD_D, width: 1.4, over: 1 });
+    sketchHatch(ctx, 10, -40, 46, 38, { angle: 1.1, gap: 7, color: LEAD2, alpha: 0.5, seed: 53 });
+    sketchEllipse(ctx, -20, -24, 6, 4, { seed: 54, color: LEAD_D, width: 1, passes: 1 });
+    sketchLine(ctx, [-38, -10], [-24, -30], { seed: 55, color: LEAD2, width: 1 });
+    sketchPoly(ctx, [[-50, 2], [-40, 22], [-10, 26], [6, 12]], { close: false, seed: 56, color: LEAD_D, width: 1.3 });
+    ctx.restore();
+  }
+  function dove(ctx, x, y, s, flap, facing = 1) {
+    ctx.save();
+    ctx.translate(x, y);
+    ctx.scale(s * facing, s);
+    const body = [[-34, 2], [-18, -10], [10, -12], [24, -20], [38, -18], [50, -10], [42, -6], [30, 6], [4, 14], [-24, 10], [-48, 18], [-44, 4]];
+    const wa = -1.1 + flap * 2;
+    const wing = [[-6, -6], [-14 + Math.cos(wa) * 22, -6 + Math.sin(wa) * 46], [-30 + Math.cos(wa) * 40, -6 + Math.sin(wa) * 62], [-24, 0], [12, -2]];
+    for (const p of [body, wing]) {
+      poly(ctx, p);
+      ctx.fillStyle = "#ffffff";
+      ctx.fill();
+    }
+    sketchPoly(ctx, body, { seed: 71, color: LEAD_D, width: 1.6 / s, over: 2 });
+    sketchPoly(ctx, wing, { seed: 72, color: LEAD_D, width: 1.4 / s, over: 2 });
+    for (let k = 0; k < 3; k++) sketchLine(ctx, [-8 - k * 7, -4], [-16 + Math.cos(wa) * 20 * (0.4 + k * 0.18) - k * 6, -6 + Math.sin(wa) * 40 * (0.4 + k * 0.18)], { seed: 73 + k, color: LEAD2, width: 1 / s, passes: 1 });
+    circle(ctx, 38, -14, 2.2);
+    ctx.fillStyle = LEAD_D;
+    ctx.fill();
+    poly(ctx, [[49, -12], [58, -9], [49, -7]]);
+    ctx.fillStyle = "#e0a060";
+    ctx.fill();
+    ctx.restore();
+  }
+  function paperCard(ctx, x, y, w, h, seed) {
+    ctx.save();
+    ctx.fillStyle = "rgba(90,80,60,0.12)";
+    ctx.fillRect(x + 6, y + 8, w, h);
+    ctx.fillStyle = "#fbf6ea";
+    ctx.fillRect(x, y, w, h);
+    sketchPoly(ctx, [[x, y], [x + w, y], [x + w, y + h], [x, y + h]], { seed, color: LEAD_D, width: 1.8, jitter: 1.6, over: 8 });
+    sketchHatch(ctx, x + w - 18, y + 8, 14, h - 16, { gap: 5, color: LEAD2, alpha: 0.45, seed: seed + 1 });
+    for (const [tx, ty, a] of [[x + 18, y - 6, -0.3], [x + w - 40, y + h - 10, -0.25]]) {
+      ctx.save();
+      ctx.translate(tx, ty);
+      ctx.rotate(a);
+      ctx.fillStyle = "rgba(236,226,196,0.85)";
+      ctx.fillRect(-22, -9, 50, 18);
+      sketchPoly(ctx, [[-22, -9], [28, -9], [28, 9], [-22, 9]], { seed: seed + 2, color: LEAD_L, width: 1, passes: 1 });
+      ctx.restore();
+    }
+    ctx.restore();
+  }
+  function sketchCassette(ctx, kind, cx, cy, s, spin) {
+    const w = 200 * s, h = 128 * s;
+    ctx.save();
+    ctx.translate(cx, cy);
+    ctx.fillStyle = "#fbf6ea";
+    roundRect(ctx, -w / 2, -h / 2, w, h, 10);
+    ctx.fill();
+    const S = (pts, seed, wd = 1.8) => sketchPoly(ctx, pts, { seed, color: LEAD_D, width: wd, jitter: 1.2, over: 5 });
+    S([[-w / 2, -h / 2], [w / 2, -h / 2], [w / 2, h / 2], [-w / 2, h / 2]], 81, 2);
+    S([[-w / 2 + 14, -h / 2 + 12], [w / 2 - 14, -h / 2 + 12], [w / 2 - 14, -h / 2 + 78], [-w / 2 + 14, -h / 2 + 78]], 82, 1.4);
+    S([[-52, -h / 2 + 34], [52, -h / 2 + 34], [52, -h / 2 + 68], [-52, -h / 2 + 68]], 83, 1.4);
+    sketchHatch(ctx, -50, -h / 2 + 36, 100, 30, { gap: 5, color: LEAD2, alpha: 0.35, seed: 84 });
+    for (const sx of [-1, 1]) {
+      const rx = sx * 34, ry = -h / 2 + 51;
+      ctx.fillStyle = "#fbf6ea";
+      circle(ctx, rx, ry, 11);
+      ctx.fill();
+      sketchEllipse(ctx, rx, ry, 11, 11, { seed: 85 + sx, color: LEAD_D, width: 1.4 });
+      ctx.save();
+      ctx.translate(rx, ry);
+      ctx.rotate(spin);
+      for (let i = 0; i < 6; i++) {
+        ctx.rotate(Math.PI / 3);
+        ctx.strokeStyle = LEAD_D;
+        ctx.lineWidth = 1.6;
+        ctx.beginPath();
+        ctx.moveTo(0, -3);
+        ctx.lineTo(0, -9);
+        ctx.stroke();
+      }
+      ctx.restore();
+    }
+    S([[-60, h / 2], [-48, h / 2 - 30], [48, h / 2 - 30], [60, h / 2]], 87, 1.4);
+    for (const sx of [-1, 1]) sketchEllipse(ctx, sx * 30, h / 2 - 14, 5, 5, { seed: 88 + sx, color: LEAD_D, width: 1.2, passes: 1 });
+    ctx.restore();
+  }
+  var s05 = {
+    id: "s05",
+    station: ST2,
+    freezeBeat: SB(7.1),
+    // Outro 展墙里定格成已经上色的样子
+    drawFigure(ctx, fig, b, env) {
+      drawWalker(ctx, { ...fig, style: "sketch" });
+      const k = coverage(b, CHAR_X, ROAD_Y - 260);
+      if (k > 0) {
+        ctx.save();
+        ctx.globalAlpha *= k;
+        drawWalker(ctx, { ...fig, style: "sketch-color" });
+        ctx.restore();
+      }
+    },
+    drawBack(ctx, b, env) {
+      const cam = env.cam;
+      const pw = Math.ceil((X_MAX - X_MIN) * K), ph = Math.ceil(1e3 * K);
+      ctx.drawImage(paperTexture(pw, ph, { base: PAPER2, seed: 55, amount: 0.7, fibers: 160 }), X_MIN, 0, X_MAX - X_MIN, 1e3);
+      ctx.save();
+      ctx.strokeStyle = rgba(LEAD_L, 0.55);
+      ctx.lineWidth = 1.4;
+      ctx.lineCap = "round";
+      for (let k = 0; k < 6; k++) {
+        const cx = ((k * 470 - cam * 0.05) % 2400 + 2400) % 2400 + X_MIN - 200, cy = 110 + k % 3 * 70;
+        for (let j = 0; j < 3; j++) {
+          ctx.beginPath();
+          ctx.arc(cx + j * 40, cy - j % 2 * 10, 30 + j * 6, Math.PI * 1.05, Math.PI * 1.95);
+          ctx.stroke();
+        }
+      }
+      ctx.restore();
+      withBloom(ctx, b, () => {
+        const g = ctx.createLinearGradient(0, 0, 0, 640);
+        g.addColorStop(0, "#9fcbea");
+        g.addColorStop(0.7, "#cfe6f2");
+        g.addColorStop(1, "#eef4f4");
+        ctx.fillStyle = g;
+        ctx.fillRect(X_MIN, 0, X_MAX - X_MIN, 660);
+      });
+      for (const [lines, wash] of [[farLines(env), farWash()], [midLines(env), midWash(env)], [groundLines(env), groundWash(env)]]) {
+        drawStrip(ctx, lines, cam);
+        withBloom(ctx, b, () => drawStrip(ctx, wash, cam));
+      }
+      const hx = HELMET_SX + env.camAt(BLOOM[0]) - cam;
+      const u = b - BLOOM[0];
+      const rock = u > 0 ? 0.22 * Math.exp(-u * 5) * Math.sin(u * 22) : 0;
+      helmet(ctx, hx, ROAD_Y + 4, rock, coverage(b, hx, ROAD_Y));
+      drawFlowers(ctx, b, env);
+    },
+    drawFront(ctx, b, env) {
+      const cam = env.cam;
+      const fg = fgLines(env);
+      drawStrip(ctx, fg.lines, cam);
+      withBloom(ctx, b, () => drawStrip(ctx, fg.wash, cam));
+      if (b >= BLOOM[0] - 0.02 && b < BLOOM[0] + 1.8) {
+        const t = DOVE_T(b);
+        const [x, y] = dovePath(t);
+        const [x2] = dovePath(Math.min(1, t + 0.02));
+        dove(ctx, x, y, 1.15 + t * 0.2, b * 3.2 % 1, x2 >= x ? 1 : -1);
+      }
+    },
+    drawFrame(ctx, R) {
+      const t = 64 * R.s, { x, y, w, h } = R;
+      ctx.save();
+      const band = new Path2D();
+      band.rect(x - t, y - t, w + 2 * t, h + 2 * t);
+      band.rect(x, y, w, h);
+      ctx.fillStyle = "#efdcbc";
+      ctx.fill(band, "evenodd");
+      const o = { color: LEAD_D, width: Math.max(1, 2 * R.s), jitter: 1.5 * R.s, over: 10 * R.s };
+      sketchPoly(ctx, [[x - t, y - t], [x + w + t, y - t], [x + w + t, y + h + t], [x - t, y + h + t]], { ...o, seed: 91 });
+      sketchPoly(ctx, [[x, y], [x + w, y], [x + w, y + h], [x, y + h]], { ...o, seed: 92 });
+      sketchPoly(ctx, [[x - t * 0.5, y - t * 0.5], [x + w + t * 0.5, y - t * 0.5], [x + w + t * 0.5, y + h + t * 0.5], [x - t * 0.5, y + h + t * 0.5]], { ...o, seed: 93, width: Math.max(1, 1.2 * R.s) });
+      ctx.restore();
+    },
+    cardStyle: {
+      ink: "#3b3732",
+      accent: "#8c867b",
+      bar: false,
+      bgDraw(ctx, x, y, w, h) {
+        paperCard(ctx, x, y, w, h, 101);
+      }
+    },
+    playerStyle: {
+      ink: "#3b3732",
+      noteColor: "#8c867b",
+      backdrop: false,
+      plateDraw(ctx, x, y, w, h) {
+        paperCard(ctx, x, y, w, h, 111);
+      },
+      drawPlayer(ctx, kind, cx, cy, s, spin) {
+        sketchCassette(ctx, kind, cx, cy, s, spin);
+      }
+    }
+  };
+
+  // src/kit/etch.js
   function grainPattern(ctx, { color = "20,18,30", density = 0.12, size = 256, seed = 7, alpha = 0.35 } = {}) {
     const tile = memo(`grain|${color}|${density}|${size}|${seed}|${alpha}`, () => {
       const c = makeCanvas(size, size);
@@ -1919,430 +2672,6 @@
     }
     ctx.restore();
   }
-
-  // src/scenes/s05.js
-  var ST2 = stationByN(5);
-  var INK2 = "#121110";
-  var PAPER2 = "#8f8a80";
-  var PAPER_L = "#b3ada1";
-  var WHITE = "#ffffff";
-  var P_FAR2 = 0.3;
-  var P_MID = 0.65;
-  var P_FG2 = 1.3;
-  var HORIZON = 560;
-  function skyLayer() {
-    return strip("s05-sky", 0.04, (ctx, x0, x1) => {
-      const path = new Path2D();
-      path.rect(x0, 0, x1 - x0, HORIZON + 20);
-      woodcut(ctx, path, {
-        ink: INK2,
-        paper: PAPER2,
-        gap: 9,
-        angle: 0.02,
-        wobble: 3,
-        seed: 11,
-        bounds: [x0, 0, x1 - x0, HORIZON + 20],
-        tone: (x, y) => 0.08 + 0.72 * Math.pow(y / HORIZON, 1.8) + (noise2(x * 4e-3, y * 0.01, 2) - 0.5) * 0.25
-      });
-      const sx = 980, sy = 230;
-      for (let r = 120; r > 8; r -= 11) {
-        ctx.strokeStyle = PAPER2;
-        ctx.lineWidth = r > 70 ? 2 : 4.5;
-        ctx.beginPath();
-        ctx.arc(sx, sy, r, 0, Math.PI * 2);
-        ctx.stroke();
-      }
-      circle(ctx, sx, sy, 30);
-      ctx.fillStyle = PAPER_L;
-      ctx.fill();
-    }, { y0: 0, y1: HORIZON + 20 });
-  }
-  function ruins() {
-    return strip("s05-ruins", P_FAR2, (ctx, x0, x1) => {
-      const R = rng("s05-ruins");
-      let x = x0;
-      while (x < x1) {
-        const w = 90 + R() * 170, h = 110 + R() * 220;
-        const top = HORIZON - h;
-        const pts = [[x, HORIZON + 30], [x, top + R() * 30]];
-        const n = 3 + Math.floor(R() * 4);
-        for (let k = 1; k < n; k++) pts.push([x + w * k / n, top + R() * 70 - (k === 1 ? 20 : 0)]);
-        pts.push([x + w, top + R() * 40], [x + w, HORIZON + 30]);
-        const p = new Path2D();
-        pts.forEach(([px, py], i) => i ? p.lineTo(px, py) : p.moveTo(px, py));
-        p.closePath();
-        woodcut(ctx, p, { ink: INK2, paper: PAPER2, gap: 6, angle: Math.PI / 2, wobble: 1, seed: Math.floor(x), bounds: [x - 10, top - 80, w + 20, h + 120], tone: (px) => 0.32 * (1 - (px - x) / w) });
-        carveEdge(ctx, p, { color: PAPER2, width: 2 });
-        ctx.fillStyle = INK2;
-        for (let wy = top + 30; wy < HORIZON - 20; wy += 34) for (let wx = x + 12; wx < x + w - 18; wx += 26) {
-          if (R() < 0.35) continue;
-          ctx.fillRect(wx, wy, 12, 18);
-          ctx.fillStyle = PAPER2;
-          ctx.fillRect(wx, wy + 16, 12, 2);
-          ctx.fillStyle = INK2;
-        }
-        if (R() > 0.5) {
-          ctx.strokeStyle = INK2;
-          ctx.lineWidth = 5;
-          ctx.beginPath();
-          ctx.moveTo(x + w * 0.6, top + 20);
-          ctx.lineTo(x + w * 0.6 + 40, top - 26);
-          ctx.stroke();
-        }
-        if (R() > 0.7) {
-          const cx = x + w * (0.2 + R() * 0.6), ch = 140 + R() * 80;
-          const cp = new Path2D();
-          cp.rect(cx, top - ch, 26, ch + 20);
-          woodcut(ctx, cp, { ink: INK2, paper: PAPER2, gap: 5, angle: Math.PI / 2, seed: 4, bounds: [cx - 5, top - ch - 5, 40, ch + 30], tone: (px) => 0.4 * (1 - (px - cx) / 26) });
-        }
-        x += w + R() * 30;
-      }
-    }, { y0: 150, y1: HORIZON + 40 });
-  }
-  function puff(i) {
-    return baked(`s05-puff-${i}`, 300, 300, (ctx) => {
-      const R = rng("puff", i);
-      const p = new Path2D();
-      const cx = 150, cy = 150;
-      const blobs = Array.from({ length: 7 }, () => [cx + (R() - 0.5) * 120, cy + (R() - 0.5) * 90, 40 + R() * 45]);
-      for (const [x, y, r] of blobs) {
-        p.moveTo(x + r, y);
-        p.arc(x, y, r, 0, Math.PI * 2);
-      }
-      ctx.fillStyle = INK2;
-      ctx.fill(p);
-      ctx.save();
-      ctx.clip(p);
-      for (const [x, y, r] of blobs) {
-        for (let rr = r * 0.9; rr > 6; rr -= 9) {
-          ctx.strokeStyle = rr > r * 0.5 ? PAPER2 : PAPER_L;
-          ctx.lineWidth = 2.2 + (r - rr) * 0.04;
-          ctx.beginPath();
-          ctx.arc(x - r * 0.15, y - r * 0.15, rr, Math.PI * 0.9 + R(), Math.PI * 1.9 + R());
-          ctx.stroke();
-        }
-      }
-      ctx.restore();
-      ctx.strokeStyle = INK2;
-      ctx.lineWidth = 3;
-      ctx.stroke(p);
-    });
-  }
-  function drawSmoke(ctx, b, cam) {
-    const columns = [[-120, 0], [520, 1], [1180, 2], [1900, 0]];
-    for (const [lx, ci] of columns) {
-      const baseX = lx - cam * P_FAR2, baseY = HORIZON - 120;
-      for (let k = 0; k < 6; k++) {
-        const life = ((b * 0.16 + k / 6 + ci * 0.13) % 1 + 1) % 1;
-        const s = 0.45 + life * 1.1;
-        const x = baseX + life * 160 + Math.sin(life * 4 + k) * 20, y = baseY - life * 420;
-        const img = puff((k + ci) % 3);
-        ctx.globalAlpha = Math.min(1, life * 4) * (1 - smoothstep(0.75, 1, life));
-        ctx.drawImage(img, x - 150 * s / K, y - 150 * s / K, 300 * s / K, 300 * s / K);
-      }
-    }
-    ctx.globalAlpha = 1;
-  }
-  function midLayer() {
-    return strip("s05-mid", P_MID, (ctx, x0, x1) => {
-      const R = rng("s05-mid");
-      const field = new Path2D();
-      field.rect(x0, HORIZON - 4, x1 - x0, ROAD_Y - HORIZON + 30);
-      woodcut(ctx, field, { ink: INK2, paper: PAPER2, gap: 8, angle: 0, wobble: 3, seed: 21, bounds: [x0, HORIZON - 10, x1 - x0, 300], tone: (x, y) => 0.55 - (y - HORIZON) / 500 + (noise2(x * 0.01, y * 0.02, 4) - 0.5) * 0.3 });
-      for (let tx = x0 + 200; tx < x1; tx += 700 + R() * 500) {
-        const tree = new Path2D();
-        const branch = (x, y, a, len, w, d) => {
-          const ex = x + Math.cos(a) * len, ey = y + Math.sin(a) * len;
-          const nx = -Math.sin(a) * w / 2, ny = Math.cos(a) * w / 2;
-          tree.moveTo(x + nx, y + ny);
-          tree.lineTo(ex + nx * 0.6, ey + ny * 0.6);
-          tree.lineTo(ex - nx * 0.6, ey - ny * 0.6);
-          tree.lineTo(x - nx, y - ny);
-          tree.closePath();
-          if (d > 0) {
-            branch(ex, ey, a - 0.4 - R() * 0.3, len * 0.72, w * 0.62, d - 1);
-            branch(ex, ey, a + 0.35 + R() * 0.3, len * 0.66, w * 0.6, d - 1);
-          }
-        };
-        branch(tx, ROAD_Y - 30, -Math.PI / 2 + (R() - 0.5) * 0.2, 150, 22, 4);
-        ctx.fillStyle = INK2;
-        ctx.fill(tree);
-        hatch(ctx, tree, { angle: 1.2, gap: 7, color: PAPER2, width: () => 1.4, wobble: 1, bounds: [tx - 250, ROAD_Y - 520, 500, 520] });
-      }
-      for (let sx = x0 + 60; sx < x1; sx += 900 + R() * 400) {
-        for (let row = 0; row < 3; row++) for (let k = 0; k < 5 - row; k++) {
-          const bx = sx + k * 58 + row * 29, by = ROAD_Y - 26 - row * 30;
-          const bag = new Path2D();
-          bag.ellipse(bx, by, 30, 16, 0, 0, Math.PI * 2);
-          woodcut(ctx, bag, { ink: INK2, paper: PAPER2, gap: 5, angle: 0.2, seed: k + row, bounds: [bx - 32, by - 18, 64, 36], tone: (x, y) => 0.55 - (y - by + 16) / 40 });
-          ctx.strokeStyle = INK2;
-          ctx.lineWidth = 2.5;
-          ctx.stroke(bag);
-        }
-      }
-      ctx.strokeStyle = INK2;
-      ctx.lineCap = "round";
-      const posts = [];
-      for (let px = x0; px < x1; px += 170 + R() * 40) posts.push([px, (R() - 0.5) * 0.25]);
-      for (const [px, tilt] of posts) {
-        ctx.lineWidth = 9;
-        ctx.beginPath();
-        ctx.moveTo(px, ROAD_Y - 6);
-        ctx.lineTo(px + Math.sin(tilt) * 190, ROAD_Y - 196);
-        ctx.stroke();
-        ctx.strokeStyle = PAPER2;
-        ctx.lineWidth = 2;
-        ctx.beginPath();
-        ctx.moveTo(px - 2, ROAD_Y - 10);
-        ctx.lineTo(px - 2 + Math.sin(tilt) * 180, ROAD_Y - 190);
-        ctx.stroke();
-        ctx.strokeStyle = INK2;
-      }
-      for (let w = 0; w < 3; w++) {
-        ctx.lineWidth = 2.4;
-        for (let i = 0; i < posts.length - 1; i++) {
-          const [a, ta] = posts[i], [b2, tb] = posts[i + 1];
-          const ya = ROAD_Y - 60 - w * 55, yb = ROAD_Y - 60 - w * 55;
-          const xa = a + Math.sin(ta) * (60 + w * 55), xb = b2 + Math.sin(tb) * (60 + w * 55);
-          ctx.beginPath();
-          ctx.moveTo(xa, ya);
-          ctx.quadraticCurveTo((xa + xb) / 2, ya + 22, xb, yb);
-          ctx.stroke();
-          for (let t = 0.15; t < 1; t += 0.22) {
-            const bx = lerp(xa, xb, t), by = lerp(ya, yb, t) + 22 * 4 * t * (1 - t) * 0.5;
-            ctx.beginPath();
-            ctx.moveTo(bx - 6, by - 6);
-            ctx.lineTo(bx + 6, by + 6);
-            ctx.moveTo(bx + 6, by - 6);
-            ctx.lineTo(bx - 6, by + 6);
-            ctx.stroke();
-          }
-        }
-      }
-    }, { y0: 300, y1: ROAD_Y + 30 });
-  }
-  function roadLayer2() {
-    return strip("s05-road", 1, (ctx, x0, x1) => {
-      const R = rng("s05-road");
-      const p = new Path2D();
-      p.rect(x0, ROAD_Y, x1 - x0, 1e3 - ROAD_Y);
-      woodcut(ctx, p, { ink: INK2, paper: PAPER2, gap: 7, angle: 0.01, wobble: 2.5, seed: 31, bounds: [x0, ROAD_Y, x1 - x0, 210], tone: (x, y) => 0.62 - (y - ROAD_Y) / 420 + (noise2(x * 6e-3, y * 0.02, 6) - 0.5) * 0.35 });
-      ctx.fillStyle = INK2;
-      ctx.fillRect(x0, ROAD_Y - 2, x1 - x0, 6);
-      ctx.strokeStyle = INK2;
-      ctx.lineWidth = 7;
-      for (const y of [870, 930]) {
-        ctx.beginPath();
-        for (let x = x0; x < x1; x += 40) {
-          const yy = y + (noise2(x * 4e-3, y, 8) - 0.5) * 16;
-          x === x0 ? ctx.moveTo(x, yy) : ctx.lineTo(x, yy);
-        }
-        ctx.stroke();
-      }
-      for (let i = 0; i < (x1 - x0) / 40; i++) {
-        const x = x0 + R() * (x1 - x0), y = ROAD_Y + 20 + R() * 170, r = 4 + R() * 14;
-        if (R() < 0.12) {
-          ctx.fillStyle = PAPER_L;
-          ellipse(ctx, x, y, r * 4, r * 0.8);
-          ctx.fill();
-          ctx.strokeStyle = INK2;
-          ctx.lineWidth = 2;
-          ctx.stroke();
-          continue;
-        }
-        smoothPath(ctx, [[x - r, y], [x - r * 0.4, y - r * 0.9], [x + r * 0.7, y - r * 0.6], [x + r, y + r * 0.3], [x, y + r * 0.6]], true);
-        ctx.fillStyle = INK2;
-        ctx.fill();
-        ctx.strokeStyle = PAPER2;
-        ctx.lineWidth = 1.5;
-        ctx.beginPath();
-        ctx.moveTo(x - r * 0.6, y - r * 0.4);
-        ctx.lineTo(x + r * 0.2, y - r * 0.6);
-        ctx.stroke();
-      }
-    }, { y0: ROAD_Y - 4, y1: 1e3 });
-  }
-  function dove(ctx, x, y, s, flap, facing = 1, perch = false) {
-    ctx.save();
-    ctx.translate(x, y);
-    ctx.scale(s * facing, s);
-    const body = new Path2D();
-    body.moveTo(-34, 2);
-    body.quadraticCurveTo(-10, -16, 18, -10);
-    body.quadraticCurveTo(30, -22, 40, -16);
-    body.quadraticCurveTo(46, -12, 52, -10);
-    body.lineTo(44, -6);
-    body.quadraticCurveTo(38, 4, 24, 8);
-    body.quadraticCurveTo(0, 16, -24, 10);
-    body.lineTo(-48, 16);
-    body.lineTo(-44, 4);
-    body.closePath();
-    const wingA = perch ? 0.1 : -1.1 + flap * 2;
-    const wing = new Path2D();
-    wing.moveTo(-4, -6);
-    wing.quadraticCurveTo(-10 + Math.cos(wingA) * 20, -6 + Math.sin(wingA) * 50, -30 + Math.cos(wingA) * 36, -6 + Math.sin(wingA) * 62);
-    wing.quadraticCurveTo(-30, -2 + Math.sin(wingA) * 20, 14, -2);
-    wing.closePath();
-    ctx.fillStyle = WHITE;
-    ctx.fill(body);
-    ctx.fill(wing);
-    ctx.strokeStyle = INK2;
-    ctx.lineWidth = 2.4 / s;
-    ctx.lineJoin = "round";
-    ctx.stroke(body);
-    ctx.stroke(wing);
-    ctx.lineWidth = 1.4 / s;
-    for (let k = 0; k < 4; k++) {
-      const t = 0.3 + k * 0.17;
-      ctx.beginPath();
-      ctx.moveTo(-6 - k * 6, -5);
-      ctx.lineTo(-10 + Math.cos(wingA) * 20 * t - k * 6, -6 + Math.sin(wingA) * 48 * t);
-      ctx.stroke();
-    }
-    for (let k = 0; k < 3; k++) {
-      ctx.beginPath();
-      ctx.moveTo(-34 - k * 4, 6 + k);
-      ctx.lineTo(-46, 10 + k * 2);
-      ctx.stroke();
-    }
-    circle(ctx, 40, -14, 2.2 / s * 1.4);
-    ctx.fillStyle = INK2;
-    ctx.fill();
-    ctx.fillStyle = "#5a554d";
-    poly(ctx, [[50, -12], [58, -9], [50, -7]]);
-    ctx.fill();
-    if (perch) {
-      ctx.strokeStyle = INK2;
-      ctx.lineWidth = 2 / s;
-      ctx.beginPath();
-      ctx.moveTo(4, 12);
-      ctx.lineTo(2, 22);
-      ctx.moveTo(12, 10);
-      ctx.lineTo(12, 22);
-      ctx.stroke();
-    }
-    ctx.restore();
-  }
-  function doveAt(b, env) {
-    const fig = env.figure();
-    const S = 1.15;
-    const sh = (pose) => {
-      const a = ANCHORS[pose].shoulder;
-      return [fig.x + (a[0] + (pose === "walk" ? -30 : 34)) * fig.scale, fig.y + (a[1] + (pose === "walk" ? 10 : 6)) * fig.scale - 22 * S];
-    };
-    const LAND = SB(5), HOP = SB(7), OFF = SB(7.6), LEAVE = SB(8.8), START = SB(3.2);
-    if (b < START || b > LEAVE) return null;
-    if (b < LAND) {
-      const t2 = (b - START) / (LAND - START);
-      const [tx, ty] = sh("stand");
-      const e = ease.inOut(t2);
-      return { x: lerp(1500, tx, e), y: lerp(90, ty, Math.pow(t2, 1.6)) - Math.sin(Math.PI * t2) * 60, flap: t2 > 0.85 ? 0.15 : b * 3 % 1, facing: -1, perch: false, s: S };
-    }
-    if (b < HOP) return { ...xy(sh(fig.pose === "stand" ? "stand" : "walk")), flap: 0, facing: b < LAND + 0.25 ? -1 : 1, perch: true, s: S, bob: Math.max(0, Math.sin((b - LAND) * Math.PI * 2)) * 3 };
-    if (b < HOP + 0.18) {
-      const t2 = (b - HOP) / 0.18;
-      const [ax2, ay2] = sh("stand"), [bx2, by2] = sh("walk");
-      return { x: lerp(ax2, bx2, t2), y: lerp(ay2, by2, t2) - Math.sin(Math.PI * t2) * 26, flap: 0.5, facing: 1, perch: false, s: S };
-    }
-    if (b < OFF) return { ...xy(sh("walk")), flap: 0, facing: 1, perch: true, s: S };
-    const t = (b - OFF) / (LEAVE - OFF);
-    const [ax, ay] = sh("walk");
-    return { x: lerp(ax, 1450, ease.in(t)), y: lerp(ay, 110, ease.out(t)), flap: b * 3 % 1, facing: 1, perch: false, s: S * (1 - t * 0.3) };
-  }
-  var xy = ([x, y]) => ({ x, y });
-  var s05 = {
-    id: "s05",
-    station: ST2,
-    drawBack(ctx, b, env) {
-      const cam = env.cam;
-      drawStrip(ctx, skyLayer(), cam);
-      drawSmoke(ctx, b, cam);
-      drawStrip(ctx, ruins(), cam);
-      drawStrip(ctx, midLayer(), cam);
-      drawStrip(ctx, roadLayer2(), cam);
-    },
-    drawFront(ctx, b, env) {
-      const cam = env.cam, c5 = env.camAt(SB(5));
-      ctx.strokeStyle = INK2;
-      ctx.lineCap = "round";
-      for (const [sx0, kind] of [[-200, "coil"], [980, "helmet"], [1250, "coil"], [2200, "coil"]]) {
-        const x = sx0 + c5 * P_FG2 - cam * P_FG2;
-        if (x < X_MIN - 400 || x > X_MAX + 400) continue;
-        if (kind === "coil") {
-          ctx.lineWidth = 3;
-          for (let k = 0; k < 14; k++) {
-            ctx.beginPath();
-            ctx.ellipse(x + k * 26, 952, 26, 46, 0.35, 0, Math.PI * 2);
-            ctx.stroke();
-            ctx.beginPath();
-            ctx.moveTo(x + k * 26 - 4, 908);
-            ctx.lineTo(x + k * 26 + 6, 900);
-            ctx.stroke();
-          }
-        } else {
-          const p = new Path2D();
-          p.ellipse(x, 960, 70, 44, 0, Math.PI, 0);
-          p.lineTo(x + 86, 962);
-          p.lineTo(x - 86, 962);
-          p.closePath();
-          ctx.fillStyle = INK2;
-          ctx.fill(p);
-          ctx.save();
-          ctx.clip(p);
-          ctx.strokeStyle = PAPER2;
-          ctx.lineWidth = 2.4;
-          for (let r = 60; r > 10; r -= 9) {
-            ctx.beginPath();
-            ctx.arc(x - 18, 954, r, Math.PI * 1.1, Math.PI * 1.55);
-            ctx.stroke();
-          }
-          ctx.restore();
-          ctx.fillStyle = PAPER2;
-          ctx.fillRect(x - 86, 960, 172, 3);
-        }
-      }
-      const d = doveAt(b, env);
-      if (d) dove(ctx, d.x, d.y - (d.bob || 0), d.s, d.flap, d.facing, d.perch);
-    },
-    drawFrame(ctx, R) {
-      const t = 64 * R.s, { x, y, w, h } = R;
-      ctx.save();
-      const outer = new Path2D();
-      outer.rect(x - t, y - t, w + 2 * t, h + 2 * t);
-      outer.rect(x, y, w, h);
-      ctx.fillStyle = INK2;
-      ctx.fill(outer, "evenodd");
-      ctx.strokeStyle = PAPER2;
-      ctx.lineWidth = Math.max(1, 2.5 * R.s);
-      for (const k of [0.25, 0.5, 0.72]) ctx.strokeRect(x - t * k, y - t * k, w + 2 * t * k, h + 2 * t * k);
-      ctx.lineWidth = Math.max(1, 4 * R.s);
-      ctx.strokeRect(x - 3, y - 3, w + 6, h + 6);
-      ctx.restore();
-    },
-    cardStyle: {
-      ink: PAPER_L,
-      accent: PAPER2,
-      bar: false,
-      bgDraw(ctx, x, y, w, h) {
-        ctx.save();
-        ctx.fillStyle = INK2;
-        ctx.fillRect(x, y, w, h);
-        ctx.strokeStyle = PAPER2;
-        ctx.lineWidth = 2;
-        ctx.strokeRect(x + 10, y + 10, w - 20, h - 20);
-        ctx.setLineDash([18, 6, 8, 5]);
-        ctx.strokeRect(x + 16, y + 16, w - 32, h - 32);
-        ctx.setLineDash([]);
-        ctx.restore();
-      }
-    },
-    playerStyle: {
-      plate: INK2,
-      ink: PAPER_L,
-      noteColor: PAPER2,
-      palette: { body: "#6f6a61", label: PAPER_L, window: INK2, accent: INK2, tape: "#2a2725", ink: INK2, hub: PAPER2 }
-    }
-  };
 
   // src/scenes/s09.js
   var ST3 = stationByN(9);
@@ -3205,7 +3534,8 @@
       ctx.shadowBlur = 16;
       ctx.shadowOffsetY = 5;
     }
-    drawPlayerKind(ctx, st.player, cx, cy, s, spinAt(gb), P, gb);
+    if (style.drawPlayer) style.drawPlayer(ctx, st.player, cx, cy, s, spinAt(gb), P, gb);
+    else drawPlayerKind(ctx, st.player, cx, cy, s, spinAt(gb), P, gb);
     ctx.shadowColor = "transparent";
     const px = 52;
     font(ctx, px, { family: style.family || SERIF, weight: 700 });
@@ -3312,7 +3642,8 @@
       } else if (st.n === 16) {
         img = freezeImage(16, sec.start + PULL);
       } else {
-        img = freezeImage(st.n, stationSection(st.n).start + FREEZE_B);
+        const sc = SCENES[stationSection(st.n).id];
+        img = freezeImage(st.n, stationSection(st.n).start + (sc.freezeBeat ?? FREEZE_B));
       }
       ctx.drawImage(img, R.x, R.y, R.w, R.h);
       const STOP = B(5, 1);
@@ -3339,7 +3670,7 @@
   // src/main/film.js
   var CHAR_PX = OX + CHAR_X * K;
   var ROAD_PX = ROAD_Y * K;
-  var LEAD2 = 2;
+  var LEAD3 = 2;
   var TAIL = 0.4;
   var sceneOf = (sec) => SCENES[sec.id];
   var camDist = (gb) => dist(Math.max(gb, WALK_START));
@@ -3416,7 +3747,7 @@
     for (const s of sections) {
       if (!s.station) continue;
       const x = gb - s.start;
-      if (x >= -LEAD2 && x < TAIL) {
+      if (x >= -LEAD3 && x < TAIL) {
         const prev = sections[sections.indexOf(s) - 1];
         return { prev, next: s, x };
       }
@@ -3425,8 +3756,8 @@
   }
   function frameRect(x) {
     const lin = (t) => t;
-    const E = keyframes([[-LEAD2, W + 90], [-0.5, CHAR_PX + 90, ease.inOut], [0, CHAR_PX, lin], [TAIL, 0, ease.out]], x);
-    const s = keyframes([[-LEAD2, 0.36], [-0.5, 0.74, ease.inOut], [0, 0.9, lin], [TAIL, 1, ease.out]], x);
+    const E = keyframes([[-LEAD3, W + 90], [-0.5, CHAR_PX + 90, ease.inOut], [0, CHAR_PX, lin], [TAIL, 0, ease.out]], x);
+    const s = keyframes([[-LEAD3, 0.36], [-0.5, 0.74, ease.inOut], [0, 0.9, lin], [TAIL, 1, ease.out]], x);
     return { E, s, x: E, y: ROAD_PX * (1 - s), w: W * s, h: H * s };
   }
   function zoomAbout(ctx, z, ax, ay) {

@@ -13,6 +13,7 @@ import { clamp, ease, lerp, smoothstep } from '../kit/math.js';
 import { drawPlayerKind, playerPalette, spinAt } from '../hud/players.js';
 import { drawSubtitle } from '../hud/subtitle.js';
 import { SB } from '../beat/time.js';
+import { SCENES } from '../scenes/index.js';
 
 export const OUTRO_LINES = ['2000—2026，十六张专辑。', '下一站，未完待续。'];
 const COLS = 4, ROWS = 4, GAP = 16;
@@ -83,7 +84,8 @@ export function drawOutro(ctx, gb) {
     } else if (st.n === 16) {
       img = freezeImage(16, sec.start + PULL);
     } else {
-      img = freezeImage(st.n, stationSection(st.n).start + FREEZE_B);
+      const sc = SCENES[stationSection(st.n).id];
+      img = freezeImage(st.n, stationSection(st.n).start + (sc.freezeBeat ?? FREEZE_B));
     }
     ctx.drawImage(img, R.x, R.y, R.w, R.h);
     // 每格右下角的小播放器：第 5 小节强拍同时停转
