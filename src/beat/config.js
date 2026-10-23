@@ -1,12 +1,13 @@
 // 节拍网格配置 —— 全片唯一的时间来源。
 // 场景里不允许写秒数，一律用「第几小节第几拍」换算（见 time.js）。
 
-// 速度。配乐实测 126.8，按 127 算；必要时直接改成 126.8。
-export const BPM = 127;
+// 速度。配乐《爱在西元前》实测稳定 126.80 BPM（全曲分段测量一致），按实测值设置。
+export const BPM = 126.8;
 
 // 配乐里第一个强拍出现的秒数。整条时间轴整体后移这么多，
 // 前面补 Intro 首帧静止画面。
-export const FIRST_DOWNBEAT = 0;
+// 实测：0.459 秒起每 4 拍一个重拍（音乐 1.405 秒两拍弱起进入，2.352 秒第一个重拍 = Intro 第 2 小节）。
+export const FIRST_DOWNBEAT = 0.459;
 
 export const BEATS_PER_BAR = 4;
 

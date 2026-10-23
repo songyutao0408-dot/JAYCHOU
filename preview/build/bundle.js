@@ -15,8 +15,8 @@
   }
 
   // src/beat/config.js
-  var BPM = 127;
-  var FIRST_DOWNBEAT = 0;
+  var BPM = 126.8;
+  var FIRST_DOWNBEAT = 0.459;
   var BEATS_PER_BAR = 4;
   var STATION_BARS = 4;
   var SECTIONS = [
