@@ -1,7 +1,7 @@
 // 水墨共用渲染（第 3 站建立，其他站可复用）。全部是 Canvas2D，确定性（只用 seed，不用 Math.random），
 // 适合在 strip / baked 里预烘焙；少量函数（inkDot、inkStream、bristleStroke 的短笔）也可以每帧画。
 //
-//   颜色      INK（焦浓重淡清五档 + 宣纸 + 花青 + 赭石 + 印章红）、inkTone(t)
+//   颜色      INK（焦浓重淡清五档 + 宣纸 + 花青 + 赭石 + 印章红）、TEA（茶色：暖琥珀）、inkTone(t)
 //   纸        xuanPaper(w, h, o)                          宣纸纹理（像素尺寸，缓存）
 //   笔触      bristleStroke(ctx, pts, o)                  毛笔一笔：多根笔毛 + 飞白 + 起收笔粗细
 //             inkDot(ctx, x, y, r, o)                     湿墨点（噪声轮廓 + 晕开的边）
@@ -12,6 +12,8 @@
 //             cunStrokes(ctx, ridgePts, o)                披麻皴：沿坡向的长枯笔
 //             mistBand(ctx, x0, x1, y, h, o)              留白雾带（纸色渐变）
 //             pine / bamboo / grassTuft / rock            松、竹、草、石（写意）
+//   泼墨      pomo(ctx, pts, o)                           泼墨块：多层浓淡墨团在形内化开 + 水渍 + 湿边，往下化进纸（烘焙用）
+//             splatter(ctx, x, y, r, o)                   甩出去的一簇墨点（主墨团 + 飞溅小点）
 //   墨线      ribbonPath(pts, widthAt)                    变宽的带状路径
 //             inkRibbon(ctx, pts, o)                      流动的墨线（湿芯 + 晕边 + 飞白），烘焙用
 //             inkStream(ctx, p0, p1, p2, t0, t1, o)       倒下来的墨流（二次曲线的一段，每帧画）
@@ -38,6 +40,14 @@ export const INK = {
   huaqing: '#7d9aa3', // 花青
   zheshi: '#d2b48c',  // 淡赭石
   seal: '#b8402e',    // 印章红（朱砂）
+};
+/** 茶色：第 3 站从山泉、茶汤到年轮一路用的同一种暖琥珀色（深 / 主 / 浅 / 淡茶水 / 暖光）。 */
+export const TEA = {
+  deep: '#8e5f27',
+  tea: '#b9853f',
+  light: '#d9b47c',
+  wash: '#efdcb6',
+  glow: '#f6d99a',
 };
 /** 墨色：t = 0 宣纸 … 1 焦墨；tint 给一点花青 / 赭石（0..1）。 */
 export function inkTone(t, { paper = INK.paper, tint = null, tintAmt = 0 } = {}) {
@@ -460,6 +470,109 @@ export function rock(ctx, x, y, w, h, { seed = 1, color = INK.zhong, alpha = 0.8
     bristleStroke(ctx, [[top[0], top[1] + 4], [top[0] + (R() - 0.5) * w * 0.2, top[1] + h * 0.45], [top[0] + (R() - 0.5) * w * 0.25, y - 2]], { width: Math.max(2.5, h * 0.05), color, alpha: alpha * 0.6, bristles: 4, dry: 0.5, seed: seed + k + 7, taper: [0.9, 0.8, 0.1], px });
   }
   mossDots(ctx, pts.slice(2, 7), { gap: Math.max(10, w / 5), size: Math.max(2, h * 0.06), color: INK.jiao, seed: seed + 3, chance: 0.5 });
+}
+
+// ---------- 泼墨 ----------
+/**
+ * 泼墨块（烘焙用）：在闭合多边形 pts 里，先铺一层淡墨，再泼几层浓淡不同、模糊程度不同的墨团（偏向上沿），
+ * 留几块回流的水渍（浅斑 + 一圈积墨），上沿压一道湿边；形外用模糊的边化开，往下（fadeY）化进纸里。
+ * o: { color（主墨色）, light（淡墨色）, alpha, seed, blobs（墨团数）, px, fadeY, edge（形边模糊，单位）, backrun（水渍数）, top（偏向上沿 0..1）}
+ */
+export function pomo(ctx, pts, o = {}) {
+  const { color = INK.nong, light = INK.dan, alpha = 0.9, seed = 1, blobs = 12, px = 1, fadeY = null, edge = 3, backrun = 3, top = 0.6, wetEdge = 0.5 } = o;
+  let x0 = Infinity, x1 = -Infinity, y0 = Infinity, y1 = -Infinity;
+  for (const [x, y] of pts) { x0 = Math.min(x0, x); x1 = Math.max(x1, x); y0 = Math.min(y0, y); y1 = Math.max(y1, y); }
+  const pad = edge * 3 + 6;
+  x0 -= pad; y0 -= pad; x1 += pad; y1 += pad;
+  const W = (x1 - x0) * px, H = (y1 - y0) * px;
+  if (W < 2 || H < 2) return;
+  const c = makeCanvas(W, H);
+  const g = c.getContext('2d');
+  g.scale(px, px);
+  g.translate(-x0, -y0);
+  const path = new Path2D();
+  pts.forEach(([x, y], i) => (i ? path.lineTo(x, y) : path.moveTo(x, y)));
+  path.closePath();
+  const R = rng('pomo', seed);
+  const w = x1 - x0, h = y1 - y0;
+  // 底：一层淡墨
+  g.fillStyle = light;
+  g.globalAlpha = 0.55;
+  g.filter = `blur(${2 * px}px)`;
+  g.fill(path);
+  // 墨团：大而虚的在下，小而实的在上
+  for (let k = 0; k < blobs; k++) {
+    const u = R(), v = Math.pow(R(), 1 + top * 2);
+    const bx = x0 + pad + u * (w - 2 * pad), by = y0 + pad + v * (h - 2 * pad) * 0.9;
+    const r = (0.08 + R() * 0.22) * Math.max(w, h * 1.5);
+    const dark = R() < 0.45;
+    g.globalAlpha = dark ? 0.35 + R() * 0.35 : 0.2 + R() * 0.25;
+    g.fillStyle = dark ? color : mix(color, light, 0.5 + R() * 0.4);
+    g.filter = `blur(${(dark ? 2 + R() * 4 : 5 + R() * 9) * px}px)`;
+    g.fill(blobPath(bx, by, r, r * (0.35 + R() * 0.4), { seed: seed * 13 + k, rough: 0.35, rot: (R() - 0.5) * 0.5 }));
+  }
+  g.filter = 'none';
+  // 水渍：浅斑 + 外圈一道积墨
+  for (let k = 0; k < backrun; k++) {
+    const bx = x0 + pad + R() * (w - 2 * pad), by = y0 + pad + (0.25 + R() * 0.6) * (h - 2 * pad);
+    const r = (0.04 + R() * 0.08) * Math.max(w, h);
+    const bp = blobPath(bx, by, r, r * (0.5 + R() * 0.4), { seed: seed * 7 + k + 50, rough: 0.45 });
+    g.globalCompositeOperation = 'destination-out';
+    g.globalAlpha = 0.35 + R() * 0.25;
+    g.filter = `blur(${1.5 * px}px)`;
+    g.fill(bp);
+    g.globalCompositeOperation = 'source-over';
+    g.globalAlpha = 0.25;
+    g.strokeStyle = color;
+    g.lineWidth = 1.6;
+    g.filter = `blur(${0.6 * px}px)`;
+    g.stroke(bp);
+  }
+  g.filter = 'none';
+  // 上沿的湿边
+  if (wetEdge > 0) {
+    g.globalAlpha = wetEdge;
+    g.strokeStyle = color;
+    g.lineWidth = 3;
+    g.lineJoin = 'round';
+    g.filter = `blur(${1.2 * px}px)`;
+    g.stroke(path);
+    g.filter = 'none';
+  }
+  // 形外化开：只留形内（边缘模糊）
+  g.globalCompositeOperation = 'destination-in';
+  g.globalAlpha = 1;
+  g.fillStyle = '#000';
+  g.filter = `blur(${edge * px}px)`;
+  g.fill(path);
+  g.filter = 'none';
+  // 往下化进纸
+  if (fadeY !== null) {
+    g.globalCompositeOperation = 'destination-out';
+    const gr = g.createLinearGradient(0, lerp(y0, fadeY, 0.45), 0, fadeY);
+    gr.addColorStop(0, 'rgba(0,0,0,0)');
+    gr.addColorStop(1, 'rgba(0,0,0,1)');
+    g.fillStyle = gr;
+    g.fillRect(x0, y0, w, h);
+    g.fillStyle = '#000';
+    g.fillRect(x0, fadeY, w, Math.max(0, y1 - fadeY));
+  }
+  ctx.save();
+  ctx.globalAlpha *= alpha;
+  ctx.drawImage(c, x0, y0, w, h);
+  ctx.restore();
+}
+
+/** 甩出去的一簇墨点：一个主墨团 + 周围大小不一的飞溅点（可每帧画，数量少）。 */
+export function splatter(ctx, x, y, r, { color = INK.jiao, alpha = 0.85, seed = 1, count = 14, spread = 2.6, dir = null } = {}) {
+  inkDot(ctx, x, y, r, { color, alpha, seed, bleed: 0.35, rough: 0.35 });
+  for (let k = 0; k < count; k++) {
+    let a = hash2(k, 1, seed) * Math.PI * 2;
+    if (dir !== null) a = dir + (hash2(k, 1, seed) - 0.5) * 1.3;
+    const d = r * (1.1 + Math.pow(hash2(k, 2, seed), 1.6) * spread);
+    const s = r * (0.05 + 0.22 * Math.pow(hash2(k, 3, seed), 2)) * (1.4 - d / (r * (1.1 + spread)));
+    inkDot(ctx, x + Math.cos(a) * d, y + Math.sin(a) * d, Math.max(0.6, s), { color, alpha, seed: seed + k * 3, bleed: 0.15, rough: 0.2 });
+  }
 }
 
 // ---------- 墨线 ----------
