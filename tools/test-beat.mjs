@@ -8,28 +8,27 @@ const bar = 4 * 60 / BPM;
 const FD = FIRST_DOWNBEAT;
 assert.equal(BPM, 126.8);          // 配乐实测
 assert.equal(FD, 0.459);
-// Intro 3 小节 + 16 站 × 4 小节 + Outro 11 小节（原 6 小节 + 结尾 5 小节）= 78 小节 = 312 拍
-assert.equal(T.TOTAL_BEATS, 312);
-near(T.duration(), FD + 78 * bar);            // ≈ 148.09 秒
+// Intro 3 小节 + 16 站 × 4 小节 + Outro 15 小节（原 6 + 点亮/胶片圆环 5 + 词云头像与落款 4）= 82 小节 = 328 拍
+assert.equal(T.TOTAL_BEATS, 328);
+near(T.duration(), FD + 82 * bar);            // ≈ 155.66 秒
 assert.ok(T.duration() < 180, '全片应在 3 分钟以内');
 near(T.timeAtBeat(T.sectionById.s01.start), FD + 3 * bar);
 for (let n = 1; n <= 16; n++) near(T.timeAtBeat(T.stationSection(n).start), FD + 3 * bar + (n - 1) * 4 * bar);
 near(T.stationSection(1).beats * T.beatSec(), 4 * bar); // 每站 7.56 秒
 near(T.timeAtBeat(T.sectionById.outro.start), FD + 67 * bar);
-near(T.sectionById.outro.beats * T.beatSec(), 11 * bar);
-near(T.timeAtBeat(T.sectionById.outro.start + 32), FD + 300 * 60 / BPM); // N3 强拍：结尾第一行文案
-near(T.timeAtBeat(T.sectionById.outro.start + 36), FD + 304 * 60 / BPM); // N4 强拍：第二行
-near(T.timeAtBeat(T.sectionById.outro.start + 40), FD + 308 * 60 / BPM); // N5 强拍：第三行
+near(T.sectionById.outro.beats * T.beatSec(), 15 * bar);
+near(T.timeAtBeat(T.sectionById.outro.start + 41), FD + 309 * 60 / BPM); // 圆环缩成光点
+near(T.timeAtBeat(T.sectionById.outro.start + 48), FD + 316 * 60 / BPM); // 词云头像拼完（第 13 小节强拍）
 assert.deepEqual(T.STATION.gag, [8, 12]);
 
 T.setGrid({ firstDownbeat: 1.25 });
 assert.equal(T.beatAt(0), 0);          // 配乐第一个强拍之前：Intro 首帧静止
 assert.equal(T.beatAt(1.0), 0);
 near(T.beatAt(1.25 + T.beatSec() * 12), 12); // 第 1 站强拍整体后移 1.25 秒
-near(T.duration(), 78 * bar + 1.25);
+near(T.duration(), 82 * bar + 1.25);
 
 T.setGrid({ firstDownbeat: 0, bpm: 127 });
-near(T.duration(), (312 * 60) / 127);
+near(T.duration(), (328 * 60) / 127);
 T.setGrid({ firstDownbeat: FD, bpm: BPM });
 
 assert.equal(T.B(2, 1), 4);

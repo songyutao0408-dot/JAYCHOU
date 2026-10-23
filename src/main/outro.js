@@ -1,12 +1,13 @@
-// Outro（11 小节）：
+// Outro（15 小节）：
 //   第 1–2 小节  镜头从第 16 站拉远，展墙 4×4，占画面宽约 85%，每格定格着那一站的他（站立姿势）
 //   第 3 小节    下方居中字幕「2000—2026，十六张专辑。」（第 5 小节末淡出）
 //   第 5 小节强拍 16 个播放器同时停转
 //   第 6 小节    安静的停顿：只有停转后的专辑墙（最后一拍整面墙轻轻暗下，准备点亮）
 //   N1–N2（第 7–8 小节）  16 格按 2000→2026 的顺序每个八分音符亮起一格，像钢琴键被依次按下，格下浮出年份
 //   N3–N4（第 9–10 小节） 4×4 像胶片一行左一行右交错滑动，再卷成一个圆环，像唱片一样旋转，带金色光尾
-//   N5（第 11 小节）      圆环缩成画面中央偏上的一张光碟，慢慢淡出到纸张底色
-//   文案三行分别落在 N3、N4、N5 的强拍，之后保持不动到结尾
+//   N5（第 11 小节）      圆环缩成画面中央偏上的一个光点（第 2 拍），停顿半拍后向四周炸开，变成 174 个歌名
+//   第 11 小节末–第 13 小节第 2 拍  歌名四散后分批聚拢，拼成侧脸闭眼、一手扶耳的头像（约 4 秒，wordcloud.js）
+//   第 13 小节第 3 拍起  头像下方依次浮出三行落款（第三行更大、单独晚半拍），和头像一起定格到全片结束
 import { W, H } from './layout.js';
 import { sectionById, stationSection, B } from '../beat/time.js';
 import { STATIONS } from '../data/stations.js';
@@ -16,13 +17,14 @@ import { paperTexture } from '../kit/paper.js';
 import { clamp, ease, lerp, smoothstep, TAU } from '../kit/math.js';
 import { roundRect, circle } from '../kit/shapes.js';
 import { font, SERIF } from '../kit/text.js';
+import { drawWordCloud } from './wordcloud.js';
 import { drawPlayerKind, playerPalette, spinAt } from '../hud/players.js';
 import { drawSubtitle } from '../hud/subtitle.js';
 import { GAG } from '../beat/time.js';
 import { SCENES } from '../scenes/index.js';
 
 export const OUTRO_LINES = ['2000—2026，十六张专辑。'];
-export const FINAL_LINES = ['27年，16张专辑，174首歌', '每一首歌都是我的青春', '谢谢你，Jay'];
+export const FINAL_LINES = ['27年，16张专辑，174首歌', '每一首歌都是我的青春', '谢谢你，JAY'];
 const COLS = 4, ROWS = 4, GAP = 16;
 const GRID_W = W * 0.85;
 const CELL_W = (GRID_W - GAP * (COLS - 1)) / COLS;
@@ -58,9 +60,10 @@ const N1 = B(7, 1), N3 = B(9, 1), N4 = B(10, 1), N5 = B(11, 1);
 const lightAt = (n) => N1 + 0.5 * (n - 1); // 每个八分音符点亮一格
 const SLIDE = [N3, N3 + 2];              // 胶片交错滑动
 const ROLL = [N3 + 2, N3 + 4.5];         // 卷成圆环
-const COLLAPSE = [N5, N5 + 1.6];         // 圆环缩成光碟
-const DISC_FADE = [N5 + 2, N5 + 3.8];    // 光碟淡出到纸色
-const TEXT_AT = [N3, N4, N5];            // 三行文案
+const COLLAPSE = [N5, N5 + 1];           // 圆环缩成一个光点
+const POINT = N5 + 1;                    // 光点出现
+const BURST = POINT + 0.5;               // 停顿半拍后炸开成歌名
+const SIGN_AT = [B(13, 3), B(13, 4), B(14, 1) + 0.5]; // 三行落款（头像拼完后）：第三行单独再晚半拍
 const RING = { x: W / 2, y: 350, r: 250, w: 140 };
 const PAPER = '#e4ddd0';
 
@@ -155,39 +158,23 @@ function drawGoldTrails(ctx, ob) {
   ctx.restore();
 }
 
-/** N5：圆环缩成的光碟。 */
-function drawDisc(ctx, ob) {
-  const c = ease.inOut(clamp((ob - COLLAPSE[0]) / (COLLAPSE[1] - COLLAPSE[0])));
-  const a = smoothstep(0.35, 1, c) * (1 - smoothstep(DISC_FADE[0], DISC_FADE[1], ob));
+/** N5：圆环缩成的光点——停顿半拍时轻轻呼吸，炸开的一瞬间一闪。 */
+function drawLightPoint(ctx, ob) {
+  const appear = smoothstep(COLLAPSE[0] + 0.4, POINT, ob);
+  const gone = smoothstep(BURST, BURST + 0.45, ob);
+  const a = appear * (1 - gone);
   if (a <= 0.001) return;
-  const r = lerp(40, 140, ease.out(c));
-  const ph = spinPhase(ob);
+  const breathe = ob >= POINT && ob < BURST ? Math.sin((Math.PI * (ob - POINT)) / (BURST - POINT)) : 0;
+  const r = 22 * (1 + 0.25 * breathe) + 220 * ease.out(clamp((ob - BURST) / 0.45));
   ctx.save();
   ctx.globalAlpha = a;
-  ctx.translate(RING.x, RING.y);
-  // 外圈金光
-  const glow = ctx.createRadialGradient(0, 0, r * 0.6, 0, 0, r * 1.6);
-  glow.addColorStop(0, 'rgba(255, 210, 120, 0.45)');
-  glow.addColorStop(1, 'rgba(255, 210, 120, 0)');
-  ctx.fillStyle = glow;
-  circle(ctx, 0, 0, r * 1.6); ctx.fill();
-  // 盘面
-  const g = ctx.createRadialGradient(0, 0, r * 0.15, 0, 0, r);
-  g.addColorStop(0, '#f6efe2'); g.addColorStop(0.55, '#d9c7a2'); g.addColorStop(1, '#b89a62');
+  const g = ctx.createRadialGradient(RING.x, RING.y, 0, RING.x, RING.y, r * 2.4);
+  g.addColorStop(0, 'rgba(255, 250, 235, 1)');
+  g.addColorStop(0.18, 'rgba(255, 222, 150, 0.95)');
+  g.addColorStop(0.5, 'rgba(255, 196, 96, 0.35)');
+  g.addColorStop(1, 'rgba(255, 196, 96, 0)');
   ctx.fillStyle = g;
-  circle(ctx, 0, 0, r); ctx.fill();
-  ctx.strokeStyle = 'rgba(90, 70, 40, 0.35)';
-  for (let k = 1; k <= 6; k++) { ctx.lineWidth = 1; circle(ctx, 0, 0, r * (0.3 + 0.11 * k)); ctx.stroke(); }
-  // 旋转的反光扇面
-  ctx.rotate(ph);
-  ctx.fillStyle = 'rgba(255, 255, 255, 0.35)';
-  ctx.beginPath(); ctx.moveTo(0, 0); ctx.arc(0, 0, r, -0.35, 0.35); ctx.closePath(); ctx.fill();
-  ctx.beginPath(); ctx.moveTo(0, 0); ctx.arc(0, 0, r, Math.PI - 0.25, Math.PI + 0.25); ctx.closePath(); ctx.fill();
-  // 中心孔
-  ctx.fillStyle = PAPER;
-  circle(ctx, 0, 0, r * 0.13); ctx.fill();
-  ctx.strokeStyle = 'rgba(90, 70, 40, 0.5)'; ctx.lineWidth = 2;
-  circle(ctx, 0, 0, r * 0.13); ctx.stroke();
+  circle(ctx, RING.x, RING.y, r * 2.4); ctx.fill();
   ctx.restore();
 }
 
@@ -214,21 +201,12 @@ function drawYearTag(ctx, st, p, ob) {
   ctx.restore();
 }
 
-/** 结尾三行文案 + 纸色半透明底板。 */
-function drawFinalText(ctx, ob) {
-  const pa = smoothstep(TEXT_AT[0] - 0.2, TEXT_AT[0] + 0.6, ob);
-  if (pa <= 0.001) return;
-  const ys = [790, 866, 946];
-  ctx.save();
-  ctx.globalAlpha = pa;
-  ctx.fillStyle = 'rgba(244, 239, 228, 0.82)';
-  roundRect(ctx, W / 2 - 470, 724, 940, 268, 22); ctx.fill();
-  ctx.strokeStyle = 'rgba(80, 64, 44, 0.25)'; ctx.lineWidth = 2;
-  roundRect(ctx, W / 2 - 470, 724, 940, 268, 22); ctx.stroke();
-  ctx.restore();
+/** 全片落款：头像拼完后，下方依次浮出三行，和头像一起定格到结尾。 */
+function drawSignOff(ctx, ob) {
+  const ys = [826, 898, 988];
   for (let i = 0; i < 3; i++) {
-    const a = smoothstep(TEXT_AT[i], TEXT_AT[i] + 0.8, ob);
-    drawSubtitle(ctx, FINAL_LINES[i], W / 2, ys[i], a, { px: i === 2 ? 56 : 50, color: '#2a241d', weight: i === 2 ? 700 : 400 });
+    const a = smoothstep(SIGN_AT[i], SIGN_AT[i] + 0.9, ob);
+    drawSubtitle(ctx, FINAL_LINES[i], W / 2, ys[i], a, { px: i === 2 ? 68 : 50, color: '#2a1d12', weight: i === 2 ? 700 : 400 });
   }
 }
 
@@ -299,12 +277,14 @@ export function drawOutro(ctx, gb) {
     // 年份牌在所有格子之后画，不会被下一行盖住
     for (const [st, p] of tags) drawYearTag(ctx, st, p, ob);
   }
-  drawDisc(ctx, ob);
+  drawLightPoint(ctx, ob);
   ctx.restore();
+  // 光点炸开 → 歌名四散 → 聚拢成头像 → 定格（屏幕空间；此时镜头已是单位变换）
+  if (ob >= BURST) drawWordCloud(ctx, ob - BURST, [RING.x, RING.y]);
 
   // 字幕（屏幕空间）
   const y = TOP + GRID_H + (H - TOP - GRID_H) / 2 + 18;
   const a1 = smoothstep(B(3, 1), B(3, 1) + 0.8, ob) * (1 - smoothstep(B(5, 4), B(6, 1), ob));
   drawSubtitle(ctx, OUTRO_LINES[0], W / 2, y, a1, { px: 50, color: '#2a241d' });
-  drawFinalText(ctx, ob);
+  drawSignOff(ctx, ob);
 }

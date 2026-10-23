@@ -18,5 +18,5 @@ export const STATION_BARS = 4;
 export const SECTIONS = [
   { id: 'intro', bars: 3 },
   ...Array.from({ length: 16 }, (_, i) => ({ id: `s${String(i + 1).padStart(2, '0')}`, bars: STATION_BARS, station: i + 1 })),
-  { id: 'outro', bars: 11 }, // 原 6 小节 + 结尾新增 5 小节（N1–N5）
+  { id: 'outro', bars: 15 }, // 原 6 小节 + 点亮 / 胶片圆环 5 小节 + 词云头像与落款 4 小节
 ];
