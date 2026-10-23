@@ -802,8 +802,8 @@
         if (O.a[i] < 0.01) continue;
         const l = luma(O, i);
         const c = l < 0.12 ? [0.17, 0.17, 0.43] : l < 0.3 ? C[0] : l < 0.45 ? C[2] : C[3];
-        const streak = noise2((x + y) * 0.9, (x - y) * 0.05, 11);
-        const gap = streak > 0.72 ? 0.6 : 0;
+        const streak2 = noise2((x + y) * 0.9, (x - y) * 0.05, 11);
+        const gap = streak2 > 0.72 ? 0.6 : 0;
         O.r[i] = c[0] + (1 - c[0]) * gap;
         O.g[i] = c[1] + (1 - c[1]) * gap;
         O.b[i] = c[2] + (1 - c[2]) * gap;
@@ -4676,10 +4676,10 @@
       const i = y * w + x;
       if (I.a[i] < 0.02) continue;
       const C = col.get(near[i]) || { c: rgbf(BLUE), l: 0.2 };
-      const glow = 0.92 + 0.14 * (1 - Math.min(1, d1a[i] / cell));
+      const glow2 = 0.92 + 0.14 * (1 - Math.min(1, d1a[i] / cell));
       const tone2 = 1 + Math.max(-0.12, Math.min(0.12, (L[i] - C.l) * 0.6));
       const ripple = 1 + (noise2(x * 0.11, y * 0.05, 33) - 0.5) * 0.12;
-      const k = glow * tone2 * ripple;
+      const k = glow2 * tone2 * ripple;
       let r = Math.min(1, C.c[0] * k), g = Math.min(1, C.c[1] * k), bl = Math.min(1, C.c[2] * k);
       const ld = sstep(1, 2, d2a[i] - d1a[i]);
       r = lead[0] + (r - lead[0]) * ld;
@@ -5929,10 +5929,10 @@
     });
     return { canvas, x0, x1, y0, y1, p };
   }
-  function washStrip(key, p, { wash, y0 = 0, y1 = 1e3 }) {
+  function washStrip(key, p, { wash: wash2, y0 = 0, y1 = 1e3 }) {
     const [x0, x1] = stripRange(p);
     const w = (x1 - x0) * K, h = (y1 - y0) * K;
-    const canvas = brushStrip(`${key}|wash`, x0, y0, w, h, wash, x1);
+    const canvas = brushStrip(`${key}|wash`, x0, y0, w, h, wash2, x1);
     return { canvas, x0, x1, y0, y1, p };
   }
   function brushStrip(key, x0, y0, w, h, draw, x1) {
@@ -6624,9 +6624,9 @@
         ctx.fillStyle = g;
         ctx.fillRect(X_MIN, 0, X_MAX - X_MIN, 660);
       });
-      for (const [lines, wash] of [[farLines(env), farWash()], [midLines(env), midWash(env)], [groundLines(env), groundWash(env)]]) {
+      for (const [lines, wash2] of [[farLines(env), farWash()], [midLines(env), midWash(env)], [groundLines(env), groundWash(env)]]) {
         drawStrip(ctx, lines, cam);
-        withBloom(ctx, b, () => drawStrip(ctx, wash, cam));
+        withBloom(ctx, b, () => drawStrip(ctx, wash2, cam));
       }
       const hx = HELMET_SX + env.camAt(BLOOM[0]) - cam;
       const u = b - BLOOM[0];
@@ -11096,115 +11096,1491 @@
     }
   };
 
-  // src/scenes/placeholder.js
-  function placeholderScene(st) {
-    const [bg, mid, ink, acc2] = st.palette;
-    const dark = ["#1c2140", "#2a2622", "#1b2230", "#5b5852"].includes(bg);
-    const far = mix(bg, mid, 0.35), near = mix(mid, ink, 0.25), road = mix(mid, ink, 0.45);
-    function layer(ctx, cam, parallax, spacing, seedKey, drawOne) {
-      const off = cam * parallax;
-      const i0 = Math.floor((X_MIN + off) / spacing) - 1, i1 = Math.ceil((X_MAX + off) / spacing) + 1;
-      for (let i = i0; i <= i1; i++) drawOne(i * spacing - off, rng(st.id, seedKey, i));
+  // src/kit/watercolor.js
+  var WC_PAPER = { cool: "#f5f3ee", warm: "#fbf4e6", white: "#fbfaf6" };
+  var scratches = {};
+  function scratch2(name, w, h) {
+    w = Math.max(1, Math.ceil(w));
+    h = Math.max(1, Math.ceil(h));
+    const bw = Math.ceil(w / 128) * 128, bh = Math.ceil(h / 128) * 128;
+    const key = `${name}|${bw}|${bh}`;
+    let c = scratches[key];
+    if (!c) {
+      c = makeCanvas(bw, bh);
+      scratches[key] = c;
     }
-    return {
-      id: st.id,
-      station: st,
-      drawBack(ctx, b, env) {
-        const cam = env.cam;
-        const g = ctx.createLinearGradient(0, 0, 0, ROAD_Y);
-        g.addColorStop(0, mix(bg, mid, dark ? 0.15 : 0.05));
-        g.addColorStop(1, mix(bg, mid, dark ? 0.45 : 0.3));
-        ctx.fillStyle = g;
-        ctx.fillRect(X_MIN - 2, 0, X_MAX - X_MIN + 4, ROAD_Y + 2);
-        layer(ctx, cam, 0.2, 230, "far", (x, R) => {
-          const h = R.range(120, 260);
-          ctx.fillStyle = far;
-          roundRect(ctx, x, ROAD_Y - 120 - h, R.range(120, 200), h + 130, 18);
-          ctx.fill();
-        });
-        layer(ctx, cam, 0.55, 310, "mid", (x, R) => {
-          const h = R.range(150, 300);
-          ctx.fillStyle = mix(far, near, 0.55);
-          poly(ctx, [[x, ROAD_Y], [x + 40, ROAD_Y - h], [x + 110, ROAD_Y - h + 30], [x + 150, ROAD_Y]]);
-          ctx.fill();
-        });
-        ctx.save();
-        font(ctx, 46, { family: SANS, weight: 700 });
-        ctx.textAlign = "center";
-        ctx.fillStyle = rgba(readableOn(bg, ink), 0.55);
-        ctx.fillText(`\u5360\u4F4D \xB7 \u7B2C ${st.n} \u7AD9 \xB7 ${st.style}`, 690, 150);
-        font(ctx, 40, { family: SERIF, weight: 400 });
-        ctx.fillText(`\u573A\u666F\uFF1A${st.scene}`, 690, 205);
-        ctx.restore();
-        ctx.fillStyle = road;
-        ctx.fillRect(X_MIN - 2, ROAD_Y, X_MAX - X_MIN + 4, 1e3 - ROAD_Y + 2);
-        ctx.fillStyle = mix(road, ink, 0.35);
-        ctx.fillRect(X_MIN - 2, ROAD_Y, X_MAX - X_MIN + 4, 6);
-        layer(ctx, cam, 1, 120, "dash", (x) => {
-          ctx.fillStyle = rgba(bg, 0.55);
-          ctx.fillRect(x, ROAD_Y + 60, 60, 8);
-        });
-        layer(ctx, cam, 1, 520, "post", (x, R) => {
-          ctx.fillStyle = near;
-          ctx.fillRect(x, ROAD_Y - 260, 16, 262);
-          circle(ctx, x + 8, ROAD_Y - 268, 22);
-          ctx.fillStyle = acc2;
-          ctx.fill();
-        });
-      },
-      drawFront(ctx, b, env) {
-        const k = smoothstep(GAG - 0.15, GAG + 0.1, b) * (1 - smoothstep(GAG + 4 - 0.2, GAG + 4, b));
-        if (k <= 0.01) return;
-        const pul = 1 + [0, 1, 2, 3].reduce((a, k2) => a + 0.08 * pulse(GAG + k2, GAG + k2 + 1, b), 0);
-        ctx.save();
-        ctx.globalAlpha = k;
-        ctx.translate(CHAR_X, ROAD_Y - 190);
-        ctx.scale(pul, pul);
-        ctx.strokeStyle = acc2;
-        ctx.lineWidth = 8;
-        for (let i = 0; i < 12; i++) {
-          const a = i / 12 * Math.PI * 2;
-          ctx.beginPath();
-          ctx.moveTo(Math.cos(a) * 210, Math.sin(a) * 210);
-          ctx.lineTo(Math.cos(a) * 250, Math.sin(a) * 250);
-          ctx.stroke();
+    const g = c.getContext("2d");
+    g.setTransform(1, 0, 0, 1, 0, 0);
+    g.globalAlpha = 1;
+    g.globalCompositeOperation = "source-over";
+    g.filter = "none";
+    g.clearRect(0, 0, w + 2, h + 2);
+    return c;
+  }
+  function pnoise(x, y, P2, seed) {
+    const xi = Math.floor(x), yi = Math.floor(y), xf = x - xi, yf = y - yi;
+    const f = (t) => t * t * (3 - 2 * t);
+    const m = (v2) => (v2 % P2 + P2) % P2;
+    const h = (a2, b2) => hash2(m(a2), m(b2), seed);
+    const u = f(xf), v = f(yf);
+    const a = h(xi, yi), b = h(xi + 1, yi), c = h(xi, yi + 1), d = h(xi + 1, yi + 1);
+    return a + (b - a) * u + (c - a) * v + (a - b - c + d) * u * v;
+  }
+  function cloudTile(seed = 1) {
+    return memo(`wc-cloud|${seed}`, () => {
+      const T = 256, c = makeCanvas(T, T), g = c.getContext("2d"), im = g.createImageData(T, T);
+      for (let y = 0; y < T; y++) for (let x = 0; x < T; x++) {
+        let s = 0, a = 0.5, n = 0;
+        for (let o = 0; o < 4; o++) {
+          const P2 = 4 << o;
+          s += a * pnoise(x / T * P2, y / T * P2, P2, seed + o * 13);
+          n += a;
+          a *= 0.5;
         }
-        ctx.restore();
+        const v = smoothstep(0.35, 0.75, s / n);
+        const i = (y * T + x) * 4;
+        im.data[i] = im.data[i + 1] = im.data[i + 2] = 255;
+        im.data[i + 3] = v * 255;
+      }
+      g.putImageData(im, 0, 0);
+      return c;
+    });
+  }
+  function grainTile2(seed = 1, dark = false) {
+    return memo(`wc-grain|${seed}|${dark}`, () => {
+      const T = 192, c = makeCanvas(T, T), g = c.getContext("2d"), im = g.createImageData(T, T);
+      for (let y = 0; y < T; y++) for (let x = 0; x < T; x++) {
+        const t = pnoise(x / 3, y / 3, T / 3, seed) * 0.65 + pnoise(x / 8, y / 8, T / 8, seed + 3) * 0.2 + hash2(x, y, seed + 5) * 0.15;
+        const v = dark ? smoothstep(0.66, 0.95, t) * 0.8 : smoothstep(0.58, 0.92, 1 - t);
+        const i = (y * T + x) * 4;
+        const col = dark ? 0 : 255;
+        im.data[i] = im.data[i + 1] = im.data[i + 2] = col;
+        im.data[i + 3] = v * 255;
+      }
+      g.putImageData(im, 0, 0);
+      return c;
+    });
+  }
+  function patternFor(g, tile2, seed, scale = 1) {
+    const p = g.createPattern(tile2, "repeat");
+    if (p.setTransform) p.setTransform(new DOMMatrix().translate(hash2(seed, 1, 77) * 256, hash2(seed, 2, 77) * 256).scale(scale));
+    return p;
+  }
+  function wcPaper(w, h, { base = WC_PAPER.cool, seed = 4, amount = 1 } = {}) {
+    w = Math.round(w);
+    h = Math.round(h);
+    return baked(`wcpaper|${w}|${h}|${base}|${seed}|${amount}`, w, h, (ctx) => {
+      const [r0, g0, b0] = hexToRgb(base);
+      const sw = Math.ceil(w / 10), sh = Math.ceil(h / 10);
+      const small = makeCanvas(sw, sh), sctx = small.getContext("2d"), img = sctx.createImageData(sw, sh);
+      for (let y = 0; y < sh; y++) for (let x = 0; x < sw; x++) {
+        const n = fbm(x / 20, y / 20, seed, 4) - 0.5;
+        const k = 1 + n * 0.05 * amount;
+        const i = (y * sw + x) * 4;
+        img.data[i] = r0 * k;
+        img.data[i + 1] = g0 * k;
+        img.data[i + 2] = b0 * k;
+        img.data[i + 3] = 255;
+      }
+      sctx.putImageData(img, 0, 0);
+      ctx.imageSmoothingQuality = "high";
+      ctx.drawImage(small, 0, 0, w, h);
+      drawTooth(ctx, w, h, seed, 0.55 * amount);
+    });
+  }
+  function drawTooth(ctx, w, h, seed, amount) {
+    ctx.save();
+    ctx.globalAlpha = 0.08 * amount;
+    ctx.fillStyle = patternFor(ctx, grainTile2(seed, true), seed);
+    ctx.fillRect(0, 0, w, h);
+    ctx.globalAlpha = 0.5 * amount;
+    ctx.fillStyle = patternFor(ctx, grainTile2(seed + 1, false), seed + 1);
+    ctx.fillRect(0, 0, w, h);
+    ctx.restore();
+  }
+  function paperTooth(w, h, { seed = 7, amount = 1 } = {}) {
+    w = Math.round(w);
+    h = Math.round(h);
+    return baked(`wctooth|${w}|${h}|${seed}|${amount}`, w, h, (ctx) => {
+      ctx.fillStyle = "#ffffff";
+      ctx.fillRect(0, 0, w, h);
+      ctx.globalAlpha = 0.09 * amount;
+      ctx.fillStyle = patternFor(ctx, grainTile2(seed, true), seed);
+      ctx.fillRect(0, 0, w, h);
+      const sw = Math.ceil(w / 16), sh = Math.ceil(h / 16);
+      const small = makeCanvas(sw, sh), sg = small.getContext("2d"), im = sg.createImageData(sw, sh);
+      for (let y = 0; y < sh; y++) for (let x = 0; x < sw; x++) {
+        const v = 255 - (fbm(x / 9, y / 9, seed + 3, 3) - 0.3) * 40 * amount;
+        const i = (y * sw + x) * 4;
+        im.data[i] = im.data[i + 1] = im.data[i + 2] = clamp(v, 200, 255);
+        im.data[i + 3] = 255;
+      }
+      sg.putImageData(im, 0, 0);
+      ctx.globalAlpha = 1;
+      ctx.globalCompositeOperation = "multiply";
+      ctx.drawImage(small, 0, 0, w, h);
+    });
+  }
+  function deckle(w, h, { color = WC_PAPER.cool, seed = 9, sides = { top: 18, right: 26, bottom: 46, left: 26 } } = {}) {
+    w = Math.round(w);
+    h = Math.round(h);
+    return baked(`wcdeckle|${w}|${h}|${color}|${seed}|${JSON.stringify(sides)}`, w, h, (ctx) => {
+      const edge = (n, len, depth, s) => {
+        const pts = [];
+        for (let i = 0; i <= n; i++) {
+          const t = i / n;
+          const d = depth * (0.35 + 0.9 * fbm(t * 9, s, seed + s, 3)) + depth * 0.5 * Math.max(0, noise2(t * 31, s, seed + 9) - 0.6);
+          pts.push([t * len, d]);
+        }
+        return pts;
+      };
+      const side = (depth, len, tf, s) => {
+        if (!depth) return;
+        const pts = edge(90, len, depth, s);
         ctx.save();
-        ctx.globalAlpha = k;
-        font(ctx, 38, { family: SANS, weight: 700 });
-        const lines = wrap(ctx, `\u7B2C 3 \u5C0F\u8282\u7684\u6897\uFF1A${st.gag}`, 760);
-        const x = 520, y = 470;
-        roundRect(ctx, x - 24, y - 54, 808, lines.length * 52 + 40, 12);
-        ctx.fillStyle = rgba(mix(bg, "#ffffff", 0.5), 0.92);
+        tf();
+        ctx.beginPath();
+        ctx.moveTo(0, -4);
+        for (const [x, y] of pts) ctx.lineTo(x, y);
+        ctx.lineTo(len, -4);
+        ctx.closePath();
+        ctx.fillStyle = color;
         ctx.fill();
-        ctx.strokeStyle = acc2;
-        ctx.lineWidth = 4;
+        ctx.globalAlpha = 0.35;
+        ctx.strokeStyle = mix(color, "#7a8aa6", 0.35);
+        ctx.lineWidth = 1.2;
+        ctx.beginPath();
+        pts.forEach(([x, y], i) => i ? ctx.lineTo(x, y + 1) : ctx.moveTo(x, y + 1));
         ctx.stroke();
-        ctx.fillStyle = ink;
-        lines.forEach((l, i) => ctx.fillText(l, x, y + i * 52));
+        ctx.restore();
+      };
+      ctx.filter = "blur(0.6px)";
+      side(sides.top, w, () => {
+      }, 1);
+      side(sides.bottom, w, () => {
+        ctx.translate(w, h);
+        ctx.rotate(Math.PI);
+      }, 2);
+      side(sides.left, h, () => {
+        ctx.translate(0, h);
+        ctx.rotate(-Math.PI / 2);
+      }, 3);
+      side(sides.right, h, () => {
+        ctx.translate(w, 0);
+        ctx.rotate(Math.PI / 2);
+      }, 4);
+      ctx.filter = "none";
+    });
+  }
+  function blobPts(cx, cy, rx, ry, { seed = 1, rough = 0.18, n = 32, rot = 0 } = {}) {
+    const pts = [];
+    for (let i = 0; i < n; i++) {
+      const a = i / n * Math.PI * 2;
+      const k = 1 + rough * ((noise2(Math.cos(a) * 1.7 + seed * 3.1, Math.sin(a) * 1.7, seed) - 0.5) * 2 + (hash2(i, seed, 41) - 0.5) * 0.5);
+      const x = Math.cos(a) * rx * k, y = Math.sin(a) * ry * k;
+      pts.push([cx + x * Math.cos(rot) - y * Math.sin(rot), cy + x * Math.sin(rot) + y * Math.cos(rot)]);
+    }
+    return pts;
+  }
+  function roughPoly(pts, { amp = 3, step = 8, seed = 1, closed = true } = {}) {
+    const out = [];
+    const n = pts.length, segs = closed ? n : n - 1;
+    let s = 0;
+    for (let i = 0; i < segs; i++) {
+      const [ax, ay] = pts[i], [bx, by] = pts[(i + 1) % n];
+      const L = Math.hypot(bx - ax, by - ay) || 1, nx = -(by - ay) / L, ny = (bx - ax) / L;
+      const k = Math.max(1, Math.round(L / step));
+      for (let j = 0; j < k; j++) {
+        const t = j / k, x = ax + (bx - ax) * t, y = ay + (by - ay) * t;
+        const d = (noise2(s * 0.13, seed * 1.3, seed) - 0.5) * 2 * amp + (hash2(s, seed, 9) - 0.5) * amp * 0.5;
+        out.push([x + nx * d, y + ny * d]);
+        s++;
+      }
+    }
+    if (!closed) out.push(pts[n - 1]);
+    return out;
+  }
+  var bboxOf = (pts) => {
+    let x0 = Infinity, y0 = Infinity, x1 = -Infinity, y1 = -Infinity;
+    for (const [x, y] of pts) {
+      if (x < x0) x0 = x;
+      if (y < y0) y0 = y;
+      if (x > x1) x1 = x;
+      if (y > y1) y1 = y;
+    }
+    return [x0, y0, x1, y1];
+  };
+  var pathOf = (pts) => {
+    const p = new Path2D();
+    pts.forEach(([x, y], i) => i ? p.lineTo(x, y) : p.moveTo(x, y));
+    p.closePath();
+    return p;
+  };
+  function wash(ctx, shape, o = {}) {
+    const {
+      color = "#7f93b8",
+      color2 = null,
+      alpha = 0.85,
+      blend = "source-over",
+      px = 1,
+      soft = 0.8,
+      edge = 0.7,
+      edgeW = 4,
+      vary = 0.3,
+      grain: grain2 = 0.3,
+      blooms = 0,
+      seed = 1,
+      lift = 0
+    } = o;
+    const edgeColor = o.edgeColor || mix(color, "#1e2a44", 0.28);
+    const isPts = Array.isArray(shape);
+    const path = isPts ? pathOf(shape) : shape.path;
+    const [bx0, by0, bx1, by1] = isPts ? bboxOf(shape) : shape.bbox;
+    const pad = Math.ceil(soft * 3 + edgeW * 2 + 4);
+    const w = Math.ceil((bx1 - bx0) * px) + pad * 2, h = Math.ceil((by1 - by0) * px) + pad * 2;
+    if (w < 2 || h < 2 || w > 8e3 || h > 8e3) return;
+    const toLocal = (g) => g.setTransform(px, 0, 0, px, pad - bx0 * px, pad - by0 * px);
+    const A = scratch2("wA", w, h), ga = A.getContext("2d");
+    toLocal(ga);
+    if (color2) {
+      const [gx0, gy0, gx1, gy1] = o.grad || [bx0, by0, bx0, by1];
+      const gr = ga.createLinearGradient(gx0, gy0, gx1, gy1);
+      gr.addColorStop(0, color);
+      gr.addColorStop(1, color2);
+      ga.fillStyle = gr;
+    } else ga.fillStyle = color;
+    ga.fill(path);
+    ga.setTransform(1, 0, 0, 1, 0, 0);
+    const Bc = scratch2("wB", w, h), gb = Bc.getContext("2d");
+    if (soft > 0) gb.filter = `blur(${soft}px)`;
+    gb.drawImage(A, 0, 0, w, h, 0, 0, w, h);
+    gb.filter = "none";
+    if (vary > 0) {
+      gb.globalCompositeOperation = "destination-out";
+      gb.globalAlpha = vary * 0.55;
+      gb.fillStyle = patternFor(gb, cloudTile(seed % 7), seed, 1.6);
+      gb.fillRect(0, 0, w, h);
+    }
+    if (lift > 0) {
+      gb.globalCompositeOperation = "destination-out";
+      gb.globalAlpha = lift;
+      const r = Math.max(w, h) * 0.55;
+      const rg = gb.createRadialGradient(w * 0.32, h * 0.28, 0, w * 0.32, h * 0.28, r);
+      rg.addColorStop(0, "rgba(0,0,0,0.8)");
+      rg.addColorStop(1, "rgba(0,0,0,0)");
+      gb.fillStyle = rg;
+      gb.fillRect(0, 0, w, h);
+    }
+    if (blooms > 0) {
+      const R = rng("wc-bloom", seed);
+      for (let i = 0; i < blooms; i++) {
+        const cx = pad + R() * (w - 2 * pad), cy = pad + R() * (h - 2 * pad);
+        const r = Math.min(w, h) * (0.12 + R() * 0.22);
+        const bp = pathOf(blobPts(cx, cy, r, r * (0.7 + R() * 0.4), { seed: seed * 7 + i, rough: 0.32, n: 28 }));
+        gb.globalCompositeOperation = "destination-out";
+        gb.globalAlpha = 0.35;
+        gb.filter = `blur(${Math.max(1, r * 0.15)}px)`;
+        gb.fill(bp);
+        gb.filter = "none";
+        gb.globalCompositeOperation = "source-atop";
+        gb.globalAlpha = 0.5;
+        gb.strokeStyle = edgeColor;
+        gb.lineWidth = Math.max(1, r * 0.05);
+        gb.stroke(bp);
+      }
+    }
+    if (edge > 0) {
+      const E = scratch2("wE", w, h), ge = E.getContext("2d");
+      ge.drawImage(A, 0, 0, w, h, 0, 0, w, h);
+      ge.globalCompositeOperation = "destination-out";
+      ge.filter = `blur(${edgeW}px)`;
+      ge.drawImage(A, 0, 0, w, h, 0, 0, w, h);
+      ge.filter = "none";
+      ge.globalCompositeOperation = "source-in";
+      ge.fillStyle = edgeColor;
+      ge.fillRect(0, 0, w, h);
+      gb.globalCompositeOperation = "source-atop";
+      for (let e = edge; e > 0; e -= 1) {
+        gb.globalAlpha = Math.min(1, e);
+        gb.drawImage(E, 0, 0, w, h, 0, 0, w, h);
+      }
+    }
+    if (grain2 > 0) {
+      gb.globalCompositeOperation = "destination-out";
+      gb.globalAlpha = grain2 * 0.45;
+      gb.fillStyle = patternFor(gb, grainTile2(seed % 5, false), seed);
+      gb.fillRect(0, 0, w, h);
+      gb.globalCompositeOperation = "source-atop";
+      gb.globalAlpha = grain2 * 0.07;
+      gb.fillStyle = patternFor(gb, grainTile2(seed % 5 + 11, true), seed + 3);
+      gb.fillRect(0, 0, w, h);
+    }
+    ctx.save();
+    ctx.globalAlpha *= alpha;
+    ctx.globalCompositeOperation = blend;
+    ctx.drawImage(Bc, 0, 0, w, h, bx0 - pad / px, by0 - pad / px, w / px, h / px);
+    ctx.restore();
+  }
+  function skyWash(ctx, x0, y0, x1, y1, stops, { px = 1, seed = 3, bands = 7, blooms = 4, grain: grain2 = 0.25 } = {}) {
+    const g = ctx.createLinearGradient(0, y0, 0, y1);
+    for (const [t, c] of stops) g.addColorStop(t, c);
+    ctx.save();
+    ctx.fillStyle = g;
+    ctx.fillRect(x0, y0, x1 - x0, y1 - y0);
+    ctx.restore();
+    const colorAt = (t) => {
+      for (let i = 1; i < stops.length; i++) if (t <= stops[i][0]) return mix(stops[i - 1][1], stops[i][1], (t - stops[i - 1][0]) / (stops[i][0] - stops[i - 1][0] || 1));
+      return stops[stops.length - 1][1];
+    };
+    const R = rng("wc-sky", seed);
+    for (let i = 0; i < bands; i++) {
+      const t = (i + 0.5) / bands + (R() - 0.5) * 0.08;
+      const y = y0 + (y1 - y0) * t, hh = (y1 - y0) * (0.08 + R() * 0.1);
+      const pts = [];
+      const n = 40;
+      for (let k = 0; k <= n; k++) {
+        const x = x0 + (x1 - x0) * k / n;
+        pts.push([x, y - hh / 2 + (noise2(k * 0.35, i, seed) - 0.5) * hh * 0.9]);
+      }
+      for (let k = n; k >= 0; k--) {
+        const x = x0 + (x1 - x0) * k / n;
+        pts.push([x, y + hh / 2 + (noise2(k * 0.35, i + 50, seed) - 0.5) * hh * 0.9]);
+      }
+      const c = colorAt(clamp(t + (R() < 0.5 ? -0.12 : 0.12)));
+      wash(ctx, pts, { color: c, alpha: 0.35 + R() * 0.2, px, soft: 10 + R() * 14, edge: R() < 0.4 ? 0.5 : 0, edgeW: 6, vary: 0.5, grain: 0, seed: seed * 11 + i });
+    }
+    for (let i = 0; i < blooms; i++) {
+      const x = x0 + R() * (x1 - x0), y = y0 + (y1 - y0) * (0.1 + R() * 0.6), r = (y1 - y0) * (0.08 + R() * 0.1);
+      const c = colorAt(clamp((y - y0) / (y1 - y0)));
+      wash(ctx, blobPts(x, y, r * 1.8, r, { seed: seed + i * 5, rough: 0.3 }), { color: mix(c, "#ffffff", 0.35), alpha: 0.5, px, soft: 3, edge: 1.2, edgeW: 5, edgeColor: mix(c, "#2a3a5a", 0.25), vary: 0.2, grain: 0, seed: seed + i });
+    }
+    if (grain2 > 0) {
+      ctx.save();
+      ctx.globalAlpha = grain2;
+      ctx.fillStyle = patternFor(ctx, grainTile2(seed, false), seed, 1 / px);
+      ctx.fillRect(x0, y0, x1 - x0, y1 - y0);
+      ctx.restore();
+    }
+  }
+  function dab(ctx, x, y, r, color, { alpha = 0.8, edge = 0.5, seed = 1, rough = 0.2, ry = null, rot = 0, n = 16, edgeColor = null } = {}) {
+    const p = pathOf(blobPts(x, y, r, ry ?? r, { seed, rough, n, rot }));
+    ctx.save();
+    ctx.globalAlpha *= alpha;
+    ctx.fillStyle = color;
+    ctx.fill(p);
+    if (edge > 0) {
+      ctx.globalAlpha = Math.min(1, ctx.globalAlpha * edge);
+      ctx.strokeStyle = edgeColor || mix(color, "#1e2a44", 0.3);
+      ctx.lineWidth = Math.max(0.6, r * 0.12);
+      ctx.stroke(p);
+    }
+    ctx.restore();
+  }
+  function glow(ctx, x, y, r, color, a = 0.6, { blend = "screen", core = 0.15 } = {}) {
+    if (a <= 2e-3 || r <= 0) return;
+    ctx.save();
+    ctx.globalCompositeOperation = blend;
+    const g = ctx.createRadialGradient(x, y, 0, x, y, r);
+    g.addColorStop(0, rgba(color, a));
+    g.addColorStop(core, rgba(color, a * 0.7));
+    g.addColorStop(0.5, rgba(color, a * 0.22));
+    g.addColorStop(1, rgba(color, 0));
+    ctx.fillStyle = g;
+    ctx.fillRect(x - r, y - r, r * 2, r * 2);
+    ctx.restore();
+  }
+  function dryBrush(ctx, pts, { width = 4, color = "#41516e", alpha = 0.8, passes = 3, dry = 0.35, seed = 1, wobble = 1.2 } = {}) {
+    ctx.save();
+    ctx.lineCap = "round";
+    ctx.lineJoin = "round";
+    ctx.strokeStyle = color;
+    for (let p = 0; p < passes; p++) {
+      const R = rng("wc-dry", seed, p);
+      ctx.globalAlpha = alpha * (p ? 0.45 : 0.85);
+      ctx.lineWidth = width * (p ? 0.45 + R() * 0.3 : 1);
+      const dash = [];
+      if (dry > 0) for (let k = 0; k < 12; k++) dash.push(width * (2 + R() * 14 * (1 - dry)), width * R() * 4 * dry);
+      ctx.setLineDash(dash);
+      ctx.lineDashOffset = R() * 40;
+      ctx.beginPath();
+      pts.forEach(([x, y], i) => {
+        const jx = (hash2(i, p, seed) - 0.5) * wobble * 2, jy = (hash2(i, p + 7, seed) - 0.5) * wobble * 2;
+        i ? ctx.lineTo(x + jx, y + jy) : ctx.moveTo(x + jx, y + jy);
+      });
+      ctx.stroke();
+    }
+    ctx.restore();
+  }
+  function streak(ctx, x, y0, y1, { w = 20, color = "#f08a6a", alpha = 0.8, seed = 1, wobble = 6, gap = 7, taper = 0.5, fade: fade2 = 0.85 } = {}) {
+    ctx.save();
+    ctx.fillStyle = color;
+    const L = y1 - y0;
+    let i = 0;
+    for (let y = y0; y < y1; y += gap * (0.6 + hash2(i, 3, seed) * 0.8), i++) {
+      const t = (y - y0) / L;
+      if (hash2(i, 1, seed) < t * 0.45) continue;
+      const ww = w * (1 + taper * t) * (0.35 + 0.9 * noise2(y * 0.05, seed, seed + 2));
+      const cx = x + Math.sin(y * 0.09 + seed) * wobble * (0.4 + t) + (hash2(i, 2, seed) - 0.5) * wobble;
+      ctx.globalAlpha = alpha * (1 - fade2 * t) * (0.55 + 0.45 * hash2(i, 4, seed));
+      ctx.beginPath();
+      ctx.ellipse(cx, y, ww / 2, gap * (0.22 + hash2(i, 5, seed) * 0.25), 0, 0, Math.PI * 2);
+      ctx.fill();
+    }
+    ctx.restore();
+  }
+  function wetRoad(ctx, x0, x1, y0, y1, { top = "#9fb0cc", bottom = "#c4cbe0", ripple = "#7f8fb0", lights = "#eef1f6", px = 1, seed = 5, density = 1 } = {}) {
+    wash(ctx, [[x0, y0], [x1, y0], [x1, y1], [x0, y1]], { color: top, color2: bottom, alpha: 1, px, soft: 0.5, edge: 0, vary: 0.35, grain: 0.35, seed });
+    const R = rng("wc-road", seed);
+    const n = Math.round((x1 - x0) * (y1 - y0) / 2600 * density);
+    ctx.save();
+    ctx.lineCap = "round";
+    for (let i = 0; i < n; i++) {
+      const y = y0 + Math.pow(R(), 0.8) * (y1 - y0), x = x0 + R() * (x1 - x0);
+      const t = (y - y0) / (y1 - y0);
+      const len = 20 + R() * 90 * (0.5 + t);
+      const light = R() < 0.45;
+      ctx.strokeStyle = light ? lights : ripple;
+      ctx.globalAlpha = (light ? 0.45 : 0.22) * (0.4 + R() * 0.6);
+      ctx.lineWidth = (light ? 1.5 : 2.2) * (0.6 + t * 1.2) * (0.6 + R() * 0.8);
+      ctx.beginPath();
+      ctx.moveTo(x, y);
+      ctx.quadraticCurveTo(x + len / 2, y + (R() - 0.5) * 3, x + len, y + (R() - 0.5) * 2);
+      ctx.stroke();
+    }
+    ctx.restore();
+  }
+  function captureUnits(key, draw, res = 1) {
+    const w = Math.round((X_MAX - X_MIN) * K * res), h = Math.round(1e3 * K * res);
+    const c = memo(`wc-cap|${key}|${w}|${h}`, () => makeCanvas(w, h));
+    const g = c.getContext("2d");
+    g.setTransform(1, 0, 0, 1, 0, 0);
+    g.clearRect(0, 0, w, h);
+    g.setTransform(K * res, 0, 0, K * res, -X_MIN * K * res, 0);
+    draw(g);
+    g.setTransform(1, 0, 0, 1, 0, 0);
+    return c;
+  }
+  function runDown(ctx, src, rect, amount, { run = 0.22, cols = 4, copies = 5, seed = 3, paper: paper2 = WC_PAPER.cool, sink = 0, px = K } = {}) {
+    const { x, y, w, h } = rect;
+    const SW = src.width, SH = src.height;
+    const sw = Math.ceil(w * px / 3), sh = Math.ceil(h * px / 3);
+    const half = scratch2("run-half", sw, sh), gh = half.getContext("2d");
+    gh.imageSmoothingQuality = "low";
+    gh.drawImage(src, 0, 0, SW, SH, 0, 0, sw, sh);
+    const out = scratch2("run-out", sw, sh), go = out.getContext("2d");
+    const maxD = sh * run * amount;
+    const prof = (c) => {
+      const u = c / (sw / cols);
+      const lo = noise2(u * 0.07, 0.5, seed);
+      const hi = noise2(u * 0.6, 3.5, seed + 1);
+      return 0.3 + 0.5 * lo + 0.55 * Math.pow(hi, 3) + 0.25 * Math.pow(noise2(u * 1.7, 7.5, seed + 2), 4);
+    };
+    for (let c = 0; c < sw; c += cols) {
+      const d = maxD * prof(c);
+      for (let k = 1; k <= copies; k++) {
+        go.globalAlpha = 1 / k;
+        const off = d * (k - 1) / (copies - 1);
+        go.drawImage(half, c, 0, cols, sh, c, off, cols, sh);
+      }
+    }
+    ctx.save();
+    const over = clamp(amount * 1.15);
+    if (over < 0.98) {
+      const dy = maxD * sink * (h / sh);
+      ctx.fillStyle = paper2;
+      ctx.fillRect(x, y, w, dy + 1);
+      ctx.globalAlpha = 1;
+      ctx.drawImage(src, 0, 0, SW, SH, x, y + dy, w, h);
+    }
+    ctx.globalAlpha = over;
+    ctx.imageSmoothingQuality = "high";
+    ctx.drawImage(out, 0, 0, sw, sh, x, y, w, h);
+    ctx.restore();
+  }
+  function wcCard(w, h, { paper: paper2 = WC_PAPER.white, color = "#7fa3cc", color2 = null, seed = 1, inset = 30, shadow = true } = {}) {
+    w = Math.round(w);
+    h = Math.round(h);
+    const pad = 24;
+    return baked(`wccard|${w}|${h}|${paper2}|${color}|${color2}|${seed}|${inset}|${shadow}`, w + pad * 2, h + pad * 2, (ctx) => {
+      ctx.translate(pad, pad);
+      const outline2 = roughPoly([[0, 0], [w, 0], [w, h], [0, h]], { amp: 2.2, step: 10, seed });
+      if (shadow) {
+        ctx.save();
+        ctx.filter = "blur(6px)";
+        ctx.globalAlpha = 0.22;
+        ctx.translate(4, 7);
+        ctx.fillStyle = "#2a3550";
+        ctx.fill(pathOf(outline2));
         ctx.restore();
       }
-    };
+      const P2 = wcPaper(w + 4, h + 4, { base: paper2, seed: seed + 2, amount: 0.9 });
+      ctx.save();
+      ctx.clip(pathOf(outline2));
+      ctx.drawImage(P2, -2, -2);
+      const ring = new Path2D();
+      const outer = roughPoly([[-10, -10], [w + 10, -10], [w + 10, h + 10], [-10, h + 10]], { amp: 2, step: 12, seed: seed + 1 });
+      const inner = roughPoly([[inset, inset * 0.8], [w - inset, inset * 0.8], [w - inset, h - inset * 0.8], [inset, h - inset * 0.8]], { amp: inset * 0.35, step: 14, seed: seed + 5 });
+      outer.forEach(([x, y], i) => i ? ring.lineTo(x, y) : ring.moveTo(x, y));
+      ring.closePath();
+      inner.forEach(([x, y], i) => i ? ring.lineTo(x, y) : ring.moveTo(x, y));
+      ring.closePath();
+      const tmp = makeCanvas(w + 40, h + 40), gt = tmp.getContext("2d");
+      gt.translate(20, 20);
+      gt.fillStyle = color;
+      gt.fill(ring, "evenodd");
+      if (color2) {
+        gt.globalCompositeOperation = "source-atop";
+        const g2 = gt.createRadialGradient(w, h, 0, w, h, Math.max(w, h) * 0.6);
+        g2.addColorStop(0, rgba(color2, 0.9));
+        g2.addColorStop(1, rgba(color2, 0));
+        gt.fillStyle = g2;
+        gt.fillRect(-20, -20, w + 40, h + 40);
+        gt.globalCompositeOperation = "source-over";
+      }
+      ctx.filter = `blur(${inset * 0.28}px)`;
+      ctx.globalAlpha = 0.55;
+      ctx.globalCompositeOperation = "multiply";
+      ctx.drawImage(tmp, -20, -20);
+      ctx.filter = "none";
+      ctx.globalAlpha = 0.28;
+      ctx.strokeStyle = mix(color, "#1e2a44", 0.3);
+      ctx.lineWidth = 1.6;
+      ctx.stroke(pathOf(roughPoly([[inset * 0.55, inset * 0.45], [w - inset * 0.55, inset * 0.45], [w - inset * 0.55, h - inset * 0.45], [inset * 0.55, h - inset * 0.45]], { amp: inset * 0.3, step: 14, seed: seed + 5 })));
+      ctx.restore();
+      ctx.globalAlpha = 0.5;
+      ctx.strokeStyle = mix(color, "#1e2a44", 0.4);
+      ctx.lineWidth = 1.2;
+      ctx.stroke(pathOf(outline2));
+    });
   }
-  function wrap(ctx, str, maxW) {
-    const out = [];
-    let line2 = "";
-    for (const ch of str) {
-      if (ctx.measureText(line2 + ch).width > maxW) {
-        out.push(line2);
-        line2 = ch;
-      } else line2 += ch;
-    }
-    if (line2) out.push(line2);
-    return out;
+  function drawWcCard(ctx, x, y, w, h, o = {}) {
+    ctx.drawImage(wcCard(w, h, o), x - 24, y - 24);
+  }
+  function wcFrameImage({ W: W2 = W, H: H2 = H, t = 64, paper: paper2 = WC_PAPER.cool, colors = ["#9ab6d8", "#c5b4dc", "#f2c3a6"], seed = 21 } = {}) {
+    return baked(`wcframe|${W2}|${H2}|${t}|${paper2}|${colors.join()}|${seed}`, W2 + 2 * t, H2 + 2 * t, (ctx) => {
+      ctx.translate(t, t);
+      const band = new Path2D();
+      const outer = roughPoly([[-t, -t], [W2 + t, -t], [W2 + t, H2 + t], [-t, H2 + t]], { amp: 3, step: 16, seed });
+      const inner = roughPoly([[0, 0], [W2, 0], [W2, H2], [0, H2]], { amp: 2.5, step: 14, seed: seed + 1 });
+      outer.forEach(([x, y], i) => i ? band.lineTo(x, y) : band.moveTo(x, y));
+      band.closePath();
+      inner.forEach(([x, y], i) => i ? band.lineTo(x, y) : band.moveTo(x, y));
+      band.closePath();
+      ctx.save();
+      ctx.clip(band, "evenodd");
+      ctx.drawImage(wcPaper(W2 + 2 * t, H2 + 2 * t, { base: paper2, seed: seed + 3 }), -t, -t);
+      const R = rng("wc-frame", seed);
+      const sides = [
+        (u) => [lerp(-t, W2 + t, u), -t * 0.5],
+        (u) => [W2 + t * 0.5, lerp(-t, H2 + t, u)],
+        (u) => [lerp(W2 + t, -t, u), H2 + t * 0.5],
+        (u) => [-t * 0.5, lerp(H2 + t, -t, u)]
+      ];
+      sides.forEach((f, si) => {
+        for (let k = 0; k < 3; k++) {
+          const u0 = R() * 0.35, u1 = 0.65 + R() * 0.35, off = (R() - 0.5) * t * 0.5, wd = t * (0.35 + R() * 0.35);
+          const pts = [];
+          for (let i = 0; i <= 30; i++) {
+            const u = lerp(u0, u1, i / 30), [x, y] = f(u);
+            const n = (noise2(u * 6, k + si * 3, seed) - 0.5) * t * 0.35;
+            pts.push(si % 2 ? [x + off + n, y] : [x, y + off + n]);
+          }
+          const top = [], bot = [];
+          pts.forEach(([x, y], i) => {
+            const ww = wd * (0.5 + 0.5 * Math.sin(i / 30 * Math.PI)) * (0.8 + 0.4 * noise2(i * 0.3, k, seed + si));
+            if (si % 2) {
+              top.push([x - ww / 2, y]);
+              bot.push([x + ww / 2, y]);
+            } else {
+              top.push([x, y - ww / 2]);
+              bot.push([x, y + ww / 2]);
+            }
+          });
+          wash(ctx, [...top, ...bot.reverse()], { color: colors[(si + k) % colors.length], alpha: 0.5 + R() * 0.2, px: 1, soft: 2.5, edge: 0.9, edgeW: 3, vary: 0.4, grain: 0.35, seed: seed + si * 10 + k, blend: "multiply" });
+        }
+      });
+      for (const [cx, cy] of [[-t / 2, -t / 2], [W2 + t / 2, -t / 2], [W2 + t / 2, H2 + t / 2], [-t / 2, H2 + t / 2]]) {
+        wash(ctx, blobPts(cx, cy, t * 0.55, t * 0.5, { seed: seed + cx, rough: 0.3 }), { color: colors[Math.abs(Math.round(cx + cy)) % colors.length], alpha: 0.55, px: 1, soft: 2, edge: 1.3, edgeW: 4, vary: 0.3, grain: 0.3, seed: seed + 5, blend: "multiply" });
+      }
+      ctx.restore();
+      dryBrush(ctx, [...inner, inner[0]], { width: 2.4, color: mix(colors[0], "#2a3a5a", 0.45), alpha: 0.55, passes: 2, dry: 0.4, seed: seed + 9, wobble: 0.8 });
+      dryBrush(ctx, [...outer, outer[0]], { width: 2, color: mix(colors[0], "#2a3a5a", 0.3), alpha: 0.4, passes: 1, dry: 0.5, seed: seed + 10, wobble: 0.8 });
+    });
+  }
+  function drawWcFrame(ctx, R, o = {}) {
+    const t = 64;
+    const img = wcFrameImage({ ...o, t });
+    const s = R.s;
+    ctx.save();
+    ctx.fillStyle = "rgba(40,55,90,0.12)";
+    ctx.beginPath();
+    ctx.ellipse(R.x + R.w / 2, R.y + R.h + t * s * 0.9, R.w * 0.55, t * s * 0.45, 0, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.imageSmoothingQuality = "high";
+    ctx.drawImage(img, R.x - t * s, R.y - t * s, img.width * (R.w / (img.width - 2 * t)), img.height * (R.h / (img.height - 2 * t)));
+    ctx.restore();
+  }
+  function wcDisc(r, { colors = ["#7fa8d8", "#e58fb0", "#f2d16b", "#6fc7d6"], paper: paper2 = WC_PAPER.white, ink = "#27364a", seed = 31 } = {}) {
+    const pad = 10, S = Math.ceil(r * 2 + pad * 2);
+    return baked(`wcdisc|${r}|${colors.join()}|${paper2}|${ink}|${seed}`, S, S, (ctx) => {
+      const c = S / 2;
+      ctx.save();
+      ctx.beginPath();
+      ctx.arc(c, c, r, 0, Math.PI * 2);
+      ctx.fillStyle = paper2;
+      ctx.fill();
+      ctx.clip();
+      ctx.drawImage(wcPaper(S, S, { base: paper2, seed }), 0, 0);
+      const n = colors.length * 2;
+      for (let i = 0; i < n; i++) {
+        const a0 = i / n * Math.PI * 2 - 0.12, a1 = (i + 1) / n * Math.PI * 2 + 0.12;
+        const pts = [];
+        for (let k = 0; k <= 16; k++) {
+          const a = lerp(a0, a1, k / 16);
+          const rr = r * (0.9 + (noise2(a * 3, i, seed) - 0.5) * 0.06);
+          pts.push([c + Math.cos(a) * rr, c + Math.sin(a) * rr]);
+        }
+        for (let k = 16; k >= 0; k--) {
+          const a = lerp(a0, a1, k / 16);
+          const rr = r * (0.5 + (noise2(a * 3, i + 9, seed) - 0.5) * 0.08);
+          pts.push([c + Math.cos(a) * rr, c + Math.sin(a) * rr]);
+        }
+        wash(ctx, pts, { color: colors[i % colors.length], alpha: 0.62, px: 1, soft: 2.2, edge: 0.9, edgeW: 2.5, vary: 0.35, grain: 0.3, seed: seed + i, blend: "multiply" });
+      }
+      wash(ctx, blobPts(c, c, r * 0.36, r * 0.36, { seed, rough: 0.05, n: 36 }), { color: mix(colors[0], "#ffffff", 0.55), alpha: 0.6, px: 1, soft: 1, edge: 0.6, edgeW: 2, vary: 0.2, grain: 0.2, seed: seed + 50 });
+      ctx.restore();
+      ctx.strokeStyle = ink;
+      ctx.lineWidth = 2.2;
+      ctx.globalAlpha = 0.85;
+      ctx.beginPath();
+      ctx.arc(c, c, r - 1, 0, Math.PI * 2);
+      ctx.stroke();
+      ctx.lineWidth = 1.4;
+      ctx.globalAlpha = 0.6;
+      ctx.beginPath();
+      ctx.arc(c, c, r * 0.26, 0, Math.PI * 2);
+      ctx.stroke();
+      ctx.globalAlpha = 1;
+      ctx.beginPath();
+      ctx.arc(c, c, r * 0.1, 0, Math.PI * 2);
+      ctx.fillStyle = mix(paper2, "#9fb2cc", 0.6);
+      ctx.fill();
+      ctx.strokeStyle = ink;
+      ctx.lineWidth = 1.4;
+      ctx.stroke();
+    });
   }
 
   // src/scenes/s10.js
-  var s10 = placeholderScene(stationByN(10));
+  var ST10 = stationByN(10);
+  registerStyle("s10-wc", (I) => watercolor(I, ["#1c2a3d", "#3b5779", "#8aa5c2", "#e4ebf1"], 0.75));
+  var PAPER7 = "#f5f3ee";
+  var INK7 = "#27364a";
+  var SKY2 = [[0, "#56739f"], [0.22, "#7f9cc6"], [0.5, "#aab3da"], [0.78, "#dcbcca"], [1, "#f2c7a4"]];
+  var FAR = ["#8d9bc3", "#9a9fc9", "#a3a9cf", "#8fa3c6"];
+  var FACADE2 = ["#7486b0", "#8a85b2", "#6f8aac", "#9a8eb6", "#b59a9c", "#7c93b4"];
+  var NEON = ["#f08a6a", "#e65f9a", "#5fc7d9", "#f2d16b"];
+  var WARM = "#ffe2a3";
+  var SHOP = "#fbe5b8";
+  var LAMP2 = "#fff1c8";
+  var UMB = "#e9654f";
+  var UMB_L = "#f59b7c";
+  var UMB_D = "#b8432f";
+  var HEAD = "#fff1c8";
+  var TAIL = "#ec5a62";
+  var P_SKY4 = 0.04;
+  var P_FAR8 = 0.25;
+  var P_MID6 = 0.6;
+  var P_STREET = 0.85;
+  var P_RAIN = 1.2;
+  var MID_BASE = 702;
+  var STREET_Y0 = 714;
+  var CURB_Y = 794;
+  var LANE_Y = 786;
+  var T_DROP = GAG - 0.4;
+  var T_MELT = GAG;
+  var T_BACK2 = GAG + 1;
+  var T_BEADS = GAG + 2;
+  var MELT_IN = 0.6;
+  var MELT_OUT = 0.65;
+  var UMB_IN = 0.65;
+  var UMB_OUT = 0.7;
+  function meltAmt(b) {
+    if (b < T_MELT || b > T_BACK2 + MELT_OUT) return 0;
+    const up = ease.out(clamp((b - T_MELT) / MELT_IN));
+    const down = ease.inOut(clamp((b - T_BACK2) / MELT_OUT));
+    return up * (1 - down);
+  }
+  function umbMelt(b) {
+    if (b < T_MELT || b > T_BACK2 + UMB_OUT) return 0;
+    const up = ease.inOut(clamp((b - T_MELT) / UMB_IN));
+    const down = ease.inOut(clamp((b - T_BACK2) / UMB_OUT));
+    return Math.min(up, 1 - down);
+  }
+  var R04 = (...k) => rng("s10", ...k);
+  function midGeo3(c9) {
+    return memo(`s10-mid|${Math.round(c9)}`, () => {
+      const [x0, x1] = [X_MIN - 520 * P_MID6 - 300, X_MAX + 2700 * P_MID6 + 300];
+      const R = R04("mid");
+      const blds = [];
+      for (let x = x0; x < x1; ) {
+        const w = 230 + R() * 230, top = 150 + R() * 220;
+        const neonKind = R();
+        blds.push({
+          x,
+          w,
+          top,
+          color: FACADE2[Math.floor(R() * FACADE2.length)],
+          seed: Math.floor(R() * 1e3),
+          awning: R() < 0.7 ? NEON[Math.floor(R() * 4)] : null,
+          neon: neonKind < 0.32 ? "bar" : neonKind < 0.62 ? "blade" : neonKind < 0.82 ? "disc" : null,
+          neonColor: NEON[Math.floor(R() * 4)],
+          lit: R()
+        });
+        x += w + (R() < 0.3 ? 40 + R() * 90 : 4 + R() * 10);
+      }
+      const lamps = [];
+      const lx0 = 540 + c9 * P_MID6;
+      for (let x = lx0 - 3 * 640; x < x1; x += 640) lamps.push({ x: x + (x === lx0 ? 0 : (hash2(Math.round(x), 3, 10) - 0.5) * 80) });
+      const trees = [];
+      for (const l of lamps) if (hash2(Math.round(l.x), 5, 10) < 0.7) trees.push({ x: l.x + 300 + (hash2(Math.round(l.x), 6, 10) - 0.5) * 80, h: 240 + hash2(Math.round(l.x), 7, 10) * 80, seed: Math.round(l.x) });
+      return { blds, lamps, trees };
+    });
+  }
+  function neonShape(B2) {
+    const { x, w } = B2;
+    if (B2.neon === "bar") return { kind: "bar", x: x + w * 0.2, y: 440, w: w * 0.6, h: 42 };
+    if (B2.neon === "blade") return { kind: "blade", x: x + w - 46, y: Math.max(B2.top + 40, 260), w: 34, h: 170 };
+    if (B2.neon === "disc") return { kind: "disc", x: x + w * 0.72, y: 455, w: 64, h: 64 };
+    return null;
+  }
+  function neonPath(N) {
+    const p = new Path2D();
+    if (N.kind === "disc") p.arc(N.x + N.w / 2, N.y + N.h / 2, N.w / 2, 0, Math.PI * 2);
+    else p.roundRect(N.x, N.y, N.w, N.h, Math.min(N.w, N.h) * 0.35);
+    return p;
+  }
+  var neonCenter = (N) => [N.x + N.w / 2, N.y + N.h / 2];
+  function skyLayer5() {
+    return strip("s10-sky", P_SKY4, (ctx, x0, x1) => {
+      skyWash(ctx, x0, 0, x1, 730, SKY2, { px: K, seed: 3, bands: 8, blooms: 4, grain: 0.18 });
+      const R = R04("cloud");
+      for (let i = 0; i < 9; i++) {
+        const cx = x0 + R() * (x1 - x0), cy = 70 + R() * 260, rx = 140 + R() * 220;
+        wash(ctx, blobPts(cx, cy, rx, rx * (0.2 + R() * 0.12), { seed: i + 3, rough: 0.28 }), { color: R() < 0.5 ? "#7f88b4" : "#9a93bd", color2: "#b9b4d6", alpha: 0.38, px: K, soft: 9, edge: 0.6, edgeW: 5, vary: 0.5, grain: 0.2, seed: 20 + i, blend: "multiply" });
+      }
+    }, { y0: 0, y1: 730 });
+  }
+  function farLayer7() {
+    return strip("s10-far", P_FAR8, (ctx, x0, x1) => {
+      const R = R04("far");
+      for (let x = x0 - 40; x < x1; ) {
+        const w = 90 + R() * 160, top = 200 + R() * 240;
+        const pts = [[x, 712], [x, top + 14], [x + w * 0.1, top], [x + w * 0.9, top], [x + w, top + 10], [x + w, 712]];
+        if (R() < 0.25) pts.splice(3, 0, [x + w * 0.45, top - 50 - R() * 50], [x + w * 0.55, top - 50 - R() * 50]);
+        const col = FAR[Math.floor(R() * FAR.length)];
+        wash(ctx, roughPoly(pts, { amp: 2, step: 10, seed: Math.round(x) }), { color: col, color2: "#cfc8e0", grad: [0, top, 0, 690], alpha: 0.7, px: K, soft: 2.2, edge: 0.8, edgeW: 3, vary: 0.45, grain: 0.25, seed: Math.round(x) % 97, blend: "multiply" });
+        const n = Math.floor(R() * 7);
+        for (let k = 0; k < n; k++) dab(ctx, x + 12 + R() * (w - 24), top + 20 + R() * (560 - top), 3.2 + R() * 1.6, WARM, { alpha: 0.85, edge: 0.3, seed: k + Math.round(x), rough: 0.25 });
+        x += w + R() * 30;
+      }
+      wash(ctx, [[x0, 560], [x1, 560], [x1, 720], [x0, 720]], { color: "#e3dbe8", color2: "#efe4e6", alpha: 0.55, px: K, soft: 16, edge: 0, vary: 0.5, grain: 0, seed: 7 });
+    }, { y0: 120, y1: 730 });
+  }
+  function midLayer6(env) {
+    const G = midGeo3(env.camAt(GAG));
+    return strip("s10-mid", P_MID6, (ctx, x0, x1) => {
+      wash(ctx, [[x0, MID_BASE - 4], [x1, MID_BASE - 4], [x1, STREET_Y0 + 6], [x0, STREET_Y0 + 6]], { color: "#b4bcd6", alpha: 0.95, px: K, soft: 1, edge: 0.5, vary: 0.3, grain: 0.3, seed: 2 });
+      for (const B2 of G.blds) {
+        if (B2.x + B2.w < x0 - 50 || B2.x > x1 + 50) continue;
+        const { x, w, top } = B2;
+        const pts = [[x, MID_BASE], [x, top + 8], [x + 6, top], [x + w - 6, top], [x + w, top + 8], [x + w, MID_BASE]];
+        wash(ctx, roughPoly(pts, { amp: 1.6, step: 9, seed: B2.seed }), { color: B2.color, color2: mix(B2.color, "#d7cde0", 0.35), alpha: 0.88, px: K, soft: 1.2, edge: 1, edgeW: 3, vary: 0.4, grain: 0.35, blooms: B2.seed % 3 === 0 ? 1 : 0, seed: B2.seed });
+        dryBrush(ctx, [[x + 2, top + 14], [x + w - 2, top + 14]], { width: 3, color: mix(B2.color, INK7, 0.45), alpha: 0.55, passes: 2, dry: 0.4, seed: B2.seed });
+        const R = R04("win", B2.seed);
+        const cols = Math.max(2, Math.floor((w - 40) / 52)), gx = (w - 40) / cols;
+        for (let y = top + 40; y < 450; y += 64) for (let c = 0; c < cols; c++) {
+          const wx = x + 20 + c * gx + gx / 2 - 12, lit = R() < 0.3 + B2.lit * 0.25;
+          const wp = roughPoly([[wx, y], [wx + 24, y], [wx + 24, y + 32], [wx, y + 32]], { amp: 0.8, step: 6, seed: B2.seed + c + y });
+          ctx.beginPath();
+          wp.forEach(([px, py], i) => i ? ctx.lineTo(px, py) : ctx.moveTo(px, py));
+          ctx.closePath();
+          ctx.fillStyle = lit ? WARM : rgba(mix(B2.color, INK7, 0.3), 0.55);
+          ctx.fill();
+          ctx.strokeStyle = rgba(mix(B2.color, INK7, 0.5), 0.45);
+          ctx.lineWidth = 1.2;
+          ctx.stroke();
+          if (lit) glow(ctx, wx + 12, y + 16, 34, "#ffd89a", 0.25);
+        }
+        const sx0 = x + 22, sx1 = x + w - 70;
+        if (sx1 - sx0 > 60) {
+          const sp = roughPoly([[sx0, 556], [sx1, 556], [sx1, 694], [sx0, 694]], { amp: 1.2, step: 8, seed: B2.seed + 5 });
+          wash(ctx, sp, { color: SHOP, color2: "#f6cf98", alpha: 0.98, px: K, soft: 1.5, edge: 0.6, edgeW: 3, edgeColor: "#c99a6a", vary: 0.3, grain: 0.2, seed: B2.seed + 5 });
+          const R2 = R04("shop", B2.seed);
+          for (let k = 0; k < 3; k++) {
+            const px = sx0 + 20 + R2() * (sx1 - sx0 - 40);
+            dab(ctx, px, 640 + R2() * 20, 16 + R2() * 10, "#b79fb8", { alpha: 0.45, ry: 40 + R2() * 14, edge: 0.4, seed: B2.seed + k });
+          }
+          dryBrush(ctx, [[sx0, 556], [sx0, 694]], { width: 3, color: mix(B2.color, INK7, 0.4), alpha: 0.6, passes: 2, seed: B2.seed + 6 });
+          dryBrush(ctx, [[(sx0 + sx1) / 2, 556], [(sx0 + sx1) / 2, 694]], { width: 2.4, color: mix(B2.color, INK7, 0.4), alpha: 0.5, passes: 2, seed: B2.seed + 7 });
+          glow(ctx, (sx0 + sx1) / 2, 625, (sx1 - sx0) * 0.75, "#ffd7a0", 0.3);
+          wash(ctx, [[sx1 + 12, 570], [x + w - 16, 570], [x + w - 16, 700], [sx1 + 12, 700]], { color: mix(B2.color, INK7, 0.35), alpha: 0.7, px: K, soft: 1, edge: 0.7, vary: 0.3, grain: 0.3, seed: B2.seed + 8 });
+        }
+        if (B2.awning) {
+          const ap = roughPoly([[x + 10, 512], [x + w - 10, 512], [x + w + 4, 552], [x - 4, 552]], { amp: 1.2, step: 8, seed: B2.seed + 9 });
+          wash(ctx, ap, { color: B2.awning, color2: mix(B2.awning, "#ffffff", 0.3), alpha: 0.85, px: K, soft: 1, edge: 1.1, edgeW: 3, vary: 0.35, grain: 0.3, seed: B2.seed + 9 });
+          for (let ax = x; ax < x + w; ax += 34) dab(ctx, ax + 17, 554, 15, B2.awning, { alpha: 0.75, ry: 8, edge: 0.6, seed: ax, rough: 0.1 });
+        }
+        const N = neonShape(B2);
+        if (N) {
+          const [cx, cy] = neonCenter(N);
+          glow(ctx, cx, cy, Math.max(N.w, N.h) * 1.6 + 80, B2.neonColor, 0.6);
+          const p = neonPath(N);
+          ctx.save();
+          ctx.fillStyle = rgba(mix(B2.neonColor, "#ffffff", 0.12), 0.92);
+          ctx.fill(p);
+          ctx.lineWidth = 5;
+          ctx.strokeStyle = mix(B2.neonColor, "#ffffff", 0.35);
+          ctx.stroke(p);
+          ctx.lineWidth = 2;
+          ctx.strokeStyle = "#fffaf0";
+          ctx.stroke(p);
+          ctx.strokeStyle = "#fffaf0";
+          ctx.lineWidth = 3.4;
+          ctx.lineCap = "round";
+          ctx.beginPath();
+          if (N.kind === "bar") for (let k = 0; k < 4; k++) {
+            const u = N.x + 18 + k * (N.w - 36) / 3;
+            ctx.moveTo(u - 10, cy + 6);
+            ctx.lineTo(u, cy - 8);
+            ctx.lineTo(u + 10, cy + 6);
+          }
+          else if (N.kind === "blade") for (let k = 0; k < 4; k++) {
+            const v = N.y + 26 + k * (N.h - 52) / 3;
+            ctx.moveTo(cx - 8, v);
+            ctx.arc(cx, v, 8, Math.PI, Math.PI * 2);
+          }
+          else {
+            ctx.moveTo(cx + 18, cy);
+            ctx.arc(cx, cy, 18, 0, Math.PI * 2);
+            ctx.moveTo(cx + 6, cy);
+            ctx.arc(cx, cy, 6, 0, Math.PI * 2);
+          }
+          ctx.stroke();
+          ctx.restore();
+          if (N.kind === "blade") dryBrush(ctx, [[N.x + N.w, N.y + 20], [x + w, N.y + 20]], { width: 3, color: INK7, alpha: 0.6, passes: 1, seed: B2.seed });
+        }
+      }
+      for (const T of G.trees) {
+        if (T.x < x0 - 200 || T.x > x1 + 200) continue;
+        dryBrush(ctx, [[T.x, MID_BASE + 6], [T.x - 4, MID_BASE - T.h * 0.5], [T.x + 6, MID_BASE - T.h * 0.8]], { width: 9, color: "#5b5f7e", alpha: 0.8, passes: 3, dry: 0.25, seed: T.seed });
+        const R = R04("tree", T.seed);
+        for (let k = 0; k < 7; k++) {
+          const cx = T.x + (R() - 0.5) * 170, cy = MID_BASE - T.h + (R() - 0.3) * 120, r = 50 + R() * 50;
+          wash(ctx, blobPts(cx, cy, r, r * 0.8, { seed: T.seed + k, rough: 0.3 }), { color: ["#86aaa6", "#9cbcb0", "#7f9fb0", "#a9c4b4"][k % 4], alpha: 0.55, px: K, soft: 2.5, edge: 1.1, edgeW: 3, vary: 0.45, grain: 0.35, seed: T.seed + k, blend: "multiply" });
+        }
+      }
+      for (const L of G.lamps) {
+        if (L.x < x0 - 200 || L.x > x1 + 200) continue;
+        const sd = Math.round(L.x);
+        dryBrush(ctx, [[L.x, MID_BASE + 8], [L.x, 330], [L.x + 4, 300], [L.x + 34, 286]], { width: 7, color: "#3f4c6b", alpha: 0.85, passes: 3, dry: 0.2, seed: sd });
+        dryBrush(ctx, [[L.x - 12, MID_BASE + 8], [L.x + 12, MID_BASE + 8]], { width: 8, color: "#3f4c6b", alpha: 0.8, passes: 2, seed: sd + 1 });
+        wash(ctx, [[L.x + 18, 280], [L.x + 58, 280], [L.x + 50, 300], [L.x + 26, 300]], { color: "#46557a", alpha: 0.9, px: K, soft: 0.6, edge: 0.6, vary: 0.2, grain: 0.2, seed: sd });
+        glow(ctx, L.x + 38, 310, 190, "#ffe2a6", 0.55);
+        dab(ctx, L.x + 38, 304, 11, LAMP2, { alpha: 1, ry: 6, edge: 0.2, seed: sd });
+      }
+    }, { y0: 60, y1: 730 });
+  }
+  function streetLayer() {
+    return strip("s10-street", P_STREET, (ctx, x0, x1) => {
+      wetRoad(ctx, x0, x1, STREET_Y0, CURB_Y + 8, { top: "#8f9cbd", bottom: "#a4afcc", ripple: "#6f7ea3", lights: "#e6eaf3", px: K, seed: 11, density: 1.2 });
+      for (let x = x0 - x0 % 200; x < x1; x += 200) {
+        dryBrush(ctx, [[x, 760], [x + 98, 760]], { width: 5, color: "#eef1f6", alpha: 0.85, passes: 2, dry: 0.3, seed: Math.round(x), wobble: 0.6 });
+      }
+    }, { y0: STREET_Y0 - 4, y1: CURB_Y + 10 });
+  }
+  function roadLayer4(env) {
+    const c9 = env.camAt(GAG);
+    return strip("s10-road", 1, (ctx, x0, x1) => {
+      wash(ctx, [[x0, CURB_Y - 2], [x1, CURB_Y - 2], [x1, 808], [x0, 808]], { color: "#c6cbdc", color2: "#b4bbd2", alpha: 1, px: K, soft: 0.6, edge: 0.6, edgeW: 2, vary: 0.3, grain: 0.4, seed: 4 });
+      dryBrush(ctx, [[x0, CURB_Y - 1], [x1, CURB_Y - 1]], { width: 2, color: "#6f7fa3", alpha: 0.6, passes: 2, dry: 0.3, seed: 5 });
+      wetRoad(ctx, x0, x1, 806, 1e3, { top: "#a7b3cf", bottom: "#c9cfe2", ripple: "#7c8bb0", lights: "#f0f2f8", px: K, seed: 12 });
+      const R = R04("tiles");
+      for (let y of [846, 902, 968]) dryBrush(ctx, [[x0, y], [x1, y]], { width: 1.6, color: "#8090b2", alpha: 0.28, passes: 1, dry: 0.55, seed: y });
+      for (let x = x0; x < x1; x += 150 + R() * 40) dryBrush(ctx, [[x, 810], [x - 40, 1e3]], { width: 1.4, color: "#8090b2", alpha: 0.2, passes: 1, dry: 0.6, seed: Math.round(x) });
+      const puddles = [];
+      for (let x = x0 + 200; x < x1; x += 380 + R() * 420) puddles.push([x, 860 + R() * 110, 70 + R() * 90]);
+      puddles.push([CHAR_X + 130 + c9, 842, 190]);
+      for (const [px, py, r] of puddles) {
+        wash(ctx, blobPts(px, py, r, r * 0.16, { seed: Math.round(px), rough: 0.22 }), { color: "#e4e4f0", color2: "#f2dccf", grad: [px - r, py, px + r, py], alpha: 0.75, px: K, soft: 1.2, edge: 1, edgeW: 3, edgeColor: "#8794b6", vary: 0.3, grain: 0.2, seed: Math.round(px) % 31 });
+      }
+    }, { y0: CURB_Y - 6, y1: 1e3 });
+  }
+  function reflLayer(env) {
+    const G = midGeo3(env.camAt(GAG));
+    return strip("s10-refl", P_MID6, (ctx, x0, x1) => {
+      for (const B2 of G.blds) {
+        if (B2.x + B2.w < x0 - 50 || B2.x > x1 + 50) continue;
+        wash(ctx, [[B2.x + 6, STREET_Y0 + 2], [B2.x + B2.w - 6, STREET_Y0 + 2], [B2.x + B2.w - 30, 930], [B2.x + 30, 930]], { color: B2.color, color2: "#c3c8dc", alpha: 0.16, px: K, soft: 14, edge: 0, vary: 0.5, grain: 0, seed: B2.seed });
+      }
+      for (const B2 of G.blds) {
+        if (B2.x + B2.w < x0 - 50 || B2.x > x1 + 50) continue;
+        const sx0 = B2.x + 22, sx1 = B2.x + B2.w - 70;
+        if (sx1 - sx0 > 60) for (let k = 0; k < 2; k++) streak(ctx, lerp(sx0, sx1, 0.3 + k * 0.4), STREET_Y0 + 4, 985, { w: (sx1 - sx0) * 0.3, color: "#ffd99c", alpha: 0.42, seed: B2.seed + k, wobble: 5, gap: 6, taper: 0.4 });
+        const N = neonShape(B2);
+        if (N) streak(ctx, neonCenter(N)[0], STREET_Y0 + 2, 995, { w: Math.max(18, N.w * 0.7), color: B2.neonColor, alpha: 0.8, seed: B2.seed + 9, wobble: 7, gap: 6, taper: 0.6, fade: 0.7 });
+      }
+      for (const L of G.lamps) streak(ctx, L.x + 38, STREET_Y0 + 2, 990, { w: 22, color: LAMP2, alpha: 0.85, seed: Math.round(L.x), wobble: 5, gap: 5, taper: 0.8, fade: 0.75 });
+    }, { y0: STREET_Y0 - 2, y1: 1e3 });
+  }
+  var CAR_L = 560;
+  function carImage(color) {
+    const pad = 30, w = (CAR_L + pad * 2) * K, h = (220 + pad) * K;
+    return baked(`s10-car|${color}`, w, h, (ctx) => {
+      ctx.scale(K, K);
+      ctx.translate(pad, 210);
+      const body = roughPoly([[10, -36], [0, -66], [8, -96], [120, -112], [186, -168], [232, -188], [382, -188], [442, -158], [520, -120], [556, -106], [560, -62], [552, -36]], { amp: 1.2, step: 10, seed: 3 });
+      wash(ctx, body, { color, color2: mix(color, "#2d3a5c", 0.3), alpha: 0.95, px: K, soft: 1, edge: 1.1, edgeW: 3, vary: 0.4, grain: 0.35, lift: 0.5, seed: 5 });
+      for (const win of [[[196, -160], [238, -180], [302, -180], [302, -120], [162, -120]], [[314, -180], [378, -180], [428, -150], [432, -120], [314, -120]]]) {
+        wash(ctx, roughPoly(win, { amp: 0.8, step: 8, seed: 7 }), { color: "#cfd6ea", color2: "#a9b4d2", alpha: 0.95, px: K, soft: 0.8, edge: 0.8, edgeW: 2, vary: 0.4, grain: 0.3, seed: 8 });
+      }
+      dryBrush(ctx, [[300, -118], [300, -50]], { width: 2, color: mix(color, INK7, 0.5), alpha: 0.6, passes: 1, seed: 9 });
+      dryBrush(ctx, [[60, -70], [540, -70]], { width: 1.6, color: mix(color, "#ffffff", 0.4), alpha: 0.5, passes: 1, seed: 10 });
+      for (const wx of [118, 444]) {
+        wash(ctx, blobPts(wx, -40, 44, 44, { seed: wx, rough: 0.05, n: 28 }), { color: "#3c4766", alpha: 0.95, px: K, soft: 0.6, edge: 0.6, vary: 0.2, grain: 0.3, seed: wx });
+        dab(ctx, wx, -40, 18, "#9aa6c4", { alpha: 0.9, edge: 0.5, seed: wx + 1, rough: 0.05 });
+      }
+      dab(ctx, 8, -84, 10, HEAD, { alpha: 1, ry: 7, edge: 0.4, seed: 1 });
+      dab(ctx, 552, -96, 8, TAIL, { alpha: 1, ry: 10, edge: 0.4, seed: 2 });
+    });
+  }
+  function drawCar(ctx, x, dir, color) {
+    const img = carImage(color), pad = 30;
+    const w = img.width / K, h = img.height / K;
+    ctx.save();
+    ctx.translate(x, LANE_Y);
+    if (dir > 0) ctx.scale(-1, 1);
+    ctx.fillStyle = "rgba(60,72,110,0.25)";
+    ctx.beginPath();
+    ctx.ellipse(CAR_L / 2, 4, CAR_L * 0.55, 10, 0, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.drawImage(img, -pad, -210, w, h);
+    const g = ctx.createLinearGradient(0, 0, -520, 0);
+    g.addColorStop(0, rgba(HEAD, 0.55));
+    g.addColorStop(1, rgba(HEAD, 0));
+    ctx.globalCompositeOperation = "screen";
+    ctx.fillStyle = g;
+    ctx.beginPath();
+    ctx.moveTo(4, -90);
+    ctx.lineTo(-520, -170);
+    ctx.lineTo(-520, 10);
+    ctx.lineTo(4, -76);
+    ctx.closePath();
+    ctx.fill();
+    ctx.restore();
+    const head = dir < 0 ? x + 8 : x - 8, tail = dir < 0 ? x + 552 : x - 552;
+    streak(ctx, head, LANE_Y + 2, 1e3, { w: 30, color: HEAD, alpha: 0.95, seed: 31, wobble: 6, gap: 5, taper: 0.9, fade: 0.6 });
+    streak(ctx, tail, LANE_Y + 2, 960, { w: 22, color: TAIL, alpha: 0.75, seed: 32, wobble: 5, gap: 5, taper: 0.7, fade: 0.75 });
+    glow(ctx, head + dir * 200, 880, 260, HEAD, 0.28);
+  }
+  var CARS = [
+    { from: 3.9, to: 8, x0: X_MAX + 80, x1: X_MIN - 680, dir: -1, color: "#3f7b93" },
+    { from: 12.3, to: 16.5, x0: X_MIN - 80, x1: X_MAX + 680, dir: 1, color: "#c9894f" }
+  ];
+  function drawRain(ctx, b, cam, k = 1) {
+    const span = X_MAX - X_MIN + 200;
+    ctx.save();
+    ctx.lineCap = "round";
+    for (let i = 0; i < 190 * k; i++) {
+      const sp = 1100 + hash2(i, 1, 10) * 600, len = 26 + hash2(i, 2, 10) * 40;
+      const y = (hash2(i, 3, 10) * 1200 + b * sp) % 1200 - 120;
+      const x = ((hash2(i, 4, 10) * span - cam * P_RAIN + y * 0.18) % span + span) % span + X_MIN - 100;
+      const light = i % 3 !== 0;
+      ctx.strokeStyle = light ? "rgba(248,250,255,0.42)" : "rgba(70,92,132,0.24)";
+      ctx.lineWidth = light ? 1.5 : 1.2;
+      ctx.beginPath();
+      ctx.moveTo(x, y);
+      ctx.lineTo(x - len * 0.18, y + len);
+      ctx.stroke();
+    }
+    for (let i = 0; i < 36; i++) {
+      const ph = ((b * 1.3 + hash2(i, 5, 10)) % 1 + 1) % 1, cyc = Math.floor(b * 1.3 + hash2(i, 5, 10));
+      const wx = hash2(i, cyc, 11) * span, y = 812 + hash2(i, cyc, 12) * 180;
+      const x = ((wx - cam) % span + span) % span + X_MIN - 100;
+      const s1 = 0.5 + (y - 800) / 220;
+      ctx.strokeStyle = `rgba(240,244,250,${(0.55 * (1 - ph)).toFixed(3)})`;
+      ctx.lineWidth = 1.2;
+      ctx.beginPath();
+      ctx.ellipse(x, y, 4 + ph * 18 * s1, (1.5 + ph * 4) * s1, 0, 0, Math.PI * 2);
+      ctx.stroke();
+    }
+    ctx.restore();
+  }
+  var UR = 178;
+  var UH = 100;
+  var APEX_Y = -640;
+  var STAND_HAND = ANCHORS.stand.handR;
+  var STAND_APEX = [20, APEX_Y + 6];
+  function canopyPts() {
+    return memo("s10-canopy-pts", () => {
+      const top = [], hem = [];
+      for (let i = 0; i <= 36; i++) {
+        const t = -1 + 2 * i / 36;
+        top.push([UR * t, UH * (1 - Math.pow(1 - t * t, 0.62))]);
+      }
+      const tipY = (t) => UH + 14 * (1 - t * t);
+      for (let i = 1; i < 36; i++) {
+        const t = 1 - 2 * i / 36;
+        const seg2 = (t + 1) / 0.5, f = seg2 - Math.floor(seg2);
+        const y = tipY(t) - 14 * Math.sin(Math.PI * f);
+        hem.push([UR * t * 0.985, y]);
+      }
+      return [...top, ...hem];
+    });
+  }
+  var TIPS = [-1, -0.5, 0, 0.5, 1].map((t) => [UR * t, UH + 14 * (1 - t * t)]);
+  function canopyImage() {
+    const pad = 40, x0 = -UR - pad, y0 = -40 - pad, w = (2 * UR + 2 * pad) * K, h = (UH + 60 + 2 * pad) * K;
+    const img = baked("s10-canopy", w, h, (ctx) => {
+      ctx.scale(K, K);
+      ctx.translate(-x0, -y0);
+      const P2 = canopyPts();
+      wash(ctx, P2, { color: UMB_L, color2: UMB, grad: [-UR, -10, UR * 0.6, UH], alpha: 0.97, px: K, soft: 0.8, edge: 1.3, edgeW: 3, edgeColor: UMB_D, vary: 0.4, grain: 0.3, lift: 0.35, seed: 61 });
+      for (const [a, b2] of [[0, 1], [2, 3]]) {
+        const tA = TIPS[a], tB = TIPS[b2];
+        const panel = [[0, 0], ...canopyPts().slice(0, 37).filter(([x]) => x >= tA[0] && x <= tB[0]), tB, [lerp(tA[0], tB[0], 0.5), Math.max(tA[1], tB[1]) - 12], tA];
+        wash(ctx, panel, { color: UMB, alpha: 0.38, px: K, soft: 1.5, edge: 0.6, edgeW: 2, edgeColor: UMB_D, vary: 0.5, grain: 0.2, seed: 70 + a, blend: "multiply" });
+      }
+      for (const [tx, ty] of TIPS) dryBrush(ctx, [[0, 2], [tx * 0.55, ty * 0.45 - 4], [tx, ty]], { width: 1.8, color: "#9b3a2e", alpha: 0.6, passes: 2, dry: 0.3, seed: 80 + Math.round(tx), wobble: 0.6 });
+      dryBrush(ctx, [[0, 4], [0, -24]], { width: 4, color: "#3b3346", alpha: 0.9, passes: 2, dry: 0.1, seed: 90 });
+    });
+    return { img, x0, y0, w: w / K, h: h / K };
+  }
+  function handTrack() {
+    const W2 = activeWalk();
+    if (!W2) return null;
+    return memo(`s10-hand|${W2.name}`, () => {
+      const m = W2.meta, sc = FIGURE_H / m.personHeight;
+      const raw2 = W2.frames.map((im) => {
+        if (!im) return [...ANCHORS.walk.hand];
+        const c = makeCanvas(m.width, m.height), g = c.getContext("2d", { willReadFrequently: true });
+        g.drawImage(im, 0, 0);
+        const ya = Math.round(m.baseY - 300 / sc), yb = Math.round(m.baseY - 205 / sc);
+        const d = g.getImageData(0, ya, m.width, yb - ya).data;
+        let bx = -1, by = 0;
+        for (let y = 0; y < yb - ya; y++) for (let x = m.width - 1; x > bx; x--) if (d[(y * m.width + x) * 4 + 3] > 140) {
+          bx = x;
+          by = y;
+          break;
+        }
+        if (bx < 0) return [...ANCHORS.walk.hand];
+        return [(bx - 6 - m.anchorX) * sc, (by + ya + 8 - m.baseY) * sc];
+      });
+      const n = raw2.length;
+      return raw2.map((_, i) => {
+        let sx = 0, sy = 0, sw = 0;
+        for (let k = -2; k <= 2; k++) {
+          const p = raw2[(i + k + n) % n], wt = 3 - Math.abs(k);
+          sx += p[0] * wt;
+          sy += p[1] * wt;
+          sw += wt;
+        }
+        return [sx / sw, sy / sw];
+      });
+    });
+  }
+  function umbrellaPose(fig) {
+    if (fig.pose === "stand") {
+      const [hx2, hy2] = STAND_HAND, [ax2, ay2] = STAND_APEX;
+      return { hand: [hx2, hy2], apex: [ax2, ay2], ang: Math.atan2(-(hx2 - ax2), hy2 - ay2) };
+    }
+    const tr = handTrack();
+    const [hx, hy] = tr ? tr[frameIndex(fig.phase || 0)] : ANCHORS.walk.hand;
+    const ax = 6 + (hx - 30) * 0.3, ay = APEX_Y + (hy + 250) * 0.25;
+    return { hand: [hx, hy], apex: [ax, ay], ang: Math.atan2(-(hx - ax), hy - ay) };
+  }
+  var rotP = ([x, y], a) => [x * Math.cos(a) - y * Math.sin(a), x * Math.sin(a) + y * Math.cos(a)];
+  function drawShaft2(ctx, hand, apex, alpha = 1) {
+    if (alpha <= 0.01) return;
+    const [hx, hy] = hand, [ax, ay] = apex;
+    const dx = hx - ax, dy = hy - ay, L = Math.hypot(dx, dy), ux = dx / L, uy = dy / L;
+    ctx.save();
+    ctx.globalAlpha *= alpha;
+    ctx.lineCap = "round";
+    ctx.strokeStyle = "#3b3346";
+    ctx.lineWidth = 4.5;
+    ctx.beginPath();
+    ctx.moveTo(ax, ay);
+    ctx.lineTo(hx + ux * 22, hy + uy * 22);
+    ctx.stroke();
+    ctx.strokeStyle = "#8a5a3c";
+    ctx.lineWidth = 8;
+    const ex = hx + ux * 22, ey = hy + uy * 22;
+    ctx.beginPath();
+    ctx.moveTo(hx - ux * 14, hy - uy * 14);
+    ctx.lineTo(ex, ey);
+    ctx.quadraticCurveTo(ex + ux * 22, ey + uy * 22, ex - uy * 18 + ux * 10, ey + ux * 18 + uy * 10);
+    ctx.stroke();
+    ctx.restore();
+  }
+  function drawCanopy(ctx, apex, ang, alpha = 1) {
+    const C = canopyImage();
+    ctx.save();
+    ctx.globalAlpha *= alpha;
+    ctx.translate(apex[0], apex[1]);
+    ctx.rotate(ang);
+    ctx.drawImage(C.img, C.x0, C.y0, C.w, C.h);
+    ctx.restore();
+  }
+  var MELT_STEPS = 24;
+  var STREAM_X = 135;
+  function meltShapes() {
+    return memo("s10-melt-shapes", () => {
+      const { apex, ang } = umbrellaPose({ pose: "stand" });
+      const S0 = canopyPts().map((p) => {
+        const [x, y] = rotP(p, ang);
+        return [x + apex[0], y + apex[1]];
+      });
+      const n = S0.length, ys = S0.map((p) => p[1]), y0 = Math.min(...ys), y1 = Math.max(...ys);
+      const S1 = S0.map(([x, y], i) => {
+        const hem = i > 36, hsh = hash2(i, 1, 51);
+        const sag = hem ? 70 + 300 * Math.pow(hsh, 2.2) : 40 + 40 * hsh;
+        return [x * 1.06 + 2, y + sag];
+      });
+      const S2 = S0.map((_, i) => {
+        const th = i <= 36 ? Math.PI + Math.PI * (i / 36) : Math.PI * ((i - 36) / (n - 36));
+        const r = 1 + (noise2(Math.cos(th) * 2, Math.sin(th) * 2, 52) - 0.5) * 0.25;
+        return [130 + Math.cos(th) * 205 * r, 10 + Math.sin(th) * 22 * r];
+      });
+      const H2 = S0.map(([, y]) => (y - y0) / (y1 - y0 || 1));
+      return { S0, S1, S2, H: H2 };
+    });
+  }
+  function meltPts(u) {
+    const { S0, S1, S2, H: H2 } = meltShapes();
+    const p1 = ease.inOut(clamp(u / 0.4));
+    return S0.map((a, i) => {
+      const b1 = S1[i];
+      const x = lerp(a[0], b1[0], p1), y = lerp(a[1], b1[1], p1);
+      const t2 = clamp((u - 0.3 - (1 - H2[i]) * 0.25) / 0.45);
+      const e = t2 * t2 * (3 - 2 * t2);
+      const xx = lerp(x, S2[i][0], e), squeeze = Math.pow(Math.sin(Math.PI * e), 0.6) * 0.92;
+      return [lerp(xx, STREAM_X + (xx - STREAM_X) * 0.1, squeeze), lerp(y, S2[i][1], e)];
+    });
+  }
+  function meltImage(k) {
+    const P0 = meltPts(k / (MELT_STEPS - 1)), { apex } = umbrellaPose({ pose: "stand" });
+    const x0 = Math.min(...P0.map((p) => p[0]), STAND_HAND[0]) - 30, x1 = Math.max(...P0.map((p) => p[0]), STAND_HAND[0]) + 30;
+    const y0 = Math.min(...P0.map((p) => p[1]), apex[1]) - 30, y1 = Math.min(60, Math.max(...P0.map((p) => p[1]), STAND_HAND[1]) + 230);
+    const img = baked(`s10-melt|${k}`, (x1 - x0) * K, (y1 - y0) * K, (ctx) => {
+      ctx.scale(K, K);
+      ctx.translate(-x0, -y0);
+      const u = k / (MELT_STEPS - 1);
+      const P2 = meltPts(u);
+      wash(ctx, P2, { color: UMB_L, color2: UMB, alpha: 0.95, px: K, soft: 1 + u * 3, edge: 1.4, edgeW: 3 + u * 3, edgeColor: UMB_D, vary: 0.45, grain: 0.3, blooms: u > 0.3 ? 2 : 0, seed: 100 + k });
+      if (u > 0.05 && u < 0.9) {
+        ctx.save();
+        ctx.lineCap = "round";
+        for (let i = 38; i < P2.length; i += 5) {
+          const len = (40 + 160 * hash2(i, 2, 53)) * Math.sin(Math.PI * clamp((u - 0.05) / 0.85));
+          const [px, py] = P2[i];
+          const end = Math.min(py + len, 4);
+          if (end <= py) continue;
+          ctx.strokeStyle = rgba(UMB, 0.75);
+          ctx.lineWidth = 3 + 4 * hash2(i, 3, 53);
+          ctx.beginPath();
+          ctx.moveTo(px, py - 4);
+          ctx.lineTo(px + 1, end);
+          ctx.stroke();
+          ctx.fillStyle = rgba(UMB_D, 0.8);
+          ctx.beginPath();
+          ctx.arc(px + 1, end, ctx.lineWidth * 0.8, 0, Math.PI * 2);
+          ctx.fill();
+        }
+        ctx.restore();
+      }
+      const { apex: apex2 } = umbrellaPose({ pose: "stand" });
+      const top = [lerp(apex2[0], STAND_HAND[0], clamp(u * 1.4)), lerp(apex2[1], STAND_HAND[1], clamp(u * 1.4))];
+      drawShaft2(ctx, STAND_HAND, top, 1 - smoothstep(0.2, 0.65, u));
+    });
+    return { img, x0, y0, w: x1 - x0, h: y1 - y0 };
+  }
+  function drawUmbrella(ctx, fig, b, part) {
+    const u = umbMelt(b);
+    if (u > 1e-3 && fig.pose === "stand") {
+      const k = Math.round(u * (MELT_STEPS - 1));
+      if (part === "front" === u < 0.62) {
+        const M2 = meltImage(k);
+        ctx.drawImage(M2.img, M2.x0, M2.y0, M2.w, M2.h);
+      }
+      if (part === "front" && u < 0.18) {
+        const P3 = umbrellaPose(fig);
+        drawCanopy(ctx, P3.apex, P3.ang, 1 - u / 0.18);
+      }
+      return;
+    }
+    if (part !== "front") return;
+    const P2 = umbrellaPose(fig);
+    drawShaft2(ctx, P2.hand, P2.apex);
+    drawCanopy(ctx, P2.apex, P2.ang);
+    drawUmbrellaRain(ctx, fig, b, P2);
+  }
+  function drawUmbrellaRain(ctx, fig, b, P2) {
+    const toFig = (p) => {
+      const [x, y] = rotP(p, P2.ang);
+      return [x + P2.apex[0], y + P2.apex[1]];
+    };
+    ctx.save();
+    ctx.lineCap = "round";
+    for (let i = 0; i < 6; i++) {
+      const ph = ((b * 3 + hash2(i, 1, 60)) % 1 + 1) % 1, cyc = Math.floor(b * 3 + hash2(i, 1, 60));
+      const t = (hash2(i, cyc, 61) - 0.5) * 1.8;
+      const [x, y] = toFig([UR * t, UH * (1 - Math.pow(1 - t * t, 0.62)) - 3]);
+      ctx.strokeStyle = `rgba(250,250,255,${(0.8 * (1 - ph)).toFixed(3)})`;
+      ctx.lineWidth = 1.6;
+      ctx.beginPath();
+      ctx.arc(x, y, 3 + ph * 10, Math.PI * 1.1, Math.PI * 1.9);
+      ctx.stroke();
+    }
+    const drop = (x, y, r, a = 1) => {
+      ctx.globalAlpha = a;
+      ctx.fillStyle = "rgba(214,228,246,0.9)";
+      ctx.beginPath();
+      ctx.arc(x, y, r, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.strokeStyle = "rgba(52,74,112,0.75)";
+      ctx.lineWidth = 1.3;
+      ctx.stroke();
+      ctx.fillStyle = "#ffffff";
+      ctx.beginPath();
+      ctx.arc(x - r * 0.35, y - r * 0.35, r * 0.32, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.globalAlpha = 1;
+    };
+    if (fig.pose === "stand" && b >= T_BEADS - 0.1 && b < T_BEADS + 2.2) {
+      const tips = [4, 0, 3, 1, 4];
+      for (let k = 0; k < 5; k++) {
+        const s0 = T_BEADS + k * 0.36, tt = b - s0;
+        if (tt < 0) continue;
+        const tip = TIPS[tips[k]], start = [tip[0] * 0.12, UH * 0.05 + 2];
+        const roll = clamp(tt / 0.5), hang = tt - 0.5, r = 4.5 + k % 2;
+        if (roll < 1) {
+          const e = roll * roll;
+          const lx = lerp(start[0], tip[0], e);
+          const t = lx / UR, ly = Math.abs(tip[0]) > UR * 0.9 ? UH * (1 - Math.pow(1 - Math.min(1, t * t), 0.62)) : lerp(start[1], tip[1], e);
+          const [x, y] = toFig([lx, ly - 4]);
+          drop(x, y, r);
+        } else if (hang < 0.28) {
+          const [x, y] = toFig([tip[0], tip[1] + 3 + hang * 14]);
+          drop(x, y, r * (1 + hang * 1.2));
+        } else {
+          const ft = (hang - 0.28) / 0.32;
+          const [x, y0] = toFig([tip[0], tip[1] + 7]);
+          const y = y0 + ft * ft * -y0;
+          if (ft < 1) {
+            ctx.strokeStyle = "rgba(214,228,246,0.9)";
+            ctx.lineWidth = r * 1.2;
+            ctx.beginPath();
+            ctx.moveTo(x, y - 12);
+            ctx.lineTo(x, y);
+            ctx.stroke();
+            drop(x, y, r * 0.8);
+          } else if (ft < 1.8) {
+            const sp = (ft - 1) / 0.8;
+            ctx.strokeStyle = `rgba(240,244,250,${(0.9 * (1 - sp)).toFixed(3)})`;
+            ctx.lineWidth = 1.5;
+            ctx.beginPath();
+            ctx.ellipse(x, 0, 6 + sp * 22, 2 + sp * 4, 0, 0, Math.PI * 2);
+            ctx.stroke();
+          }
+        }
+      }
+    } else if (fig.pose !== "stand") {
+      const b0 = Math.floor(b), tt = b - b0;
+      if (tt < 0.5) {
+        const tip = TIPS[hash2(b0, 1, 62) < 0.5 ? 0 : 1];
+        const [x, y0] = toFig([tip[0], tip[1] + 6]);
+        const y = y0 + (tt / 0.5) ** 2 * -y0;
+        ctx.strokeStyle = "rgba(214,228,246,0.85)";
+        ctx.lineWidth = 4;
+        ctx.beginPath();
+        ctx.moveTo(x - tt * 150, y - 10);
+        ctx.lineTo(x - tt * 150, y);
+        ctx.stroke();
+      }
+    }
+    ctx.restore();
+  }
+  var reflCanvas = null;
+  function drawReflection(ctx, fig, b) {
+    const RX0 = -260, RX1 = 360, RH = 200;
+    const w = Math.ceil((RX1 - RX0) * K), h = Math.ceil(RH * K);
+    if (!reflCanvas) reflCanvas = makeCanvas(w, h);
+    const g = reflCanvas.getContext("2d");
+    g.setTransform(1, 0, 0, 1, 0, 0);
+    g.globalCompositeOperation = "source-over";
+    g.globalAlpha = 1;
+    g.clearRect(0, 0, w, h);
+    g.setTransform(K, 0, 0, -K, -RX0 * K, 0);
+    drawWalker(g, { ...fig, rim: null });
+    g.setTransform(1, 0, 0, 1, 0, 0);
+    g.globalCompositeOperation = "destination-in";
+    const gr = g.createLinearGradient(0, 0, 0, h);
+    gr.addColorStop(0, "rgba(0,0,0,0.42)");
+    gr.addColorStop(0.6, "rgba(0,0,0,0.12)");
+    gr.addColorStop(1, "rgba(0,0,0,0)");
+    g.fillStyle = gr;
+    g.fillRect(0, 0, w, h);
+    const band = 6;
+    for (let y = 0; y < h; y += band) {
+      const dx = Math.sin(y * 0.21 + b * 5) * (1.5 + y / h * 5);
+      ctx.drawImage(reflCanvas, 0, y, w, band, RX0 + dx, 4 + y / K, w / K, band / K);
+    }
+  }
+  function drawBigDrop(ctx, b, env) {
+    if (b < T_DROP || b > T_MELT + 0.45) return;
+    const fig = env.figure();
+    const [ax, ay] = STAND_APEX;
+    const tx = fig.x + ax * fig.scale, ty = fig.y + (ay - 6) * fig.scale;
+    ctx.save();
+    if (b < T_MELT) {
+      const t = (b - T_DROP) / (T_MELT - T_DROP);
+      const y = lerp(-60, ty, t * t), x = tx + (1 - t) * 30;
+      ctx.fillStyle = "rgba(200,218,242,0.95)";
+      ctx.strokeStyle = "rgba(40,62,104,0.85)";
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.moveTo(x, y - 34);
+      ctx.quadraticCurveTo(x + 12, y - 4, x, y + 6);
+      ctx.quadraticCurveTo(x - 12, y - 4, x, y - 34);
+      ctx.fill();
+      ctx.stroke();
+      ctx.fillStyle = "#fff";
+      ctx.beginPath();
+      ctx.arc(x - 3, y - 6, 2.6, 0, Math.PI * 2);
+      ctx.fill();
+    } else {
+      const t = (b - T_MELT) / 0.45;
+      ctx.strokeStyle = `rgba(235,242,252,${(0.95 * (1 - t)).toFixed(3)})`;
+      ctx.lineWidth = 2.5;
+      ctx.beginPath();
+      ctx.ellipse(tx, ty, 10 + t * 70, 4 + t * 16, 0, 0, Math.PI * 2);
+      ctx.stroke();
+      ctx.fillStyle = `rgba(214,228,246,${(1 - t).toFixed(3)})`;
+      for (let k = 0; k < 9; k++) {
+        const a = Math.PI * (1.05 + k / 8 * 0.9), d = 20 + t * 90;
+        ctx.beginPath();
+        ctx.arc(tx + Math.cos(a) * d, ty + Math.sin(a) * d * 0.7 + t * t * 60, 3.5, 0, Math.PI * 2);
+        ctx.fill();
+      }
+    }
+    ctx.restore();
+  }
+  function paintBack(ctx, b, env) {
+    const cam = env.cam;
+    drawStrip(ctx, skyLayer5(), cam);
+    drawStrip(ctx, farLayer7(), cam);
+    drawStrip(ctx, midLayer6(env), cam);
+    const G = midGeo3(env.camAt(GAG));
+    const beatK = Math.exp(-((b % 1 + 1) % 1) * 4);
+    for (const B2 of G.blds) {
+      const N = neonShape(B2);
+      if (!N) continue;
+      const [cx, cy] = neonCenter(N), sx = cx - cam * P_MID6;
+      if (sx < X_MIN - 200 || sx > X_MAX + 200) continue;
+      glow(ctx, sx, cy, Math.max(N.w, N.h) + 70, B2.neonColor, 0.12 + 0.18 * beatK);
+    }
+    drawStrip(ctx, streetLayer(), cam);
+    drawStrip(ctx, roadLayer4(env), cam);
+    drawStrip(ctx, reflLayer(env), cam);
+    for (const C of CARS) {
+      if (b < C.from || b > C.to) continue;
+      const t = (b - C.from) / (C.to - C.from);
+      drawCar(ctx, lerp(C.x0, C.x1, t), C.dir, C.color);
+    }
+  }
+  var s10 = {
+    id: "s10",
+    station: ST10,
+    figureStyle: "s10-wc",
+    // 蓝调背景前黑衣容易贴色：暖白轮廓光（像路灯照出来的边，也像水彩里留出的纸白）
+    figureRim: { color: "#fff3dc", width: 5, alpha: 1 },
+    freezeBeat: GAG + 3,
+    // Outro 展墙：伞已复原，雨珠正从伞尖滴落
+    drawFigure(ctx, fig, b, env) {
+      if (fig.pose === "walk" || fig.pose === "stand") drawReflection(ctx, fig, b);
+      drawUmbrella(ctx, fig, b, "back");
+      const m = meltAmt(b);
+      if (m > 0.01) {
+        ctx.save();
+        for (let k = 1; k <= 1; k++) {
+          ctx.globalAlpha = 0.28 * m;
+          ctx.save();
+          ctx.translate(0, 26 * m);
+          drawWalker(ctx, { ...fig, rim: null });
+          ctx.restore();
+        }
+        ctx.restore();
+      }
+      drawWalker(ctx, fig);
+      drawUmbrella(ctx, fig, b, "front");
+    },
+    drawBack(ctx, b, env) {
+      const m = meltAmt(b);
+      if (m < 2e-3) {
+        paintBack(ctx, b, env);
+        return;
+      }
+      const S = captureUnits("s10", (g) => paintBack(g, b, env), 0.5);
+      runDown(ctx, S, { x: X_MIN, y: 0, w: X_MAX - X_MIN, h: 1e3 }, m, { run: 0.24, seed: 7, paper: PAPER7, copies: 4 });
+    },
+    drawFront(ctx, b, env) {
+      drawBigDrop(ctx, b, env);
+      drawRain(ctx, b, env.cam);
+      const pw = Math.round((X_MAX - X_MIN) * K), ph = Math.round(1e3 * K);
+      ctx.save();
+      ctx.globalCompositeOperation = "multiply";
+      ctx.drawImage(paperTooth(pw, ph, { seed: 7, amount: 0.9 }), X_MIN, 0, X_MAX - X_MIN, 1e3);
+      ctx.restore();
+      ctx.drawImage(deckle(pw, ph, { color: PAPER7, seed: 9, sides: { top: 0, right: 22, bottom: 40, left: 22 } }), X_MIN, 0, X_MAX - X_MIN, 1e3);
+    },
+    drawFrame(ctx, R) {
+      drawWcFrame(ctx, R, { paper: "#f7f5f0", colors: ["#8fb0d8", "#c7b3dc", "#f2c3a6", "#9fd0d8"], seed: 21 });
+    },
+    cardStyle: {
+      ink: INK7,
+      accent: "#c4553b",
+      bar: false,
+      bgDraw(ctx, x, y, w, h) {
+        drawWcCard(ctx, x, y, w, h, { paper: "#fbfaf6", color: "#6f97c8", color2: "#e3a3bd", seed: 3, inset: 34 });
+      }
+    },
+    playerStyle: {
+      ink: INK7,
+      noteColor: "#c4553b",
+      backdrop: false,
+      plateDraw(ctx, x, y, w, h) {
+        drawWcCard(ctx, x, y, w, h, { paper: "#fbfaf6", color: "#6f97c8", seed: 5, inset: 20 });
+      },
+      drawPlayer(ctx, kind, cx, cy, sc, spin) {
+        const r = 78;
+        const D = wcDisc(r, { colors: ["#7fa8d8", "#e58fb0", "#f2d16b", "#6fc7d6"], paper: "#fbfaf6", ink: INK7, seed: 31 });
+        ctx.save();
+        ctx.translate(cx, cy);
+        ctx.scale(sc, sc);
+        ctx.fillStyle = "rgba(40,55,90,0.16)";
+        ctx.beginPath();
+        ctx.ellipse(4, 8, r, r, 0, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.rotate(spin);
+        ctx.drawImage(D, -D.width / 2, -D.height / 2);
+        ctx.restore();
+      }
+    }
+  };
 
   // src/scenes/s11.js
-  var ST10 = stationByN(11);
+  var ST11 = stationByN(11);
   var SCREEN = "#fff4dc";
   var OUT = "#2a1409";
   var BLACK = "#24130b";
@@ -12760,7 +14136,7 @@
   }
   var s11 = {
     id: "s11",
-    station: ST10,
+    station: ST11,
     quantize: 10,
     figureStyle: "s11-puppet",
     freezeBeat: GAG + 1.5,
@@ -13064,10 +14440,10 @@
   }
 
   // src/scenes/s12.js
-  var ST11 = stationByN(12);
-  var PAPER7 = "#f7ecd2";
+  var ST12 = stationByN(12);
+  var PAPER8 = "#f7ecd2";
   var PAPER22 = "#f3e0b4";
-  var INK7 = "#1d1612";
+  var INK8 = "#1d1612";
   var RED3 = "#d8352a";
   var RED_D3 = "#a8261f";
   var PINK = "#f07c98";
@@ -13084,7 +14460,7 @@
   var WOOD2 = "#8a4b28";
   var SKIN = "#f8d3ac";
   var WHITE = "#fffaf0";
-  var P_SKY4 = 0.04;
+  var P_SKY5 = 0.04;
   var P_MTN = 0.12;
   var P_CITY = 0.24;
   var P_TREE = 0.5;
@@ -13109,19 +14485,19 @@
   var T_JAR = [GAG + 1.55, GAG + 2];
   var T_SWEAT2 = [GAG + 2.6, GAG + 4.1];
   var T_SIT = [GAG + 4.7, GAG + 5.4];
-  var pathOf = (fn) => {
+  var pathOf2 = (fn) => {
     const p = new Path2D();
     fn(p);
     return p;
   };
-  var rectP2 = (x, y, w, h) => pathOf((p) => p.rect(x, y, w, h));
-  var ellP = (x, y, rx, ry, rot = 0) => pathOf((p) => p.ellipse(x, y, Math.max(0.01, rx), Math.max(0.01, ry), rot, 0, TAU));
+  var rectP2 = (x, y, w, h) => pathOf2((p) => p.rect(x, y, w, h));
+  var ellP = (x, y, rx, ry, rot = 0) => pathOf2((p) => p.ellipse(x, y, Math.max(0.01, rx), Math.max(0.01, ry), rot, 0, TAU));
   var circP = (x, y, r) => ellP(x, y, r, r);
-  var polyP = (pts, close = true) => pathOf((p) => {
+  var polyP = (pts, close = true) => pathOf2((p) => {
     pts.forEach(([x, y], i) => i ? p.lineTo(x, y) : p.moveTo(x, y));
     if (close) p.closePath();
   });
-  function nh(ctx, path, fill, { line: line2 = LW2, reg = 1, ink = INK7 } = {}) {
+  function nh(ctx, path, fill, { line: line2 = LW2, reg = 1, ink = INK8 } = {}) {
     if (fill) {
       ctx.save();
       if (reg) ctx.translate(REG2[0] * reg, REG2[1] * reg);
@@ -13137,10 +14513,10 @@
       ctx.stroke(path);
     }
   }
-  function nhUnion(ctx, path, fill, { line: line2 = LW2, under = PAPER7 } = {}) {
+  function nhUnion(ctx, path, fill, { line: line2 = LW2, under = PAPER8 } = {}) {
     ctx.save();
     ctx.lineJoin = "round";
-    ctx.strokeStyle = INK7;
+    ctx.strokeStyle = INK8;
     ctx.lineWidth = line2 * 2;
     ctx.stroke(path);
     ctx.fillStyle = under;
@@ -13151,7 +14527,7 @@
     ctx.fill(path);
     ctx.restore();
   }
-  function strokeLine(ctx, pts, w = LW2, color = INK7) {
+  function strokeLine(ctx, pts, w = LW2, color = INK8) {
     ctx.strokeStyle = color;
     ctx.lineWidth = w;
     ctx.lineCap = "round";
@@ -13258,7 +14634,7 @@
     ctx.restore();
   }
   function spiral(ctx, cx, cy, r, { turns = 1.25, a0 = 2.4, dir = 1, lw = 2 } = {}) {
-    ctx.strokeStyle = INK7;
+    ctx.strokeStyle = INK8;
     ctx.lineWidth = lw;
     ctx.lineCap = "round";
     ctx.beginPath();
@@ -13288,10 +14664,10 @@
     for (const [dx, dy, r, d] of [[-26, -12, 31, 1], [16, -18, 28, -1], [-58, 6, 22, 1], [50, -2, 22, -1]]) spiral(ctx, dx, dy + 2, r * 0.62, { dir: d, lw: L * 0.75, a0: d > 0 ? 2.6 : 0.6 });
     ctx.restore();
   }
-  var paper = () => paperTexture(Math.ceil((X_MAX - X_MIN) * K), Math.ceil(1e3 * K), { base: PAPER7, seed: 12, amount: 1.1 });
-  function skyLayer5() {
-    return strip("s12-sky", P_SKY4, (ctx, x0, x1) => {
-      const sx = 1010 + 1250 * P_SKY4;
+  var paper = () => paperTexture(Math.ceil((X_MAX - X_MIN) * K), Math.ceil(1e3 * K), { base: PAPER8, seed: 12, amount: 1.1 });
+  function skyLayer6() {
+    return strip("s12-sky", P_SKY5, (ctx, x0, x1) => {
+      const sx = 1010 + 1250 * P_SKY5;
       nh(ctx, circP(sx, 128, 66), YEL_L2, { line: LW2 });
       nh(ctx, circP(sx, 128, 50), RED3, { line: LW2 });
       ctx.fillStyle = rgba(YEL_L2, 0.85);
@@ -13337,7 +14713,7 @@
     band(base - h * 0.78, cols[0]);
     ctx.restore();
     nh(ctx, p, null, { line: LW2 });
-    ctx.strokeStyle = INK7;
+    ctx.strokeStyle = INK8;
     ctx.lineWidth = 1.8;
     ctx.lineCap = "round";
     for (const k of [-1, 1]) {
@@ -13381,7 +14757,7 @@
     nh(ctx, p, color, { line: lw });
     ctx.save();
     ctx.clip(p);
-    ctx.strokeStyle = rgba(INK7, 0.75);
+    ctx.strokeStyle = rgba(INK8, 0.75);
     ctx.lineWidth = Math.max(1, lw * 0.4);
     const n = Math.round(w / 16);
     for (let k = 1; k < n; k++) {
@@ -13438,11 +14814,11 @@
         if (tx < x0 - 200) continue;
         nh(ctx, rectP2(tx - 150, 470, 300, 140), WALLC, { line: LW2 });
         for (let x = tx - 150; x < tx + 150; x += 30) nh(ctx, rectP2(x, 457, 17, 14), WALLC, { line: 2.4 });
-        nh(ctx, rectP2(tx - 108, 400, 216, 58), PAPER7, { line: LW2 });
+        nh(ctx, rectP2(tx - 108, 400, 216, 58), PAPER8, { line: LW2 });
         for (let k = 0; k < 6; k++) nh(ctx, rectP2(tx - 104 + k * 40, 400, 10, 58), RED3, { line: 2 });
         nh(ctx, rectP2(tx - 112, 446, 224, 12), RED_D3, { line: 2.4 });
         eaveRoof(ctx, tx - 140, tx + 140, 372, 404, { flare: 22, inset: 0.18, lw: 2.6 });
-        nh(ctx, rectP2(tx - 72, 338, 144, 36), PAPER7, { line: 2.6 });
+        nh(ctx, rectP2(tx - 72, 338, 144, 36), PAPER8, { line: 2.6 });
         for (let k = 0; k < 4; k++) nh(ctx, rectP2(tx - 68 + k * 44, 338, 9, 36), RED3, { line: 2 });
         eaveRoof(ctx, tx - 108, tx + 108, 290, 342, { flare: 24, inset: 0.24, lw: 2.6 });
       }
@@ -13489,7 +14865,7 @@
   function tileCoping(ctx, xa, xb, y) {
     nh(ctx, rectP2(xa - 6, y, xb - xa + 12, 18), IND, { line: 2.6 });
     nh(ctx, rectP2(xa - 2, y - 8, xb - xa + 4, 9), "#3d5f9e", { line: 2.2 });
-    ctx.strokeStyle = INK7;
+    ctx.strokeStyle = INK8;
     ctx.lineWidth = 1.6;
     for (let x = xa; x < xb; x += 13) {
       ctx.beginPath();
@@ -13505,7 +14881,7 @@
       const kind = Math.floor(R() * 3);
       let p;
       if (kind === 0) p = circP(x, 668, 34);
-      else if (kind === 1) p = pathOf((q) => {
+      else if (kind === 1) p = pathOf2((q) => {
         q.moveTo(x - 48, 690);
         q.arc(x, 712, 52, Math.PI * 1.22, Math.PI * 1.78);
         q.lineTo(x + 24, 700);
@@ -13562,7 +14938,7 @@
       const ex = sx + (sx - x) * 0.6 + (R() - 0.5) * 30, ey = 620 + R() * 110;
       strands.push([sx, sy, (sx + ex) / 2 + (sx - x) * 0.5, sy - 30, ex, ey]);
     }
-    for (const [w, c] of [[6.4, INK7], [3.4, "#4caf5f"]]) {
+    for (const [w, c] of [[6.4, INK8], [3.4, "#4caf5f"]]) {
       ctx.strokeStyle = c;
       ctx.lineWidth = w;
       ctx.lineCap = "round";
@@ -13579,7 +14955,7 @@
     const w = xb - xa;
     nh(ctx, rectP2(xa + 10, 520, w - 20, 272), PAPER22, { line: LW2, reg: 0 });
     nh(ctx, rectP2(xa, 768, w, 24), STONE_D2, { line: 2.4 });
-    const aw = pathOf((p) => {
+    const aw = pathOf2((p) => {
       p.moveTo(xa - 10, 540);
       p.lineTo(xb + 10, 540);
       p.lineTo(xb + 22, 582);
@@ -13614,7 +14990,7 @@
       nh(ctx, rectP2(lx - 8, 602, 16, 5), YEL2, { line: 1.6 });
     }
   }
-  function streetLayer(cg) {
+  function streetLayer2(cg) {
     return strip("s12-street", 1, (ctx, x0, x1) => {
       const R = rng("s12-street");
       const fx = (x2) => x2 + cg;
@@ -13633,7 +15009,7 @@
       inkTexture(ctx, x0, 380, x1 - x0, 420, 0.5);
     }, { y0: 380, y1: 800 });
   }
-  function roadLayer4() {
+  function roadLayer5() {
     return strip("s12-road", 1, (ctx, x0, x1) => {
       const R = rng("s12-road");
       nh(ctx, rectP2(x0, 800, x1 - x0, 200), STONE2, { line: 0, reg: 0 });
@@ -13657,7 +15033,7 @@
           x += w;
         }
       }
-      ctx.fillStyle = INK7;
+      ctx.fillStyle = INK8;
       ctx.fillRect(x0, 798, x1 - x0, 4.5);
       inkTexture(ctx, x0, 800, x1 - x0, 200, 0.45);
     }, { y0: 796, y1: 1e3 });
@@ -13690,7 +15066,7 @@
         const x = bx + cg * P_FG6;
         if (x < x0 - 300 || x > x1 + 300) continue;
         const pts = [[x + 120, -20], [x + 40, 70], [x - 40, 130], [x - 140, 170]];
-        ctx.strokeStyle = INK7;
+        ctx.strokeStyle = INK8;
         ctx.lineWidth = 15;
         ctx.lineCap = "round";
         ctx.beginPath();
@@ -13705,7 +15081,7 @@
         ctx.stroke();
         const twigs = [[x + 30, 80, x - 10, 200], [x - 60, 140, x - 70, 230], [x + 70, 30, x + 110, 120]];
         for (const [ax, ay, bx2, by] of twigs) {
-          ctx.strokeStyle = INK7;
+          ctx.strokeStyle = INK8;
           ctx.lineWidth = 8;
           ctx.beginPath();
           ctx.moveTo(ax, ay);
@@ -13744,7 +15120,7 @@
     nh(ctx, rectP2(470, 760, 1090, 28), "#e7cf9f", { line: 2.4, reg: 0 });
     for (let k = 0; k < 3; k++) {
       const x = 628 + k * 50;
-      nh(ctx, rectP2(x, 592, 48, 168), PAPER7, { line: 2.6 });
+      nh(ctx, rectP2(x, 592, 48, 168), PAPER8, { line: 2.6 });
       nh(ctx, rectP2(x + 5, 598, 38, 156), WHITE, { line: 1.6, reg: 0 });
     }
     for (const [x, y, r] of [[662, 650, 18], [716, 628, 22], [742, 690, 16], [690, 706, 14]]) {
@@ -13754,7 +15130,7 @@
     strokeLine(ctx, [[700, 760], [700, 720], [690, 690]], 2.4, GRN2);
     for (const x of [870, 1070]) {
       nh(ctx, rectP2(x, 578, 70, 104), IND_L, { line: 2.4 });
-      nh(ctx, rectP2(x + 8, 590, 54, 78), PAPER7, { line: 1.6, reg: 0 });
+      nh(ctx, rectP2(x + 8, 590, 54, 78), PAPER8, { line: 1.6, reg: 0 });
       nh(ctx, polyP([[x + 10, 660], [x + 26, 618], [x + 40, 660]]), "#7cc3a4", { line: 1.6 });
       nh(ctx, polyP([[x + 28, 664], [x + 44, 630], [x + 60, 664]]), "#6f95d0", { line: 1.6 });
       nh(ctx, circP(x + 48, 606, 6), RED3, { line: 1.4 });
@@ -13769,7 +15145,7 @@
     nh(ctx, rectP2(cx - 66, 708, 132, 12), RED_D3, { line: 2.6 });
     nh(ctx, rectP2(cx - 58, 720, 116, 14), RED3, { line: 2.4 });
     for (const lx of [cx - 56, cx + 47]) nh(ctx, rectP2(lx, 734, 9, 52), RED_D3, { line: 2.2 });
-    nh(ctx, pathOf((p) => {
+    nh(ctx, pathOf2((p) => {
       p.moveTo(cx - 48, 698);
       p.quadraticCurveTo(cx - 34, 716, cx - 20, 698);
       p.closePath();
@@ -13787,7 +15163,7 @@
     nh(ctx, rectP2(480, 712, 106, 62), YEL_L2, { line: 2 });
     tuanhua(ctx, 533, 743, 22, { lw: 1.6 });
     const win = rectP2(470, 566, 126, 134);
-    nh(ctx, win, PAPER7, { line: 0, reg: 0 });
+    nh(ctx, win, PAPER8, { line: 0, reg: 0 });
     ctx.save();
     ctx.clip(win);
     ctx.strokeStyle = RED_D3;
@@ -13830,7 +15206,7 @@
     tuanhua(ctx, 1305, 752, 24, { lw: 1.8 });
     nh(ctx, rectP2(1208, 684, 194, 14), WOOD2, { line: 2.6 });
     nh(ctx, rectP2(1330, 662, 58, 22), RED_D3, { line: 2.4 });
-    ctx.strokeStyle = INK7;
+    ctx.strokeStyle = INK8;
     ctx.lineWidth = 1.4;
     for (let k = 0; k < 6; k++) {
       ctx.beginPath();
@@ -13873,7 +15249,7 @@
       nh(ctx, circP(px, 600, 3), YEL2, { line: 0 });
     }
     ctx.lineCap = "round";
-    for (const [w, c] of [[14, INK7], [9, RED3]]) {
+    for (const [w, c] of [[14, INK8], [9, RED3]]) {
       ctx.strokeStyle = c;
       ctx.lineWidth = w;
       ctx.beginPath();
@@ -13884,7 +15260,7 @@
     }
     tuanhua(ctx, DOOR_X, 582, 20, { n: 8, petal: RED3, inner: PINK, leaf: YEL2, core: YEL2, lw: 1.8 });
     for (const x of [612, 790]) nh(ctx, polyP([[x, 564], [x - 10, 600], [x + 10, 600]]), RED3, { line: 2 });
-    const eave = pathOf((p) => {
+    const eave = pathOf2((p) => {
       p.moveTo(452, 502);
       p.lineTo(1568, 502);
       p.quadraticCurveTo(1590, 520, 1612, 526);
@@ -13897,7 +15273,7 @@
     nh(ctx, eave, IND, { line: LW2 });
     ctx.save();
     ctx.clip(eave);
-    ctx.strokeStyle = rgba(INK7, 0.7);
+    ctx.strokeStyle = rgba(INK8, 0.7);
     ctx.lineWidth = 1.4;
     for (let x = 440; x < 1600; x += 14) {
       ctx.beginPath();
@@ -13918,7 +15294,7 @@
     for (let k = 0; k < UP.length - 1; k++) {
       const a = UP[k] + 14, b = UP[k + 1] - 14;
       const w2 = rectP2(a, 356, b - a, 76);
-      nh(ctx, w2, PAPER7, { line: 0, reg: 0 });
+      nh(ctx, w2, PAPER8, { line: 0, reg: 0 });
       ctx.save();
       ctx.clip(w2);
       ctx.strokeStyle = RED_D3;
@@ -13965,7 +15341,7 @@
     strokeLine(ctx, [[0, 0], [0, 10]], 2.2);
     const h = r * 1.15;
     nh(ctx, ellP(0, 14 + h, r, h), RED3, { line: 2.8 });
-    ctx.strokeStyle = INK7;
+    ctx.strokeStyle = INK8;
     ctx.lineWidth = 1.6;
     for (const k of [0.32, 0.68]) {
       ctx.beginPath();
@@ -14026,7 +15402,7 @@
         p.lineTo(sx + 8 + Math.sin(b * Math.PI + k * 0.6 + ph) * 6 * (k / 8), y);
       }
       ctx.lineCap = "round";
-      ctx.strokeStyle = INK7;
+      ctx.strokeStyle = INK8;
       ctx.lineWidth = 9;
       ctx.stroke(p);
       ctx.strokeStyle = dx ? GRN2 : YEL2;
@@ -14050,7 +15426,7 @@
         nh(ctx, tubeP([[hx2, -150], knee, [fx, -14 - lift]], [20, 16, 13]), o.pants || "#2b2522", { line: lw });
         if (o.legs !== "none" && o.wraps !== false) {
           nh(ctx, tubeP([knee.map((v, i) => i ? v + 18 : v), [fx, -18 - lift]], [14, 13]), WHITE, { line: lw * 0.8 });
-          ctx.strokeStyle = INK7;
+          ctx.strokeStyle = INK8;
           ctx.lineWidth = thin;
           for (let k = 1; k < 4; k++) {
             const t = k / 4;
@@ -14061,7 +15437,7 @@
             ctx.stroke();
           }
         }
-        nh(ctx, ellP(fx - 9, -7 - lift, 23, 9.5), INK7, { line: lw * 0.6, reg: 0 });
+        nh(ctx, ellP(fx - 9, -7 - lift, 23, 9.5), INK8, { line: lw * 0.6, reg: 0 });
         strokeLine(ctx, [[fx - 30, -2 - lift], [fx + 12, -2 - lift]], thin, WHITE);
       };
       if (ph === null) {
@@ -14130,7 +15506,7 @@
       ctx.fillRect(-60, -10, 120, 18);
     }
     ctx.restore();
-    ctx.strokeStyle = INK7;
+    ctx.strokeStyle = INK8;
     ctx.lineWidth = thin;
     ctx.beginPath();
     ctx.moveTo(-6, -144);
@@ -14151,7 +15527,7 @@
     nh(ctx, ellP(22, -188, 8, 11), o.face || SKIN, { line: thin * 1.2, reg: 0.5 });
     nh(ctx, ellP(HC[0], HC[1], 47, 45), o.face || SKIN, { line: lw, reg: 0.5 });
     if (o.hat === "cap") {
-      const cap = pathOf((p) => {
+      const cap = pathOf2((p) => {
         p.moveTo(-54, -198);
         p.quadraticCurveTo(-52, -250, -6, -250);
         p.quadraticCurveTo(40, -250, 42, -196);
@@ -14164,30 +15540,30 @@
       strokeLine(ctx, [[-30, -244], [-26, -210]], thin, "#5b4a40");
       nh(ctx, circP(-6, -254, 8), RED3, { line: thin * 1.3 });
     } else if (o.hat === "kerchief") {
-      const k = pathOf((p) => {
+      const k = pathOf2((p) => {
         p.moveTo(-56, -194);
         p.quadraticCurveTo(-54, -248, -4, -246);
         p.quadraticCurveTo(44, -244, 44, -190);
         p.quadraticCurveTo(-6, -214, -56, -194);
         p.closePath();
       });
-      nh(ctx, k, INK7, { line: lw, reg: 0 });
-      nh(ctx, polyP([[40, -206], [70, -190], [62, -170], [40, -192]]), INK7, { line: thin, reg: 0 });
+      nh(ctx, k, INK8, { line: lw, reg: 0 });
+      nh(ctx, polyP([[40, -206], [70, -190], [62, -170], [40, -192]]), INK8, { line: thin, reg: 0 });
     } else if (o.hat === "scholar") {
       nh(ctx, polyP([[-50, -200], [-46, -262], [36, -262], [40, -198], [-6, -212]]), IND, { line: lw });
       strokeLine(ctx, [[-48, -232], [38, -232]], thin, IND_L);
       for (const dy of [0, 16]) nh(ctx, polyP([[38, -230 + dy], [70, -214 + dy], [64, -204 + dy], [38, -216 + dy]]), IND, { line: thin });
     } else if (o.hat === "round") {
-      nh(ctx, pathOf((p) => {
+      nh(ctx, pathOf2((p) => {
         p.moveTo(-52, -204);
         p.quadraticCurveTo(-48, -252, -6, -252);
         p.quadraticCurveTo(36, -252, 40, -202);
         p.closePath();
       }), RED_D3, { line: lw });
-      nh(ctx, rectP2(-54, -210, 96, 12), INK7, { line: thin, reg: 0 });
+      nh(ctx, rectP2(-54, -210, 96, 12), INK8, { line: thin, reg: 0 });
       nh(ctx, circP(-6, -256, 7), YEL2, { line: thin });
     }
-    nh(ctx, polyP([[10, -206], [24, -204], [20, -182], [12, -186]]), INK7, { line: 0, reg: 0 });
+    nh(ctx, polyP([[10, -206], [24, -204], [20, -182], [12, -186]]), INK8, { line: 0, reg: 0 });
     ctx.fillStyle = rgba(PINK, 0.85);
     ctx.beginPath();
     ctx.ellipse(-42, -174, 10, 8, 0, 0, TAU);
@@ -14195,7 +15571,7 @@
     ctx.beginPath();
     ctx.ellipse(4, -176, 10, 8, 0, 0, TAU);
     ctx.fill();
-    ctx.strokeStyle = INK7;
+    ctx.strokeStyle = INK8;
     ctx.lineWidth = thin * 1.25;
     for (const ex of [-36, -8]) {
       ctx.beginPath();
@@ -14210,23 +15586,23 @@
     ctx.quadraticCurveTo(-60, -180, -50, -176);
     ctx.stroke();
     if (o.beard === "full") {
-      nh(ctx, pathOf((p) => {
+      nh(ctx, pathOf2((p) => {
         p.moveTo(-56, -178);
         p.quadraticCurveTo(-50, -132, -18, -128);
         p.quadraticCurveTo(14, -134, 18, -170);
         p.quadraticCurveTo(-10, -150, -56, -178);
         p.closePath();
-      }), INK7, { line: 0, reg: 0 });
+      }), INK8, { line: 0, reg: 0 });
     }
     if (o.beard === "mustache") {
-      for (const d of [-1, 1]) nh(ctx, pathOf((p) => {
+      for (const d of [-1, 1]) nh(ctx, pathOf2((p) => {
         p.moveTo(-36, -172);
         p.quadraticCurveTo(-36 + d * 14, -170, -36 + d * 22, -150);
         p.quadraticCurveTo(-36 + d * 10, -164, -36, -168);
         p.closePath();
-      }), INK7, { line: 0, reg: 0 });
+      }), INK8, { line: 0, reg: 0 });
     }
-    const mouth = pathOf((p) => {
+    const mouth = pathOf2((p) => {
       p.moveTo(-40, -166);
       p.quadraticCurveTo(-30, -150, -18, -166);
       p.closePath();
@@ -14237,7 +15613,7 @@
     if (o.arms === "fist") {
       nh(ctx, circP(-66, -88, 12.5), o.face || SKIN, { line: lw * 0.8, reg: 0.5 });
       nh(ctx, ellP(-58, -84, 12, 15, 0.3), o.face || SKIN, { line: lw * 0.8, reg: 0.5 });
-      ctx.strokeStyle = INK7;
+      ctx.strokeStyle = INK8;
       ctx.lineWidth = thin;
       for (const dy of [-6, 0, 6]) {
         ctx.beginPath();
@@ -14306,7 +15682,7 @@
     star2.closePath();
     nh(ctx, star2, YEL2, { line: 3 });
     nh(ctx, circP(hx, hy, r0 * 0.9), WHITE, { line: 0, reg: 0 });
-    ctx.strokeStyle = INK7;
+    ctx.strokeStyle = INK8;
     ctx.lineCap = "round";
     for (let k = 0; k < 10; k++) {
       const a = k / 10 * TAU + 0.5, d0 = r1 + 6 + u * 70, d1 = d0 + 30 * (1 - u);
@@ -14327,7 +15703,7 @@
     if (u > 0.4) return;
     ctx.save();
     ctx.globalAlpha = 1 - u / 0.4;
-    ctx.strokeStyle = INK7;
+    ctx.strokeStyle = INK8;
     ctx.lineWidth = 3.4;
     ctx.lineCap = "round";
     for (const r of [70, 92]) {
@@ -14354,7 +15730,7 @@
       ctx.lineTo(cx + Math.cos(a + da) * r0, cy + Math.sin(a + da) * r0);
       ctx.closePath();
       ctx.fill();
-      ctx.strokeStyle = INK7;
+      ctx.strokeStyle = INK8;
       ctx.lineWidth = 2;
       ctx.stroke();
     }
@@ -14368,7 +15744,7 @@
     const x = fig.x + (a[0] + 24) * fig.scale, y = fig.y + (a[1] + 8) * fig.scale + slide;
     ctx.save();
     ctx.globalAlpha = k;
-    const p = pathOf((q) => {
+    const p = pathOf2((q) => {
       q.moveTo(x, y - 26);
       q.quadraticCurveTo(x + 16, y - 2, x + 12, y + 8);
       q.arc(x, y + 6, 12, 0.2, Math.PI - 0.2);
@@ -14383,8 +15759,8 @@
     ctx.restore();
   }
   registerStyle("s12-nianhua", (I) => {
-    const O = comicBase(I, { levels: 6, keep: 0.2, lw: 4.6, inner: 0.36, ink: INK7 });
-    const pal = [INK7, "#203d7e", "#5b82c6", "#e8ab82", "#f8d6b0", PAPER7].map(rgbf);
+    const O = comicBase(I, { levels: 6, keep: 0.2, lw: 4.6, inner: 0.36, ink: INK8 });
+    const pal = [INK8, "#203d7e", "#5b82c6", "#e8ab82", "#f8d6b0", PAPER8].map(rgbf);
     const n = O.w * O.h, cls = new Int8Array(n).fill(-1);
     for (let i = 0; i < n; i++) {
       if (O.a[i] < 0.01) continue;
@@ -14392,7 +15768,7 @@
       const skin = O.r[i] - O.b[i] > 0.07 && l > 0.22;
       cls[i] = l < 0.075 ? 0 : skin ? l < 0.5 ? 3 : 4 : l < 0.24 ? 1 : l < 0.5 ? 2 : 5;
     }
-    const DX = 2, DY = 2, paperC = rgbf(PAPER7);
+    const DX = 2, DY = 2, paperC = rgbf(PAPER8);
     for (let y = 0; y < O.h; y++) for (let x = 0; x < O.w; x++) {
       const i = y * O.w + x;
       if (cls[i] < 0) continue;
@@ -14421,7 +15797,7 @@
       huiwen(ctx, 0, 0, h - 2 * band, band - 6, YEL2, 2.2);
       ctx.restore();
     }
-    nh(ctx, rectP2(x + band, y + band, w - 2 * band, h - 2 * band), PAPER7, { line: 3, reg: 0.8 });
+    nh(ctx, rectP2(x + band, y + band, w - 2 * band, h - 2 * band), PAPER8, { line: 3, reg: 0.8 });
     ctx.strokeStyle = rgba(GRN2, 0.9);
     ctx.lineWidth = 2.4;
     ctx.strokeRect(x + band + 6, y + band + 6, w - 2 * band - 12, h - 2 * band - 12);
@@ -14434,7 +15810,7 @@
     ctx.translate(cx, cy);
     nh(ctx, circP(0, 0, r), YEL_L2, { line: 3.4 * s });
     ctx.rotate(spin);
-    const ring = pathOf((p) => {
+    const ring = pathOf2((p) => {
       p.arc(0, 0, r * 0.9, 0, TAU);
       p.moveTo(r * 0.66, 0);
       p.arc(0, 0, r * 0.66, 0, TAU, true);
@@ -14450,7 +15826,7 @@
     nh(ctx, ellP(r * 0.78, 0, 9 * s, 6 * s), GRN2, { line: 2 * s, reg: 0 });
     tuanhua(ctx, 0, 0, r * 0.6, { lw: 1.8 * s });
     nh(ctx, circP(0, 0, r * 0.12), YEL2, { line: 2 * s, reg: 0 });
-    nh(ctx, circP(0, 0, r * 0.05), INK7, { line: 0, reg: 0 });
+    nh(ctx, circP(0, 0, r * 0.05), INK8, { line: 0, reg: 0 });
     ctx.restore();
   }
   function plate(ctx, x, y, w, h) {
@@ -14465,7 +15841,7 @@
     ctx.beginPath();
     ctx.ellipse(x + w / 2, y + h + t * 0.9, w * 0.55, t * 0.5, 0, 0, TAU);
     ctx.fill();
-    const ringP = (o, i) => pathOf((p) => {
+    const ringP = (o, i) => pathOf2((p) => {
       p.rect(x - o, y - o, w + 2 * o, h + 2 * o);
       p.rect(x - i, y - i, w + 2 * i, h + 2 * i);
     });
@@ -14494,7 +15870,7 @@
       ctx.arc(px, y + h + m, Math.max(1, 3.5 * R.s), 0, TAU);
       ctx.fill();
     }
-    ctx.strokeStyle = INK7;
+    ctx.strokeStyle = INK8;
     ctx.lineWidth = lw;
     ctx.strokeRect(x - t, y - t, w + 2 * t, h + 2 * t);
     ctx.strokeRect(x - t * 0.3, y - t * 0.3, w + t * 0.6, h + t * 0.6);
@@ -14506,21 +15882,21 @@
   }
   var s12 = {
     id: "s12",
-    station: ST11,
+    station: ST12,
     figureStyle: "s12-nianhua",
     // 年画人物外的一圈纸白留边：在红柱、靛蓝雨棚、绿树前也拉得开
-    figureRim: { color: PAPER7, width: 5, alpha: 1 },
+    figureRim: { color: PAPER8, width: 5, alpha: 1 },
     freezeBeat: GAG + 2.1,
     // Outro 展墙：店小二深躬、食客拱手、掌柜捧酒
     drawBack(ctx, b, env) {
       const cam = env.cam, cg = env.camAt(GAG), off = cg - cam;
       ctx.drawImage(paper(), X_MIN, 0, X_MAX - X_MIN, 1e3);
-      drawStrip(ctx, skyLayer5(), cam);
+      drawStrip(ctx, skyLayer6(), cam);
       drawStrip(ctx, mountainLayer(), cam);
       drawStrip(ctx, cityLayer(), cam);
       drawStrip(ctx, treeLayer(), cam);
-      drawStrip(ctx, streetLayer(cg), cam);
-      drawStrip(ctx, roadLayer4(), cam);
+      drawStrip(ctx, streetLayer2(cg), cam);
+      drawStrip(ctx, roadLayer5(), cam);
       heroGlow(ctx, b);
       const B2 = INN_BOX;
       if (B2.x1 + off > X_MIN && B2.x0 + off < X_MAX) {
@@ -14578,15 +15954,119 @@
     drawFrame(ctx, R) {
       nianhuaFrame(ctx, R);
     },
-    cardStyle: { ink: INK7, accent: RED3, bar: false, bgDraw: (ctx, x, y, w, h) => cardBg(ctx, x, y, w, h) },
+    cardStyle: { ink: INK8, accent: RED3, bar: false, bgDraw: (ctx, x, y, w, h) => cardBg(ctx, x, y, w, h) },
     playerStyle: {
-      ink: INK7,
+      ink: INK8,
       noteColor: RED3,
       backdrop: false,
       plateDraw: (ctx, x, y, w, h) => plate(ctx, x, y, w, h),
       drawPlayer: (ctx, kind, cx, cy, s, spin) => nianhuaCD(ctx, kind, cx, cy, s, spin)
     }
   };
+
+  // src/scenes/placeholder.js
+  function placeholderScene(st) {
+    const [bg, mid, ink, acc2] = st.palette;
+    const dark = ["#1c2140", "#2a2622", "#1b2230", "#5b5852"].includes(bg);
+    const far = mix(bg, mid, 0.35), near = mix(mid, ink, 0.25), road = mix(mid, ink, 0.45);
+    function layer(ctx, cam, parallax, spacing, seedKey, drawOne) {
+      const off = cam * parallax;
+      const i0 = Math.floor((X_MIN + off) / spacing) - 1, i1 = Math.ceil((X_MAX + off) / spacing) + 1;
+      for (let i = i0; i <= i1; i++) drawOne(i * spacing - off, rng(st.id, seedKey, i));
+    }
+    return {
+      id: st.id,
+      station: st,
+      drawBack(ctx, b, env) {
+        const cam = env.cam;
+        const g = ctx.createLinearGradient(0, 0, 0, ROAD_Y);
+        g.addColorStop(0, mix(bg, mid, dark ? 0.15 : 0.05));
+        g.addColorStop(1, mix(bg, mid, dark ? 0.45 : 0.3));
+        ctx.fillStyle = g;
+        ctx.fillRect(X_MIN - 2, 0, X_MAX - X_MIN + 4, ROAD_Y + 2);
+        layer(ctx, cam, 0.2, 230, "far", (x, R) => {
+          const h = R.range(120, 260);
+          ctx.fillStyle = far;
+          roundRect(ctx, x, ROAD_Y - 120 - h, R.range(120, 200), h + 130, 18);
+          ctx.fill();
+        });
+        layer(ctx, cam, 0.55, 310, "mid", (x, R) => {
+          const h = R.range(150, 300);
+          ctx.fillStyle = mix(far, near, 0.55);
+          poly(ctx, [[x, ROAD_Y], [x + 40, ROAD_Y - h], [x + 110, ROAD_Y - h + 30], [x + 150, ROAD_Y]]);
+          ctx.fill();
+        });
+        ctx.save();
+        font(ctx, 46, { family: SANS, weight: 700 });
+        ctx.textAlign = "center";
+        ctx.fillStyle = rgba(readableOn(bg, ink), 0.55);
+        ctx.fillText(`\u5360\u4F4D \xB7 \u7B2C ${st.n} \u7AD9 \xB7 ${st.style}`, 690, 150);
+        font(ctx, 40, { family: SERIF, weight: 400 });
+        ctx.fillText(`\u573A\u666F\uFF1A${st.scene}`, 690, 205);
+        ctx.restore();
+        ctx.fillStyle = road;
+        ctx.fillRect(X_MIN - 2, ROAD_Y, X_MAX - X_MIN + 4, 1e3 - ROAD_Y + 2);
+        ctx.fillStyle = mix(road, ink, 0.35);
+        ctx.fillRect(X_MIN - 2, ROAD_Y, X_MAX - X_MIN + 4, 6);
+        layer(ctx, cam, 1, 120, "dash", (x) => {
+          ctx.fillStyle = rgba(bg, 0.55);
+          ctx.fillRect(x, ROAD_Y + 60, 60, 8);
+        });
+        layer(ctx, cam, 1, 520, "post", (x, R) => {
+          ctx.fillStyle = near;
+          ctx.fillRect(x, ROAD_Y - 260, 16, 262);
+          circle(ctx, x + 8, ROAD_Y - 268, 22);
+          ctx.fillStyle = acc2;
+          ctx.fill();
+        });
+      },
+      drawFront(ctx, b, env) {
+        const k = smoothstep(GAG - 0.15, GAG + 0.1, b) * (1 - smoothstep(GAG + 4 - 0.2, GAG + 4, b));
+        if (k <= 0.01) return;
+        const pul = 1 + [0, 1, 2, 3].reduce((a, k2) => a + 0.08 * pulse(GAG + k2, GAG + k2 + 1, b), 0);
+        ctx.save();
+        ctx.globalAlpha = k;
+        ctx.translate(CHAR_X, ROAD_Y - 190);
+        ctx.scale(pul, pul);
+        ctx.strokeStyle = acc2;
+        ctx.lineWidth = 8;
+        for (let i = 0; i < 12; i++) {
+          const a = i / 12 * Math.PI * 2;
+          ctx.beginPath();
+          ctx.moveTo(Math.cos(a) * 210, Math.sin(a) * 210);
+          ctx.lineTo(Math.cos(a) * 250, Math.sin(a) * 250);
+          ctx.stroke();
+        }
+        ctx.restore();
+        ctx.save();
+        ctx.globalAlpha = k;
+        font(ctx, 38, { family: SANS, weight: 700 });
+        const lines = wrap(ctx, `\u7B2C 3 \u5C0F\u8282\u7684\u6897\uFF1A${st.gag}`, 760);
+        const x = 520, y = 470;
+        roundRect(ctx, x - 24, y - 54, 808, lines.length * 52 + 40, 12);
+        ctx.fillStyle = rgba(mix(bg, "#ffffff", 0.5), 0.92);
+        ctx.fill();
+        ctx.strokeStyle = acc2;
+        ctx.lineWidth = 4;
+        ctx.stroke();
+        ctx.fillStyle = ink;
+        lines.forEach((l, i) => ctx.fillText(l, x, y + i * 52));
+        ctx.restore();
+      }
+    };
+  }
+  function wrap(ctx, str, maxW) {
+    const out = [];
+    let line2 = "";
+    for (const ch of str) {
+      if (ctx.measureText(line2 + ch).width > maxW) {
+        out.push(line2);
+        line2 = ch;
+      } else line2 += ch;
+    }
+    if (line2) out.push(line2);
+    return out;
+  }
 
   // src/scenes/s13.js
   var s13 = placeholderScene(stationByN(13));
@@ -15061,7 +16541,7 @@
   var CHAR_PX = OX + CHAR_X * K;
   var ROAD_PX = ROAD_Y * K;
   var LEAD4 = 2;
-  var TAIL = 0.4;
+  var TAIL2 = 0.4;
   var sceneOf = (sec) => SCENES[sec.id];
   var renderFlags = { hideFigure: false };
   var camDist = (gb) => dist(Math.max(gb, WALK_START));
@@ -15162,7 +16642,7 @@
     for (const s of sections) {
       if (!s.station) continue;
       const x = gb - s.start;
-      if (x >= -LEAD4 && x < TAIL) {
+      if (x >= -LEAD4 && x < TAIL2) {
         const prev = sections[sections.indexOf(s) - 1];
         return { prev, next: s, x };
       }
@@ -15171,8 +16651,8 @@
   }
   function frameRect(x) {
     const lin2 = (t) => t;
-    const E = keyframes([[-LEAD4, W + 90], [-0.5, CHAR_PX + 90, ease.inOut], [0, CHAR_PX, lin2], [TAIL, 0, ease.out]], x);
-    const s = keyframes([[-LEAD4, 0.36], [-0.5, 0.74, ease.inOut], [0, 0.9, lin2], [TAIL, 1, ease.out]], x);
+    const E = keyframes([[-LEAD4, W + 90], [-0.5, CHAR_PX + 90, ease.inOut], [0, CHAR_PX, lin2], [TAIL2, 0, ease.out]], x);
+    const s = keyframes([[-LEAD4, 0.36], [-0.5, 0.74, ease.inOut], [0, 0.9, lin2], [TAIL2, 1, ease.out]], x);
     return { E, s, x: E, y: ROAD_PX * (1 - s), w: W * s, h: H * s };
   }
   function zoomAbout(ctx, z, ax, ay) {
