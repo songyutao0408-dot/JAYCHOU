@@ -22,7 +22,8 @@
   var SECTIONS = [
     { id: "intro", bars: 3 },
     ...Array.from({ length: 16 }, (_, i) => ({ id: `s${String(i + 1).padStart(2, "0")}`, bars: STATION_BARS, station: i + 1 })),
-    { id: "outro", bars: 6 }
+    { id: "outro", bars: 11 }
+    // 原 6 小节 + 结尾新增 5 小节（N1–N5）
   ];
 
   // src/beat/time.js
@@ -26699,7 +26700,8 @@
   }
 
   // src/main/outro.js
-  var OUTRO_LINES = ["2000\u20142026\uFF0C\u5341\u516D\u5F20\u4E13\u8F91\u3002", "\u4E0B\u4E00\u7AD9\uFF0C\u672A\u5B8C\u5F85\u7EED\u3002"];
+  var OUTRO_LINES = ["2000\u20142026\uFF0C\u5341\u516D\u5F20\u4E13\u8F91\u3002"];
+  var FINAL_LINES = ["27\u5E74\uFF0C16\u5F20\u4E13\u8F91\uFF0C174\u9996\u6B4C", "\u6BCF\u4E00\u9996\u6B4C\u90FD\u662F\u6211\u7684\u9752\u6625", "\u8C22\u8C22\u4F60\uFF0CJay"];
   var COLS = 4;
   var ROWS3 = 4;
   var GAP = 16;
@@ -26725,10 +26727,201 @@
     });
   }
   var liveCanvas = null;
+  var PULL = B(3, 1);
+  var STOP = B(5, 1);
+  var DIM = [B(6, 4), B(7, 1)];
+  var N1 = B(7, 1);
+  var N3 = B(9, 1);
+  var N4 = B(10, 1);
+  var N5 = B(11, 1);
+  var lightAt = (n) => N1 + 0.5 * (n - 1);
+  var SLIDE = [N3, N3 + 2];
+  var ROLL = [N3 + 2, N3 + 4.5];
+  var COLLAPSE = [N5, N5 + 1.6];
+  var DISC_FADE = [N5 + 2, N5 + 3.8];
+  var TEXT_AT = [N3, N4, N5];
+  var RING = { x: W / 2, y: 350, r: 250, w: 140 };
+  var PAPER11 = "#e4ddd0";
+  function spinPhase(ob) {
+    const t = ob - ROLL[0];
+    if (t <= 0) return 0;
+    const T2 = N5 - ROLL[0];
+    if (t <= T2) return 0.1 * t * t;
+    return 0.1 * T2 * T2 + 0.2 * T2 * (t - T2);
+  }
+  function cellPose(n, ob) {
+    const R = cellRect(n);
+    const row = Math.floor((n - 1) / COLS);
+    const dir = row % 2 === 0 ? -1 : 1;
+    const slide = ease.inOut(clamp((ob - SLIDE[0]) / (SLIDE[1] - SLIDE[0])));
+    const g = { x: R.x + R.w / 2 + dir * 240 * slide, y: R.y + R.h / 2, w: R.w, h: R.h, rot: 0 };
+    const m = ease.inOut(clamp((ob - ROLL[0]) / (ROLL[1] - ROLL[0])));
+    if (m <= 0) return g;
+    const c = ease.inOut(clamp((ob - COLLAPSE[0]) / (COLLAPSE[1] - COLLAPSE[0])));
+    const th = -Math.PI / 2 + (n - 1) / 16 * TAU + spinPhase(ob);
+    const rr = RING.r * (1 - c);
+    const rw = RING.w * (1 - 0.85 * c);
+    const a0 = (n - 1) / 16 * TAU;
+    const rot = Math.atan2(Math.sin(a0), Math.cos(a0)) + spinPhase(ob);
+    const ring = { x: RING.x + Math.cos(th) * rr, y: RING.y + Math.sin(th) * rr, w: rw, h: rw * 9 / 16, rot };
+    return { x: lerp(g.x, ring.x, m), y: lerp(g.y, ring.y, m), w: lerp(g.w, ring.w, m), h: lerp(g.h, ring.h, m), rot: lerp(0, ring.rot, m), th, rr };
+  }
+  function cellImage(n, ob, gb2, sec) {
+    if (n === 16 && ob < PULL) {
+      if (!liveCanvas) liveCanvas = makeCanvas(W, H);
+      const lc = liveCanvas.getContext("2d");
+      lc.setTransform(1, 0, 0, 1, 0, 0);
+      drawSection(lc, stationSection(16), gb2);
+      return liveCanvas;
+    }
+    if (n === 16) return freezeImage(16, sec.start + PULL);
+    const sc = SCENES[stationSection(n).id];
+    return freezeImage(n, stationSection(n).start + (sc.freezeBeat ?? FREEZE_B));
+  }
+  function drawFilmStrips(ctx, ob) {
+    const a = smoothstep(SLIDE[0], SLIDE[0] + 0.6, ob) * (1 - smoothstep(ROLL[0], ROLL[0] + 1, ob));
+    if (a <= 1e-3) return;
+    const slide = ease.inOut(clamp((ob - SLIDE[0]) / (SLIDE[1] - SLIDE[0])));
+    ctx.save();
+    ctx.globalAlpha = a;
+    for (let row = 0; row < ROWS3; row++) {
+      const R = cellRect(row * COLS + 1);
+      const dir = row % 2 === 0 ? -1 : 1;
+      const y0 = R.y - 18, h = R.h + 36;
+      ctx.fillStyle = "#231e1a";
+      ctx.fillRect(-20, y0, W + 40, h);
+      ctx.fillStyle = PAPER11;
+      const off2 = (dir * 240 * slide % 44 + 44) % 44;
+      for (let x = -44 + off2; x < W + 44; x += 44) {
+        roundRect(ctx, x, y0 + 4, 22, 9, 2);
+        ctx.fill();
+        roundRect(ctx, x, y0 + h - 13, 22, 9, 2);
+        ctx.fill();
+      }
+    }
+    ctx.restore();
+  }
+  function drawGoldTrails(ctx, ob) {
+    const m = ease.inOut(clamp((ob - ROLL[0]) / (ROLL[1] - ROLL[0])));
+    const c = ease.inOut(clamp((ob - COLLAPSE[0]) / (COLLAPSE[1] - COLLAPSE[0])));
+    const a = smoothstep(0.4, 1, m) * (1 - c);
+    if (a <= 1e-3) return;
+    const speed2 = Math.min(1, 0.2 * (ob - ROLL[0]));
+    const len = 0.15 + 0.55 * speed2;
+    ctx.save();
+    ctx.globalCompositeOperation = "lighter";
+    ctx.lineCap = "round";
+    for (let n = 1; n <= 16; n++) {
+      const p = cellPose(n, ob);
+      const rr = p.rr ?? RING.r;
+      for (let k = 0; k < 6; k++) {
+        const t0 = p.th - len * (k + 1) / 6, t1 = p.th - len * k / 6;
+        ctx.strokeStyle = `rgba(255, 196, 96, ${(0.32 * a * (1 - k / 6)).toFixed(3)})`;
+        ctx.lineWidth = 16 * (1 - k / 7);
+        ctx.beginPath();
+        ctx.arc(RING.x, RING.y, rr, t0, t1);
+        ctx.stroke();
+      }
+    }
+    ctx.restore();
+  }
+  function drawDisc(ctx, ob) {
+    const c = ease.inOut(clamp((ob - COLLAPSE[0]) / (COLLAPSE[1] - COLLAPSE[0])));
+    const a = smoothstep(0.35, 1, c) * (1 - smoothstep(DISC_FADE[0], DISC_FADE[1], ob));
+    if (a <= 1e-3) return;
+    const r = lerp(40, 140, ease.out(c));
+    const ph = spinPhase(ob);
+    ctx.save();
+    ctx.globalAlpha = a;
+    ctx.translate(RING.x, RING.y);
+    const glow2 = ctx.createRadialGradient(0, 0, r * 0.6, 0, 0, r * 1.6);
+    glow2.addColorStop(0, "rgba(255, 210, 120, 0.45)");
+    glow2.addColorStop(1, "rgba(255, 210, 120, 0)");
+    ctx.fillStyle = glow2;
+    circle(ctx, 0, 0, r * 1.6);
+    ctx.fill();
+    const g = ctx.createRadialGradient(0, 0, r * 0.15, 0, 0, r);
+    g.addColorStop(0, "#f6efe2");
+    g.addColorStop(0.55, "#d9c7a2");
+    g.addColorStop(1, "#b89a62");
+    ctx.fillStyle = g;
+    circle(ctx, 0, 0, r);
+    ctx.fill();
+    ctx.strokeStyle = "rgba(90, 70, 40, 0.35)";
+    for (let k = 1; k <= 6; k++) {
+      ctx.lineWidth = 1;
+      circle(ctx, 0, 0, r * (0.3 + 0.11 * k));
+      ctx.stroke();
+    }
+    ctx.rotate(ph);
+    ctx.fillStyle = "rgba(255, 255, 255, 0.35)";
+    ctx.beginPath();
+    ctx.moveTo(0, 0);
+    ctx.arc(0, 0, r, -0.35, 0.35);
+    ctx.closePath();
+    ctx.fill();
+    ctx.beginPath();
+    ctx.moveTo(0, 0);
+    ctx.arc(0, 0, r, Math.PI - 0.25, Math.PI + 0.25);
+    ctx.closePath();
+    ctx.fill();
+    ctx.fillStyle = PAPER11;
+    circle(ctx, 0, 0, r * 0.13);
+    ctx.fill();
+    ctx.strokeStyle = "rgba(90, 70, 40, 0.5)";
+    ctx.lineWidth = 2;
+    circle(ctx, 0, 0, r * 0.13);
+    ctx.stroke();
+    ctx.restore();
+  }
+  function drawYearTag(ctx, st, p, ob) {
+    const t = ob - lightAt(st.n);
+    const a = smoothstep(0, 0.35, t) * (1 - smoothstep(SLIDE[0], SLIDE[0] + 1, ob));
+    if (a <= 1e-3) return;
+    const rise = (1 - ease.out(clamp(t / 0.5))) * 14;
+    const tw = 108, th = 42;
+    const x = p.x - tw / 2, y = p.y + p.h / 2 - th - 10 + rise;
+    ctx.save();
+    ctx.globalAlpha = a;
+    ctx.fillStyle = "rgba(0,0,0,0.18)";
+    roundRect(ctx, x + 2, y + 3, tw, th, 8);
+    ctx.fill();
+    ctx.fillStyle = "#f4efe4";
+    roundRect(ctx, x, y, tw, th, 8);
+    ctx.fill();
+    ctx.strokeStyle = "#2c2723";
+    ctx.lineWidth = 2;
+    roundRect(ctx, x, y, tw, th, 8);
+    ctx.stroke();
+    font(ctx, 30, { family: SERIF, weight: 700 });
+    ctx.fillStyle = "#2a241d";
+    ctx.textAlign = "center";
+    ctx.textBaseline = "middle";
+    ctx.fillText(String(st.year), p.x, y + th / 2 + 1);
+    ctx.restore();
+  }
+  function drawFinalText(ctx, ob) {
+    const pa = smoothstep(TEXT_AT[0] - 0.2, TEXT_AT[0] + 0.6, ob);
+    if (pa <= 1e-3) return;
+    const ys = [790, 866, 946];
+    ctx.save();
+    ctx.globalAlpha = pa;
+    ctx.fillStyle = "rgba(244, 239, 228, 0.82)";
+    roundRect(ctx, W / 2 - 470, 724, 940, 268, 22);
+    ctx.fill();
+    ctx.strokeStyle = "rgba(80, 64, 44, 0.25)";
+    ctx.lineWidth = 2;
+    roundRect(ctx, W / 2 - 470, 724, 940, 268, 22);
+    ctx.stroke();
+    ctx.restore();
+    for (let i = 0; i < 3; i++) {
+      const a = smoothstep(TEXT_AT[i], TEXT_AT[i] + 0.8, ob);
+      drawSubtitle(ctx, FINAL_LINES[i], W / 2, ys[i], a, { px: i === 2 ? 56 : 50, color: "#2a241d", weight: i === 2 ? 700 : 400 });
+    }
+  }
   function drawOutro(ctx, gb2) {
     const sec = sectionById.outro;
     const ob = gb2 - sec.start;
-    const PULL = B(3, 1);
     const u = ease.inOut(clamp(ob / PULL));
     const r16 = cellRect(16);
     const S0 = W / r16.w;
@@ -26740,49 +26933,62 @@
     ctx.translate(W / 2, H / 2);
     ctx.scale(s, s);
     ctx.translate(-cx, -cy);
-    const wall = paperTexture(W, H, { base: "#e4ddd0", seed: 21, amount: 0.8, fibers: 120 });
+    const wall = paperTexture(W, H, { base: PAPER11, seed: 21, amount: 0.8, fibers: 120 });
     ctx.drawImage(wall, -W * 2, -H * 2, W * 5, H * 5);
-    for (const st of STATIONS) {
-      const R = cellRect(st.n);
-      const sx = (R.x - cx) * s + W / 2, sy = (R.y - cy) * s + H / 2;
-      if (sx > W || sy > H || sx + R.w * s < 0 || sy + R.h * s < 0) continue;
-      ctx.fillStyle = "rgba(0,0,0,0.18)";
-      ctx.fillRect(R.x + 4, R.y + 6, R.w, R.h);
-      ctx.fillStyle = "#2c2723";
-      ctx.fillRect(R.x - 5, R.y - 5, R.w + 10, R.h + 10);
-      let img;
-      if (st.n === 16 && ob < PULL) {
-        if (!liveCanvas) liveCanvas = makeCanvas(W, H);
-        const lc = liveCanvas.getContext("2d");
-        lc.setTransform(1, 0, 0, 1, 0, 0);
-        drawSection(lc, stationSection(16), gb2);
-        img = liveCanvas;
-      } else if (st.n === 16) {
-        img = freezeImage(16, sec.start + PULL);
-      } else {
-        const sc = SCENES[stationSection(st.n).id];
-        img = freezeImage(st.n, stationSection(st.n).start + (sc.freezeBeat ?? FREEZE_B));
-      }
-      ctx.drawImage(img, R.x, R.y, R.w, R.h);
-      const STOP = B(5, 1);
-      const spinGb = Math.min(gb2, sec.start + STOP);
-      const settle = ob > STOP ? 0.12 * Math.exp(-(ob - STOP) * 7) * Math.sin((ob - STOP) * 26) : 0;
-      const ps = st.player === "phone" ? 0.3 : 0.36;
-      const px = R.x + R.w - (st.player === "phone" ? 26 : 36), py = R.y + R.h - (st.player === "phone" ? 40 : 30);
-      const appear = smoothstep(B(1, 3), B(2, 3), ob);
-      if (appear > 0) {
+    drawFilmStrips(ctx, ob);
+    drawGoldTrails(ctx, ob);
+    const dimBase = 0.55 * smoothstep(DIM[0], DIM[1], ob);
+    const cellsAlpha = 1 - ease.inOut(clamp((ob - COLLAPSE[0]) / (COLLAPSE[1] - COLLAPSE[0])));
+    const playersAlpha = smoothstep(B(1, 3), B(2, 3), ob) * (1 - smoothstep(SLIDE[0], SLIDE[0] + 1, ob));
+    if (cellsAlpha > 1e-3) {
+      const tags = [];
+      for (const st of STATIONS) {
+        const p = cellPose(st.n, ob);
+        const sx = (p.x - p.w / 2 - cx) * s + W / 2, sy = (p.y - p.h / 2 - cy) * s + H / 2;
+        if (sx > W || sy > H || sx + p.w * s < 0 || sy + p.h * s < 0) continue;
+        const t = ob - lightAt(st.n);
+        const lit = t >= 0 ? 1 - ease.out(clamp(t / 0.3)) : 1;
+        const dim = ob < DIM[0] ? 0 : dimBase * lit;
+        const press = t >= 0 ? Math.sin(Math.PI * clamp(t / 0.35)) * 7 : 0;
+        const flash = t >= 0 ? 0.5 * Math.exp(-t * 7) : 0;
+        const k = p.w / CELL_W;
         ctx.save();
-        ctx.globalAlpha = appear;
-        drawPlayerKind(ctx, st.player, px, py, ps, spinAt(spinGb) + settle, playerPalette(st), spinGb);
+        ctx.globalAlpha = cellsAlpha;
+        ctx.translate(p.x, p.y + press);
+        ctx.rotate(p.rot);
+        ctx.fillStyle = "rgba(0,0,0,0.18)";
+        ctx.fillRect(-p.w / 2 + 4 * k, -p.h / 2 + 6 * k, p.w, p.h);
+        ctx.fillStyle = "#2c2723";
+        const b = Math.max(2, 5 * k);
+        ctx.fillRect(-p.w / 2 - b, -p.h / 2 - b, p.w + 2 * b, p.h + 2 * b);
+        ctx.drawImage(cellImage(st.n, ob, gb2, sec), -p.w / 2, -p.h / 2, p.w, p.h);
+        if (dim > 1e-3) {
+          ctx.fillStyle = `rgba(28, 22, 16, ${dim.toFixed(3)})`;
+          ctx.fillRect(-p.w / 2, -p.h / 2, p.w, p.h);
+        }
+        if (flash > 0.01) {
+          ctx.fillStyle = `rgba(255, 246, 220, ${flash.toFixed(3)})`;
+          ctx.fillRect(-p.w / 2, -p.h / 2, p.w, p.h);
+        }
+        if (playersAlpha > 1e-3) {
+          const spinGb = Math.min(gb2, sec.start + STOP);
+          const settle = ob > STOP ? 0.12 * Math.exp(-(ob - STOP) * 7) * Math.sin((ob - STOP) * 26) : 0;
+          const ps = st.player === "phone" ? 0.3 : 0.36;
+          const px = p.w / 2 - (st.player === "phone" ? 26 : 36), py = p.h / 2 - (st.player === "phone" ? 40 : 30);
+          ctx.globalAlpha = cellsAlpha * playersAlpha;
+          drawPlayerKind(ctx, st.player, px, py, ps, spinAt(spinGb) + settle, playerPalette(st), spinGb);
+        }
         ctx.restore();
+        tags.push([st, { ...p, y: p.y + press }]);
       }
+      for (const [st, p] of tags) drawYearTag(ctx, st, p, ob);
     }
+    drawDisc(ctx, ob);
     ctx.restore();
     const y = TOP + GRID_H + (H - TOP - GRID_H) / 2 + 18;
     const a1 = smoothstep(B(3, 1), B(3, 1) + 0.8, ob) * (1 - smoothstep(B(5, 4), B(6, 1), ob));
-    const a2 = smoothstep(B(6, 1), B(6, 1) + 0.8, ob);
     drawSubtitle(ctx, OUTRO_LINES[0], W / 2, y, a1, { px: 50, color: "#2a241d" });
-    drawSubtitle(ctx, OUTRO_LINES[1], W / 2, y, a2, { px: 50, color: "#2a241d", weight: 700 });
+    drawFinalText(ctx, ob);
   }
 
   // src/main/film.js
