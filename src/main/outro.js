@@ -1,13 +1,13 @@
-// Outro（15 小节）：
+// Outro（13 小节）：
 //   第 1–2 小节  镜头从第 16 站拉远，展墙 4×4，占画面宽约 85%，每格定格着那一站的他（站立姿势）
 //   第 3 小节    下方居中字幕「2000—2026，十六张专辑。」（第 5 小节末淡出）
 //   第 5 小节强拍 16 个播放器同时停转
 //   第 6 小节    安静的停顿：只有停转后的专辑墙（最后一拍整面墙轻轻暗下，准备点亮）
 //   N1–N2（第 7–8 小节）  16 格按 2000→2026 的顺序每个八分音符亮起一格，像钢琴键被依次按下，格下浮出年份
 //   N3–N4（第 9–10 小节） 4×4 像胶片一行左一行右交错滑动，再卷成一个圆环，像唱片一样旋转，带金色光尾
-//   N5（第 11 小节）      圆环缩成画面中央偏上的一个光点（第 2 拍），停顿半拍后向四周炸开，变成 174 个歌名
-//   第 11 小节末–第 13 小节第 2 拍  歌名四散后分批聚拢，拼成侧脸闭眼、一手扶耳的头像（约 4 秒，wordcloud.js）
-//   第 13 小节第 3 拍起  头像下方依次浮出三行落款（第三行更大、单独晚半拍），和头像一起定格到全片结束
+//   N5（第 11 小节）      圆环向中心收拢消失，原位像相纸显影一样浮出一张艺术黑白照（双色调，贴合纸张和墨色）
+//   第 12–13 小节         照片和下方三行文案一起定格，直到全片结束
+//   文案三行分别落在 N3、N4、N5 的强拍（第三行更大、加粗），之后保持不动到结尾
 import { W, H } from './layout.js';
 import { sectionById, stationSection, B } from '../beat/time.js';
 import { STATIONS } from '../data/stations.js';
@@ -17,11 +17,11 @@ import { paperTexture } from '../kit/paper.js';
 import { clamp, ease, lerp, smoothstep, TAU } from '../kit/math.js';
 import { roundRect, circle } from '../kit/shapes.js';
 import { font, SERIF } from '../kit/text.js';
-import { drawWordCloud } from './wordcloud.js';
 import { drawPlayerKind, playerPalette, spinAt } from '../hud/players.js';
 import { drawSubtitle } from '../hud/subtitle.js';
 import { GAG } from '../beat/time.js';
 import { SCENES } from '../scenes/index.js';
+import { END_PHOTO } from '../data/endphoto.js';
 
 export const OUTRO_LINES = ['2000—2026，十六张专辑。'];
 export const FINAL_LINES = ['27年，16张专辑，174首歌', '每一首歌都是我的青春', '谢谢你，JAY'];
@@ -60,10 +60,9 @@ const N1 = B(7, 1), N3 = B(9, 1), N4 = B(10, 1), N5 = B(11, 1);
 const lightAt = (n) => N1 + 0.5 * (n - 1); // 每个八分音符点亮一格
 const SLIDE = [N3, N3 + 2];              // 胶片交错滑动
 const ROLL = [N3 + 2, N3 + 4.5];         // 卷成圆环
-const COLLAPSE = [N5, N5 + 1];           // 圆环缩成一个光点
-const POINT = N5 + 1;                    // 光点出现
-const BURST = POINT + 0.5;               // 停顿半拍后炸开成歌名
-const SIGN_AT = [B(13, 3), B(13, 4), B(14, 1) + 0.5]; // 三行落款（头像拼完后）：第三行单独再晚半拍
+const COLLAPSE = [N5, N5 + 1.6];         // 圆环向中心收拢消失
+const DEVELOP = [N5 + 0.9, N5 + 3.4];    // 照片显影
+const TEXT_AT = [N3, N4, N5];            // 三行文案
 const RING = { x: W / 2, y: 350, r: 250, w: 140 };
 const PAPER = '#e4ddd0';
 
@@ -158,23 +157,47 @@ function drawGoldTrails(ctx, ob) {
   ctx.restore();
 }
 
-/** N5：圆环缩成的光点——停顿半拍时轻轻呼吸，炸开的一瞬间一闪。 */
-function drawLightPoint(ctx, ob) {
-  const appear = smoothstep(COLLAPSE[0] + 0.4, POINT, ob);
-  const gone = smoothstep(BURST, BURST + 0.45, ob);
-  const a = appear * (1 - gone);
-  if (a <= 0.001) return;
-  const breathe = ob >= POINT && ob < BURST ? Math.sin((Math.PI * (ob - POINT)) / (BURST - POINT)) : 0;
-  const r = 22 * (1 + 0.25 * breathe) + 220 * ease.out(clamp((ob - BURST) / 0.45));
+// 结尾照片：先解码好（entry.js 在开始渲染前 await loadEndPhoto()）
+let photoImg = null;
+export function loadEndPhoto() {
+  if (photoImg) return Promise.resolve();
+  const img = new Image();
+  img.src = END_PHOTO.src;
+  return img.decode().then(() => { photoImg = img; }, () => { photoImg = img; });
+}
+const PHOTO_H = 560, PHOTO_W = (PHOTO_H * END_PHOTO.w) / END_PHOTO.h;
+const PHOTO = { x: RING.x - PHOTO_W / 2, y: RING.y - PHOTO_H / 2, w: PHOTO_W, h: PHOTO_H };
+
+/** N5：圆环消失的位置浮出照片。像相纸显影：先是一片淡淡的纸色，影像从浅到深慢慢出来，同时轻轻放大到位。 */
+function drawPhoto(ctx, ob) {
+  if (!photoImg) return;
+  const t = clamp((ob - DEVELOP[0]) / (DEVELOP[1] - DEVELOP[0]));
+  if (t <= 0) return;
+  const appear = smoothstep(0, 0.25, t);
+  const dev = ease.inOut(t);
+  const k = lerp(0.94, 1, ease.out(t));
+  const w = PHOTO.w * k, h = PHOTO.h * k, x = RING.x - w / 2, y = RING.y - h / 2;
+  const B0 = 14; // 相纸白边
   ctx.save();
-  ctx.globalAlpha = a;
-  const g = ctx.createRadialGradient(RING.x, RING.y, 0, RING.x, RING.y, r * 2.4);
-  g.addColorStop(0, 'rgba(255, 250, 235, 1)');
-  g.addColorStop(0.18, 'rgba(255, 222, 150, 0.95)');
-  g.addColorStop(0.5, 'rgba(255, 196, 96, 0.35)');
-  g.addColorStop(1, 'rgba(255, 196, 96, 0)');
-  ctx.fillStyle = g;
-  circle(ctx, RING.x, RING.y, r * 2.4); ctx.fill();
+  ctx.globalAlpha = appear;
+  // 投影
+  ctx.fillStyle = 'rgba(40, 28, 18, 0.22)';
+  ctx.fillRect(x - B0 + 6, y - B0 + 9, w + 2 * B0, h + 2 * B0);
+  // 相纸
+  ctx.fillStyle = '#f3ecdf';
+  ctx.fillRect(x - B0, y - B0, w + 2 * B0, h + 2 * B0);
+  ctx.globalAlpha = appear * dev;
+  ctx.drawImage(photoImg, x, y, w, h);
+  // 显影前的「雾」：纸色盖在影像上，慢慢退掉
+  if (dev < 1) {
+    ctx.globalAlpha = appear * (1 - dev) * 0.85;
+    ctx.fillStyle = '#efe6d6';
+    ctx.fillRect(x, y, w, h);
+  }
+  ctx.globalAlpha = appear;
+  ctx.strokeStyle = 'rgba(60, 44, 30, 0.35)';
+  ctx.lineWidth = 1.5;
+  ctx.strokeRect(x - B0, y - B0, w + 2 * B0, h + 2 * B0);
   ctx.restore();
 }
 
@@ -201,12 +224,12 @@ function drawYearTag(ctx, st, p, ob) {
   ctx.restore();
 }
 
-/** 全片落款：头像拼完后，下方依次浮出三行，和头像一起定格到结尾。 */
-function drawSignOff(ctx, ob) {
-  const ys = [826, 898, 988];
+/** 结尾三行文案（照片下方，居中）：分别落在 N3 / N4 / N5 的强拍，第三行更大、加粗，之后定格到结尾。 */
+function drawFinalText(ctx, ob) {
+  const ys = [776, 848, 940];
   for (let i = 0; i < 3; i++) {
-    const a = smoothstep(SIGN_AT[i], SIGN_AT[i] + 0.9, ob);
-    drawSubtitle(ctx, FINAL_LINES[i], W / 2, ys[i], a, { px: i === 2 ? 68 : 50, color: '#2a1d12', weight: i === 2 ? 700 : 400 });
+    const a = smoothstep(TEXT_AT[i], TEXT_AT[i] + 0.8, ob);
+    drawSubtitle(ctx, FINAL_LINES[i], W / 2, ys[i], a, { px: i === 2 ? 66 : 48, color: '#2a1d12', weight: i === 2 ? 700 : 400 });
   }
 }
 
@@ -277,14 +300,12 @@ export function drawOutro(ctx, gb) {
     // 年份牌在所有格子之后画，不会被下一行盖住
     for (const [st, p] of tags) drawYearTag(ctx, st, p, ob);
   }
-  drawLightPoint(ctx, ob);
+  drawPhoto(ctx, ob);
   ctx.restore();
-  // 光点炸开 → 歌名四散 → 聚拢成头像 → 定格（屏幕空间；此时镜头已是单位变换）
-  if (ob >= BURST) drawWordCloud(ctx, ob - BURST, [RING.x, RING.y]);
 
   // 字幕（屏幕空间）
   const y = TOP + GRID_H + (H - TOP - GRID_H) / 2 + 18;
   const a1 = smoothstep(B(3, 1), B(3, 1) + 0.8, ob) * (1 - smoothstep(B(5, 4), B(6, 1), ob));
   drawSubtitle(ctx, OUTRO_LINES[0], W / 2, y, a1, { px: 50, color: '#2a241d' });
-  drawSignOff(ctx, ob);
+  drawFinalText(ctx, ob);
 }

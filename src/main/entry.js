@@ -7,6 +7,7 @@ import { setWalkSpeed } from './walk.js';
 import { duration, sections, TOTAL_BEATS, grid, setGrid, timeAtBeat, beatAt } from '../beat/time.js';
 import { STATIONS } from '../data/stations.js';
 import { setupPreview } from './preview.js';
+import { loadEndPhoto } from './outro.js';
 import { contactSheet, styleCheck, walkSheet } from './sheets.js';
 
 const params = new URLSearchParams(location.search);
@@ -25,6 +26,7 @@ new window.p5((p) => {
     const canvas = cnv.elt;
     const nFonts = await loadEmbeddedFonts();
     await loadWalkSets();
+    await loadEndPhoto();
     // 走路素材：正侧面（side）。assets/walk/frames/ 下若有多套，可用 ?walk=<套名> 切换
     setWalkSpeed(useWalkSet(params.get('walk') || undefined));
     if (params.has('bpm')) setGrid({ bpm: parseFloat(params.get('bpm')) });
