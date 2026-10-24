@@ -1,7 +1,8 @@
 // Intro（3 小节）：纸张质感背景，衬线字体。
 //   第 1 小节：一盘虚构磁带从上方落向卡座
-//   第 2 小节第 1 拍：「咔哒」推入，计数器从 000 开始转；第 3 拍字幕一淡入
-//   第 3 小节第 1 拍：字幕二淡入；人物从磁带标签纸上走出来，落到路上往右走，第 4 小节强拍穿过第一道画框
+//   第 2 小节第 1 拍：「咔哒」推入，计数器从 000 开始转
+//   第 3 小节第 1 拍：人物从磁带标签纸上走出来，落到路上往右走，第 4 小节强拍穿过第一道画框
+//   开场文案三行从视频第一帧起就在卡座左边，第 3 小节后半淡出
 import { X_MIN, X_MAX, ROAD_Y, CHAR_X, K } from '../main/layout.js';
 import { paperTexture } from '../kit/paper.js';
 import { bakeBrush } from '../kit/brush.js';
@@ -25,10 +26,8 @@ const LABEL = { dx: 22, dy: 16, w: CAS.w - 44, h: 106 };
 const COUNTER = { x: 716, y: 280, w: 120, h: 60 };
 
 const T_CLICK = B(2, 1);
-const T_SUB1 = B(2, 3);
-const T_SUB2 = B(3, 1);
 const T_OUT = B(3, 1); // 人物走出标签
-export const SUBTITLES = ['2000 年，他出发了。', '前面是十六张专辑。'];
+export const SUBTITLES = ['2000年', '周杰伦一声“Wow”', '开启了华语乐坛的新时代'];
 
 // 铅笔纸面：人物先漫画化，再整体向纸色褪 42%（styles.js 的 pencil）
 const FIG_STYLE = 'pencil';
@@ -179,19 +178,19 @@ export const intro = {
     ctx.drawImage(rs, 80, ROAD_Y - 20 / K, rs.width / K, rs.height / K);
     ctx.restore();
   },
-  drawFront(ctx, b) {
-    // 两条字幕：固定在画面下方（不随镜头平移）
-    const out = 1 - smoothstep(B(3, 3), B(3, 4), b);
-    const a1 = smoothstep(T_SUB1, T_SUB1 + 0.7, b) * out;
-    const a2 = smoothstep(T_SUB2, T_SUB2 + 0.7, b) * out;
+  drawFront(ctx, b, env) {
+    // 开场文案三行：视频第一帧起就在（不淡入），写在卡座左边的纸面上，跟纸面一起随镜头平移（不会压到卡座），第 3 小节后半淡出
+    const a = 1 - smoothstep(B(3, 3), B(3, 4), b);
+    if (a <= 0.001) return;
     ctx.save();
     ctx.textAlign = 'center';
-    font(ctx, 54, { family: SERIF, weight: 400 });
-    ctx.fillStyle = rgba(INK, a1);
-    ctx.fillText(SUBTITLES[0], 500, 892);
-    font(ctx, 54, { family: SERIF, weight: 700 });
-    ctx.fillStyle = rgba(INK, a2);
-    ctx.fillText(SUBTITLES[1], 500, 960);
+    ctx.fillStyle = rgba(INK, a);
+    const cx = -70 - env.cam;
+    font(ctx, 64, { family: SERIF, weight: 700 });
+    ctx.fillText(SUBTITLES[0], cx, 360);
+    font(ctx, 48, { family: SERIF, weight: 400 });
+    ctx.fillText(SUBTITLES[1], cx, 448);
+    ctx.fillText(SUBTITLES[2], cx, 520);
     ctx.restore();
   },
 };

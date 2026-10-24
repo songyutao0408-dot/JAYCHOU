@@ -971,10 +971,8 @@
   var LABEL = { dx: 22, dy: 16, w: CAS.w - 44, h: 106 };
   var COUNTER = { x: 716, y: 280, w: 120, h: 60 };
   var T_CLICK = B(2, 1);
-  var T_SUB1 = B(2, 3);
-  var T_SUB2 = B(3, 1);
   var T_OUT = B(3, 1);
-  var SUBTITLES = ["2000 \u5E74\uFF0C\u4ED6\u51FA\u53D1\u4E86\u3002", "\u524D\u9762\u662F\u5341\u516D\u5F20\u4E13\u8F91\u3002"];
+  var SUBTITLES = ["2000\u5E74", "\u5468\u6770\u4F26\u4E00\u58F0\u201CWow\u201D", "\u5F00\u542F\u4E86\u534E\u8BED\u4E50\u575B\u7684\u65B0\u65F6\u4EE3"];
   var FIG_STYLE = "pencil";
   function deckStrokes() {
     return bakeBrush("intro-deck", DECK.w * K + 20, DECK.h * K + 20, (Bx) => {
@@ -1121,18 +1119,18 @@
       ctx.drawImage(rs, 80, ROAD_Y - 20 / K, rs.width / K, rs.height / K);
       ctx.restore();
     },
-    drawFront(ctx, b) {
-      const out = 1 - smoothstep(B(3, 3), B(3, 4), b);
-      const a1 = smoothstep(T_SUB1, T_SUB1 + 0.7, b) * out;
-      const a2 = smoothstep(T_SUB2, T_SUB2 + 0.7, b) * out;
+    drawFront(ctx, b, env) {
+      const a = 1 - smoothstep(B(3, 3), B(3, 4), b);
+      if (a <= 1e-3) return;
       ctx.save();
       ctx.textAlign = "center";
-      font(ctx, 54, { family: SERIF, weight: 400 });
-      ctx.fillStyle = rgba(INK, a1);
-      ctx.fillText(SUBTITLES[0], 500, 892);
-      font(ctx, 54, { family: SERIF, weight: 700 });
-      ctx.fillStyle = rgba(INK, a2);
-      ctx.fillText(SUBTITLES[1], 500, 960);
+      ctx.fillStyle = rgba(INK, a);
+      const cx = -70 - env.cam;
+      font(ctx, 64, { family: SERIF, weight: 700 });
+      ctx.fillText(SUBTITLES[0], cx, 360);
+      font(ctx, 48, { family: SERIF, weight: 400 });
+      ctx.fillText(SUBTITLES[1], cx, 448);
+      ctx.fillText(SUBTITLES[2], cx, 520);
       ctx.restore();
     }
   };
