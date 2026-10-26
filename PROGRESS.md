@@ -1,6 +1,6 @@
 # 进度记录
 
-> 新会话接手时先读这里，再读 `PROMPT.md`。
+> 新会话接手时先读这里，再读 `PROMPT.md`。最终成片的完整设计（合并了所有修改）见 [`PROMPT_FINAL.md`](PROMPT_FINAL.md)。
 
 ## 当前状态
 
